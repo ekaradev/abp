@@ -1,14 +1,11 @@
 ﻿using System.Threading.Tasks;
 using Volo.Abp.AspNetCore.Mvc.ApplicationConfigurations;
 
-namespace Volo.Abp.AspNetCore.Mvc.Client
+namespace Volo.Abp.AspNetCore.Mvc.Client;
+
+public interface ICachedApplicationConfigurationClient
 {
-    public interface ICachedApplicationConfigurationClient
-    {
-        Task InitializeAsync();
+    Task<ApplicationConfigurationDto> GetAsync();
 
-        Task<ApplicationConfigurationDto> GetAsync();
-
-        ApplicationConfigurationDto Get();
-    }
+    ApplicationConfigurationDto Get();
 }

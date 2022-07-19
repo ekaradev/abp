@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
     var l = abp.localization.getResource('Docs');
 
     var _createModal = new abp.ModalManager({
@@ -57,6 +57,7 @@
                                         .delete(data.record.id)
                                         .then(function () {
                                             _dataTable.ajax.reload();
+                                            abp.notify.success(l('SuccessfullyDeleted'));
                                         });
                                 },
                             },
@@ -156,8 +157,7 @@
             .confirm(l('ReIndexAllProjectConfirmationMessage'))
             .done(function (accepted) {
                 if (accepted) {
-                    volo.docs.admin.projectsAdmin
-                        .reindexAll()
+                    volo.docs.admin.projectsAdmin.reindexAll()
                         .then(function () {
                             abp.message.success(
                                 l('SuccessfullyReIndexAllProject')

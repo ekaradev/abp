@@ -1,11 +1,11 @@
-﻿(function ($) {
+(function ($) {
     var l = abp.localization.getResource('Blogging');
 
     var initSocialShareLinks = function () {
         var re = new RegExp(/^.*\//);
         var rootUrl = re.exec(window.location.href);
 
-        var pageHeader = $('#PostTitle').text();
+        var pageHeader = $('#PostTitle').text().trim();
         var blogName = $('#BlogFullName').attr('name');
 
         $('#TwitterShareLink').attr(
@@ -60,11 +60,14 @@
                 id: form.commentId,
                 commentDto: {
                     text: form.text,
+                    // TODO: Implement concurrencyStamp here:
+                    //concurrencyStamp: form.concurrencyStamp
                 },
             },
             success: function (response) {
                 $('div .editForm').hide();
                 $('#' + form.commentId).text(form.text);
+                //$(this).find('[name=concurrencyStamp]').val(response.concurrencyStamp);
             },
         });
     });

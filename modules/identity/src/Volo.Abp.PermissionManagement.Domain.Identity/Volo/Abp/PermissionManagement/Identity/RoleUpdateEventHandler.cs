@@ -1,43 +1,32 @@
 ﻿using System.Threading.Tasks;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Domain.Entities.Events;
-using Volo.Abp.EventBus;
+using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Identity;
 
-namespace Volo.Abp.PermissionManagement.Identity
+namespace Volo.Abp.PermissionManagement.Identity;
+
+public class RoleUpdateEventHandler :
+    IDistributedEventHandler<IdentityRoleNameChangedEto>,
+    ITransientDependency
 {
-    public class RoleUpdateEventHandler :
-        ILocalEventHandler<IdentityRoleNameChangedEvent>,
-        ITransientDependency
+    protected IPermissionManager PermissionManager { get; }
+    protected IPermissionGrantRepository PermissionGrantRepository { get; }
+
+    public RoleUpdateEventHandler(
+        IPermissionManager permissionManager,
+        IPermissionGrantRepository permissionGrantRepository)
     {
-        protected IIdentityRoleRepository RoleRepository { get; }
-        protected IPermissionManager PermissionManager { get; }
-        protected IPermissionGrantRepository PermissionGrantRepository { get; }
+        PermissionManager = permissionManager;
+        PermissionGrantRepository = permissionGrantRepository;
+    }
 
-        public RoleUpdateEventHandler(
-            IIdentityRoleRepository roleRepository,
-            IPermissionManager permissionManager,
-            IPermissionGrantRepository permissionGrantRepository)
+    public async Task HandleEventAsync(IdentityRoleNameChangedEto eventData)
+    {
+        var permissionGrantsInRole = await PermissionGrantRepository.GetListAsync(RolePermissionValueProvider.ProviderName, eventData.OldName);
+        foreach (var permissionGrant in permissionGrantsInRole)
         {
-            RoleRepository = roleRepository;
-            PermissionManager = permissionManager;
-            PermissionGrantRepository = permissionGrantRepository;
-        }
-
-        public virtual async Task HandleEventAsync(IdentityRoleNameChangedEvent eventData)
-        {
-            var role = await RoleRepository.FindAsync(eventData.IdentityRole.Id, false);
-            if (role == null)
-            {
-                return;
-            }
-
-            var permissionGrantsInRole = await PermissionGrantRepository.GetListAsync(RolePermissionValueProvider.ProviderName, eventData.OldName);
-            foreach (var permissionGrant in permissionGrantsInRole)
-            {
-                await PermissionManager.UpdateProviderKeyAsync(permissionGrant, eventData.IdentityRole.Name);
-            }
+            await PermissionManager.UpdateProviderKeyAsync(permissionGrant, eventData.Name);
         }
     }
 }

@@ -1,5 +1,12 @@
-import { Inject, Injectable, OnDestroy, Optional } from '@angular/core';
-import { BehaviorSubject, Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
+import {
+  BehaviorSubject,
+  MonoTypeOperatorFunction,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+} from 'rxjs';
 import {
   catchError,
   debounceTime,
@@ -14,7 +21,7 @@ import { PagedResultDto } from '../models/dtos';
 import { LIST_QUERY_DEBOUNCE_TIME } from '../tokens/list.token';
 
 @Injectable()
-export class ListService<QueryParamsType = ABP.PageQueryParams> implements OnDestroy {
+export class ListService<QueryParamsType = ABP.PageQueryParams | any> implements OnDestroy {
   private _filter = '';
   set filter(value: string) {
     this._filter = value;
@@ -33,6 +40,7 @@ export class ListService<QueryParamsType = ABP.PageQueryParams> implements OnDes
     return this._maxResultCount;
   }
 
+  private _skipCount = 0;
   private _page = 0;
   set page(value: number) {
     if (value === this._page) return;
@@ -67,46 +75,67 @@ export class ListService<QueryParamsType = ABP.PageQueryParams> implements OnDes
   get query$(): Observable<QueryParamsType> {
     return this._query$
       .asObservable()
-      .pipe(debounceTime(this.delay || 300), shareReplay({ bufferSize: 1, refCount: true }));
+      .pipe(this.delay, shareReplay({ bufferSize: 1, refCount: true }));
   }
 
   private _isLoading$ = new BehaviorSubject(false);
 
   private destroy$ = new Subject();
 
+  private delay: MonoTypeOperatorFunction<QueryParamsType>;
+
   get isLoading$(): Observable<boolean> {
     return this._isLoading$.asObservable();
   }
 
   get = () => {
-    this._query$.next(({
-      filter: this._filter || undefined,
-      maxResultCount: this._maxResultCount,
-      skipCount: this._page * this._maxResultCount,
-      sorting: this._sortOrder ? `${this._sortKey} ${this._sortOrder}` : undefined,
-    } as any) as QueryParamsType);
+    this.resetPageWhenUnchanged();
+    this.next();
   };
 
-  constructor(@Optional() @Inject(LIST_QUERY_DEBOUNCE_TIME) private delay: number) {
+  getWithoutPageReset = () => {
+    this.next();
+  };
+
+  constructor(injector: Injector) {
+    const delay = injector.get(LIST_QUERY_DEBOUNCE_TIME, 300);
+    this.delay = delay ? debounceTime(delay) : tap();
     this.get();
   }
 
-  hookToQuery<T extends any>(
+  hookToQuery<T>(
     streamCreatorCallback: QueryStreamCreatorCallback<T, QueryParamsType>,
   ): Observable<PagedResultDto<T>> {
-    this._isLoading$.next(true);
-
     return this.query$.pipe(
+      tap(() => this._isLoading$.next(true)),
       switchMap(query => streamCreatorCallback(query).pipe(catchError(() => of(null)))),
       filter(Boolean),
       tap(() => this._isLoading$.next(false)),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      shareReplay<any>({ bufferSize: 1, refCount: true }),
       takeUntil(this.destroy$),
     );
   }
 
   ngOnDestroy() {
     this.destroy$.next();
+  }
+
+  private resetPageWhenUnchanged() {
+    const skipCount = this._page * this._maxResultCount;
+
+    if (skipCount === this._skipCount) {
+      this._page = 0;
+      this._skipCount = 0;
+    } else this._skipCount = skipCount;
+  }
+
+  private next() {
+    this._query$.next({
+      filter: this._filter || undefined,
+      maxResultCount: this._maxResultCount,
+      skipCount: this._page * this._maxResultCount,
+      sorting: this._sortOrder ? `${this._sortKey} ${this._sortOrder}` : undefined,
+    } as any as QueryParamsType);
   }
 }
 

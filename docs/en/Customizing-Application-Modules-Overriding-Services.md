@@ -29,7 +29,7 @@ public class TestAppService : IIdentityUserAppService, ITransientDependency
 }
 ````
 
-The dependency injection system allows to register multiple services for the same interface. The last registered one is used when the interface is injected. It is a good practice to explicitly replace the service. 
+The dependency injection system allows to register multiple services for the same interface. The last registered one is used when the interface is injected. It is a good practice to explicitly replace the service.
 
 Example:
 
@@ -59,7 +59,6 @@ In most cases, you will want to change one or a few methods of the current imple
 ### Example: Overriding an Application Service
 
 ````csharp
-//[RemoteService(IsEnabled = false)] // If you use dynamic controller feature you can disable remote service. Prevent creating duplicate controller for the application service.
 [Dependency(ReplaceServices = true)]
 [ExposeServices(typeof(IIdentityUserAppService), typeof(IdentityUserAppService), typeof(MyIdentityUserAppService))]
 public class MyIdentityUserAppService : IdentityUserAppService
@@ -76,7 +75,7 @@ public class MyIdentityUserAppService : IdentityUserAppService
     {
     }
 
-    public override async Task<IdentityUserDto> CreateAsync(IdentityUserCreateDto input)
+    public async override Task<IdentityUserDto> CreateAsync(IdentityUserCreateDto input)
     {
         if (input.PhoneNumber.IsNullOrWhiteSpace())
         {
@@ -109,33 +108,33 @@ public class MyIdentityUserManager : IdentityUserManager
 {
         public MyIdentityUserManager(
             IdentityUserStore store,
-            IIdentityRoleRepository roleRepository, 
+            IIdentityRoleRepository roleRepository,
             IIdentityUserRepository userRepository,
-            IOptions<IdentityOptions> optionsAccessor, 
+            IOptions<IdentityOptions> optionsAccessor,
             IPasswordHasher<IdentityUser> passwordHasher,
-            IEnumerable<IUserValidator<IdentityUser>> userValidators, 
-            IEnumerable<IPasswordValidator<IdentityUser>> passwordValidators, 
+            IEnumerable<IUserValidator<IdentityUser>> userValidators,
+            IEnumerable<IPasswordValidator<IdentityUser>> passwordValidators,
             ILookupNormalizer keyNormalizer,
             IdentityErrorDescriber errors,
             IServiceProvider services,
-            ILogger<IdentityUserManager> logger, 
-            ICancellationTokenProvider cancellationTokenProvider) : 
+            ILogger<IdentityUserManager> logger,
+            ICancellationTokenProvider cancellationTokenProvider) :
             base(store,
                 roleRepository,
-                userRepository, 
-                optionsAccessor, 
-                passwordHasher, 
-                userValidators, 
+                userRepository,
+                optionsAccessor,
+                passwordHasher,
+                userValidators,
                 passwordValidators,
-                keyNormalizer, 
-                errors, 
-                services, 
-                logger, 
+                keyNormalizer,
+                errors,
+                services,
+                logger,
                 cancellationTokenProvider)
         {
         }
 
-    public override async Task<IdentityResult> CreateAsync(IdentityUser user)
+    public async override Task<IdentityResult> CreateAsync(IdentityUser user)
     {
         if (user.PhoneNumber.IsNullOrWhiteSpace())
         {
@@ -162,6 +161,122 @@ This example class inherits from the `IdentityUserManager` [domain service](Doma
 
 Check the [localization system](Localization.md) to learn how to localize the error messages.
 
+### Example: Overriding a Repository
+
+````csharp
+public class MyEfCoreIdentityUserRepository : EfCoreIdentityUserRepository
+{
+    public MyEfCoreIdentityUserRepository(
+        IDbContextProvider<IIdentityDbContext> dbContextProvider)
+        : base(dbContextProvider)
+    {
+    }
+
+    /* You can override any base method here */
+}
+````
+
+In this example, we are overriding the `EfCoreIdentityUserRepository` class that is defined by the [Identity module](Modules/Identity.md). This is the [Entity Framework Core](Entity-Framework-Core.md) implementation of the user repository. 
+
+Thanks to the naming convention (`MyEfCoreIdentityUserRepository` ends with `EfCoreIdentityUserRepository`), no additional setup is required. You can override any base method to customize it for your needs.
+
+However, if you inject `IRepository<IdentityUser>` or `IRepository<IdentityUser, Guid>`, it will still use the default repository implementation. To replace the default repository implementation, write the following code in the `ConfigureServices` method of your module class:
+
+````csharp
+context.Services.AddDefaultRepository(
+    typeof(Volo.Abp.Identity.IdentityUser),
+    typeof(MyEfCoreIdentityUserRepository),
+    replaceExisting: true
+);
+````
+
+In this way, your implementation will be used if you inject `IRepository<IdentityUser>`, `IRepository<IdentityUser, Guid>` or `IIdentityUserRepository`.
+
+If you want to add extra methods to your repository and use it in your own code, you can define an interface and expose it from your repository implementation. You can also extend the pre-built repository interface. Example:
+
+````csharp
+public interface IMyIdentityUserRepository : IIdentityUserRepository
+{
+    public Task DeleteByEmailAddress(string email);
+}
+````
+
+The `IMyIdentityUserRepository` interface extends the Identity module's `IIdentityUserRepository` interface. Then you can implement it as shown in the following example:
+
+````csharp
+[ExposeServices(typeof(IMyIdentityUserRepository), IncludeDefaults = true)]
+public class MyEfCoreIdentityUserRepository
+    : EfCoreIdentityUserRepository, IMyIdentityUserRepository
+{
+    public MyEfCoreIdentityUserRepository(
+        IDbContextProvider<IIdentityDbContext> dbContextProvider)
+        : base(dbContextProvider)
+    {
+    }
+
+    public async Task DeleteByEmailAddress(string email)
+    {
+        var dbContext = await GetDbContextAsync();
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user != null)
+        {
+            dbContext.Users.Remove(user);
+        }
+    }
+}
+````
+
+The `MyEfCoreIdentityUserRepository` class implements the `IMyIdentityUserRepository` interface. `ExposeServices` attribute is needed since ABP can not expose `IMyIdentityUserRepository` by naming conventions (`MyEfCoreIdentityUserRepository` doesn't end with `MyIdentityUserRepository`). Now, you can inject the `IMyIdentityUserRepository` interface into your services and call its `DeleteByEmailAddress` method.
+
+### Example: Overriding a Controller
+
+````csharp
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Volo.Abp.Account;
+using Volo.Abp.DependencyInjection;
+
+namespace MyProject.Controllers
+{
+    [Dependency(ReplaceServices = true)]
+    [ExposeServices(typeof(AccountController))]
+    public class MyAccountController : AccountController
+    {
+        public MyAccountController(IAccountAppService accountAppService)
+            : base(accountAppService)
+        {
+
+        }
+
+        public async override Task SendPasswordResetCodeAsync(
+            SendPasswordResetCodeDto input)
+        {
+            Logger.LogInformation("Your custom logic...");
+
+            await base.SendPasswordResetCodeAsync(input);
+        }
+    }
+}
+````
+
+This example replaces the `AccountController` (An API Controller defined in the [Account Module](Modules/Account.md)) and overrides the `SendPasswordResetCodeAsync` method.
+
+**`[ExposeServices(typeof(AccountController))]` is essential** here since it registers this controller for the `AccountController` in the dependency injection system. `[Dependency(ReplaceServices = true)]` is also recommended to clear the old registration (even the ASP.NET Core DI system selects the last registered one).
+
+In addition, the `MyAccountController` will be removed from [`ApplicationModel`](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.applicationmodels.applicationmodel.controllers) because it defines `ExposeServicesAttribute`.
+
+If `IncludeSelf = true` is specified, i.e. `[ExposeServices(typeof(AccountController), IncludeSelf = true)]`, then `AccountController` will be removed instead. This is useful for **extending** a controller.
+
+If you don't want to remove either controller, you can configure `AbpAspNetCoreMvcOptions`:
+
+```csharp
+Configure<AbpAspNetCoreMvcOptions>(options =>
+{
+    options.IgnoredControllersOnModelExclusion
+           .AddIfNotContains(typeof(MyAccountController));
+});
+```
+
 ### Overriding Other Classes
 
 Overriding controllers, framework services, view component classes and any other type of classes registered to dependency injection can be overridden just like the examples above.
@@ -179,7 +294,7 @@ Assuming that you've already added a `SocialSecurityNumber` as described in the 
 You can use the [object extension system](Object-Extensions.md) to add the property to the `IdentityUserDto`. Write this code inside the `YourProjectNameDtoExtensions` class comes with the application startup template:
 
 ````csharp
-ObjectExtensionManager.Instance                    
+ObjectExtensionManager.Instance
     .AddOrUpdateProperty<IdentityUserDto, string>(
         "SocialSecurityNumber"
     );
@@ -251,8 +366,8 @@ ObjectExtensionManager.Instance
     .AddOrUpdateProperty<string>(
         new[]
         {
-            typeof(IdentityUserDto), 
-            typeof(IdentityUserCreateDto), 
+            typeof(IdentityUserDto),
+            typeof(IdentityUserCreateDto),
             typeof(IdentityUserUpdateDto)
         },
         "SocialSecurityNumber"

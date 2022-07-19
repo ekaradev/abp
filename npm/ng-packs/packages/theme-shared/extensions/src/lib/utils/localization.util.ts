@@ -1,27 +1,37 @@
-import { ApplicationConfiguration, createLocalizationPipeKeyGenerator } from '@abp/ng.core';
+import {
+  ApplicationLocalizationConfigurationDto,
+  createLocalizationPipeKeyGenerator,
+} from '@abp/ng.core';
 import { ObjectExtensions } from '../models/object-extensions';
 
 export function createDisplayNameLocalizationPipeKeyGenerator(
-  localization: ApplicationConfiguration.Localization,
+  localization: ApplicationLocalizationConfigurationDto,
 ) {
   const generateLocalizationPipeKey = createLocalizationPipeKeyGenerator(localization);
 
-  return (displayName: ObjectExtensions.DisplayName, fallback: ObjectExtensions.DisplayName) => {
+  return (
+    displayName: ObjectExtensions.LocalizableStringDto,
+    fallback: ObjectExtensions.LocalizableStringDto,
+  ) => {
     if (displayName && displayName.name)
       return generateLocalizationPipeKey(
-        [displayName.resource],
+        [displayName.resource || ''],
         [displayName.name],
         displayName.name,
       );
 
     const key = generateLocalizationPipeKey(
-      [fallback.resource],
+      [fallback.resource || ''],
       ['DisplayName:' + fallback.name],
       undefined,
     );
 
     if (key) return key;
 
-    return generateLocalizationPipeKey([fallback.resource], [fallback.name], fallback.name);
+    return generateLocalizationPipeKey(
+      [fallback.resource || ''],
+      [fallback.name || ''],
+      fallback.name,
+    );
   };
 }

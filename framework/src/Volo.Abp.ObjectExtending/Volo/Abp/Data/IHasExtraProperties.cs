@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
+﻿namespace Volo.Abp.Data;
 
-namespace Volo.Abp.Data
+public interface IHasExtraProperties
 {
-    //TODO: Move to Volo.Abp.Data.ObjectExtending namespace at 4.0?
-
-    public interface IHasExtraProperties
-    {
-        Dictionary<string, object> ExtraProperties { get; }
-    }
+    ExtraPropertyDictionary ExtraProperties { get; }
 }

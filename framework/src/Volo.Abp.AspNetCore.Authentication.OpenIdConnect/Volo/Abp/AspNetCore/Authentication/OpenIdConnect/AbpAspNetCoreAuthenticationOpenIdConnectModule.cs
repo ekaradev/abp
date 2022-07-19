@@ -1,14 +1,16 @@
 ﻿using Volo.Abp.AspNetCore.Authentication.OAuth;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.RemoteServices;
 
-namespace Volo.Abp.AspNetCore.Authentication.OpenIdConnect
+namespace Volo.Abp.AspNetCore.Authentication.OpenIdConnect;
+
+[DependsOn(
+    typeof(AbpMultiTenancyModule),
+    typeof(AbpAspNetCoreAuthenticationOAuthModule),
+    typeof(AbpRemoteServicesModule)
+    )]
+public class AbpAspNetCoreAuthenticationOpenIdConnectModule : AbpModule
 {
-    [DependsOn(
-        typeof(AbpMultiTenancyModule),
-        typeof(AbpAspNetCoreAuthenticationOAuthModule))]
-    public class AbpAspNetCoreAuthenticationOpenIdConnectModule : AbpModule
-    {
 
-    }
 }

@@ -1,22 +1,21 @@
 import {
-  AuthGuard,
-  DynamicLayoutComponent,
-  PermissionGuard,
+  AuthGuard, PermissionGuard,
   ReplaceableComponents,
-  ReplaceableRouteContainerComponent,
+  ReplaceableRouteContainerComponent, RouterOutletComponent
 } from '@abp/ng.core';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RolesComponent } from './components/roles/roles.component';
 import { UsersComponent } from './components/users/users.component';
 import { eIdentityComponents } from './enums/components';
+import { IdentityExtensionsGuard } from './guards/extensions.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: 'roles', pathMatch: 'full' },
   {
     path: '',
-    component: DynamicLayoutComponent,
-    canActivate: [AuthGuard, PermissionGuard],
+    component: RouterOutletComponent,
+    canActivate: [AuthGuard, PermissionGuard, IdentityExtensionsGuard],
     children: [
       {
         path: 'roles',

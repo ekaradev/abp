@@ -90,7 +90,7 @@ Abra o `book-list.component.html`e adicione o `abp-modal`para mostrar / ocultar 
   <ng-template #abpBody> </ng-template>
 
   <ng-template #abpFooter>
-    <button type="button" class="btn btn-secondary" #abpClose>
+    <button type="button" class="btn btn-secondary" abpClose>
       Cancel
     </button>
   </ng-template>
@@ -108,7 +108,7 @@ Adicione um bot√£o rotulado `New book`para mostrar o modal:
       Books
     </h5>
   </div>
-  <div class="text-right col col-md-6">
+  <div class="text-end col col-md-6">
     <button id="create-role" class="btn btn-primary" type="button" (click)="createBook()">
       <i class="fa fa-plus mr-1"></i> <span>New book</span>
     </button>
@@ -276,7 +276,7 @@ Abra o `book-list.component.html`e adicione um `abp-button`para salvar o formul√
 
 ```html
 <ng-template #abpFooter>
-  <button type="button" class="btn btn-secondary" #abpClose>
+  <button type="button" class="btn btn-secondary" abpClose>
     Cancel
   </button>
   <button class="btn btn-primary" (click)="save()">

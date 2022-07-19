@@ -1,25 +1,23 @@
-﻿@using Microsoft.Extensions.Localization
-@using Volo.Abp.FeatureManagement.Localization
-@using Volo.Abp.Validation.StringValues
-@inject IStringLocalizer<AbpFeatureManagementResource> L
+﻿@using Volo.Abp.Validation.StringValues
+@using Microsoft.Extensions.Localization
+@inherits AbpFeatureManagementComponentBase
 
-<Modal @ref="_modal">
-    <ModalBackdrop />
-    <ModalContent Size="ModalSize.Large" IsCentered="true">
+<Modal @ref="Modal" Closing="@ClosingModal">
+    <ModalContent Size="ModalSize.Large" Centered="true">
         <ModalHeader>
             <ModalTitle>@L["Features"]</ModalTitle>
-            <CloseButton Clicked="CloseModal" />
+            <CloseButton Clicked="CloseModal"/>
         </ModalHeader>
         <ModalBody MaxHeight="50">
-            @if (_groups == null)
+            @if (Groups == null || !Groups.Any())
             {
                 <span>@L["NoFeatureFoundMessage"]</span>
             }
             else
             {
-                <Tabs TabPosition="TabPosition.Left" Pills="true" SelectedTab="@GetNormalizedGroupName(_groups.First().Name)">
+                <Tabs TabPosition="TabPosition.Start" Pills="true" @bind-SelectedTab="@SelectedTabName">
                     <Items>
-                        @foreach (var group in _groups)
+                        @foreach (var group in Groups)
                         {
                             <Tab Name="@GetNormalizedGroupName(group.Name)">
                                 <span>@group.DisplayName</span>
@@ -27,50 +25,71 @@
                         }
                     </Items>
                     <Content>
-                        @foreach (var group in _groups)
+                        @for (var i = 0; i < Groups.Count; i++)
                         {
-                            <TabPanel Name="@GetNormalizedGroupName(group.Name)">
-                                <h4>@group.DisplayName</h4>
-                                
-                                @foreach (var feature in group.Features)
+                            var index = i;
+                            <TabPanel Name="@GetNormalizedGroupName(Groups[index].Name)">
+                                <h4>@Groups[index].DisplayName</h4>
+                                <hr class="mt-2 mb-3"/>
+                                @foreach (var feature in Groups[index].Features)
                                 {
-                                    var disabled = IsDisabled(feature.Provider.Name);
-                                    
-                                    if (feature.ValueType is FreeTextStringValueType)
-                                    {
-                                        <Field>
-                                            <FieldLabel>@feature.DisplayName</FieldLabel>
-                                            <TextEdit Disabled="@disabled" @bind-text="@feature.Value" />
-                                            @if (feature.Description != null)
+                                    <div class="mt-2">
+                                        @{
+                                            var disabled = IsDisabled(feature.Provider.Name);
+
+                                            if (feature.ValueType is FreeTextStringValueType)
                                             {
-                                                <span>@feature.Description</span>
+                                                <Field Style="@GetFeatureStyles(feature)">
+                                                    <FieldLabel>@feature.DisplayName</FieldLabel>
+                                                    <TextEdit Disabled="@disabled"
+                                                              Text="@feature.Value"
+                                                              TextChanged="@(async (v) => await OnFeatureValueChangedAsync(v, feature))"/>
+                                                    @if (feature.Description != null)
+                                                    {
+                                                        <div class="form-text">@feature.Description</div>
+                                                    }
+                                                </Field>
                                             }
-                                        </Field>
-                                    }
 
-                                    if (feature.ValueType is SelectionStringValueType)
-                                    {
-                                        var items = ((SelectionStringValueType) feature.ValueType).ItemSource.Items;
-                                        
-                                        <Field>
-                                            <FieldLabel>@feature.DisplayName</FieldLabel>
-                                            <Select TValue="string" SelectedValue="feature.Value">
-                                                @foreach (var item in items)
-                                                {
-                                                    <SelectItem Value="@item.Value">@item.DisplayText</SelectItem>
-                                                }
-                                            </Select>
-                                        </Field>
-                                    }
+                                            if (feature.ValueType is SelectionStringValueType)
+                                            {
+                                                var items = ((SelectionStringValueType) feature.ValueType).ItemSource.Items;
 
-                                    if (feature.ValueType is ToggleStringValueType)
-                                    {
-                                        <Field>
-                                            <Check TValue="bool" @bind-checked="@ToggleValues[feature.Name]">@feature.DisplayName</Check>
-                                        </Field>
-                                    }
+                                                <Field Style="@GetFeatureStyles(feature)">
+                                                    <FieldLabel>@feature.DisplayName</FieldLabel>
+                                                    <Select TValue="string"
+                                                            @bind-SelectedValue="@SelectionStringValues[feature.Name]">
+                                                        @foreach (var item in items)
+                                                        {
+                                                            <SelectItem Value="@item.Value">
+                                                                @CreateStringLocalizer(item.DisplayText.ResourceName).GetString(item.DisplayText.Name)
+                                                            </SelectItem>
+                                                        }
+                                                    </Select>
+                                                    @if (feature.Description != null)
+                                                    {
+                                                        <div class="form-text">@feature.Description</div>
+                                                    }
+                                                </Field>
+                                            }
+
+                                            if (feature.ValueType is ToggleStringValueType)
+                                            {
+                                                <Field Style="@GetFeatureStyles(feature)">
+                                                    <Check
+                                                        TValue="bool" Checked="@ToggleValues[feature.Name]" CheckedChanged="@(async (v) => await OnSelectedValueChangedAsync(v, feature))">
+                                                        @feature.DisplayName
+                                                    </Check>
+                                                    @if (feature.Description != null)
+                                                    {
+                                                        <div class="form-text">@feature.Description</div>
+                                                    }
+                                                </Field>
+                                            }
+                                        }
+                                    </div>
                                 }
-                                
+
                             </TabPanel>
                         }
                     </Content>

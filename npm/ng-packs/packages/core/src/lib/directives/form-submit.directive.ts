@@ -16,7 +16,7 @@ import { SubscriptionService } from '../services/subscription.service';
 type Controls = { [key: string]: FormControl } | FormGroup[];
 
 @Directive({
-  // tslint:disable-next-line: directive-selector
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'form[ngSubmit][formGroup]',
   providers: [SubscriptionService],
 })
@@ -27,6 +27,9 @@ export class FormSubmitDirective implements OnInit {
   @Input()
   notValidateOnSubmit: string | boolean;
 
+  @Input()
+  markAsDirtyWhenSubmit = true;
+
   @Output() readonly ngSubmit = new EventEmitter();
 
   executedNgSubmit = false;
@@ -36,17 +39,21 @@ export class FormSubmitDirective implements OnInit {
     private host: ElementRef<HTMLFormElement>,
     private cdRef: ChangeDetectorRef,
     private subscription: SubscriptionService,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subscription.addOne(this.formGroupDirective.ngSubmit, () => {
-      this.markAsDirty();
+      if (this.markAsDirtyWhenSubmit) {
+        this.markAsDirty();
+      }
+
       this.executedNgSubmit = true;
     });
 
     const keyup$ = fromEvent(this.host.nativeElement as HTMLElement, 'keyup').pipe(
       debounceTime(this.debounce),
-      filter((key: KeyboardEvent) => key && key.key === 'Enter'),
+      filter(event => !(event.target instanceof HTMLTextAreaElement)),
+      filter((event: KeyboardEvent) => event && event.key === 'Enter'),
     );
 
     this.subscription.addOne(keyup$, () => {

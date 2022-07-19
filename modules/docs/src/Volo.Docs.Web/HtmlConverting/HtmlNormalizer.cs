@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using Volo.Docs.Utils;
 
 namespace Volo.Docs.HtmlConverting
@@ -24,7 +27,7 @@ namespace Volo.Docs.HtmlConverting
                                          (localDirectory.IsNullOrEmpty() ? "" : localDirectory.TrimStart('/').EnsureEndsWith('/')) +
                                          match.Groups[2].Value.TrimStart('/');
 
-                    return match.Groups[1] + " src=\"" + newImageSource + "\" " + match.Groups[3];
+                    return match.Groups[1] + " src=\"" + HttpUtility.HtmlEncode(newImageSource) + "\" " + match.Groups[3];
 
                 }, RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Multiline);
 
@@ -33,7 +36,12 @@ namespace Volo.Docs.HtmlConverting
 
         public static string ReplaceCodeBlocksLanguage(string content, string currentLanguage, string newLanguage)
         {
-            return Regex.Replace(content, "<code class=\"" + currentLanguage + "\">", "<code class=\"" + newLanguage + "\">", RegexOptions.IgnoreCase);
+            var sb = new StringBuilder();
+            var pattern = sb.Append("<code class=\"").Append(currentLanguage).Append("\">").ToString();
+            sb.Clear();
+            var replacement = sb.Append("<code class=\"").Append(newLanguage).Append("\">").ToString();
+
+            return Regex.Replace(content, pattern, replacement, RegexOptions.IgnoreCase);
         }
 
         /// <summary>
@@ -43,20 +51,64 @@ namespace Volo.Docs.HtmlConverting
         {
             try
             {
+                var ignoredIndicies = GetIgnoredImageIndicies(html);
+
                 return Regex.Replace(html, "<img.+?src=[\"'](.+?)[\"'].*?>", match =>
                 {
+                    if (ignoredIndicies != null && ignoredIndicies.Contains(match.Index))
+                    {
+                        return match.Value;
+                    }
+
                     var link = match.Groups[1].Value;
                     var imgTag = match.Groups[0].Value;
                     var title = GetTitleFromTag(imgTag);
 
-                    return $"<a target = \"_blank\" rel=\"noopener noreferrer\" title=\"{title}\" href=\"{link}\"><img src=\"{link}\" alt=\"{title}\"></a>";
+                    return $"<a target = \"_blank\" rel=\"noopener noreferrer\" title=\"{title}\" href=\"{link}\">{imgTag}</a>";
                 });
-
             }
             catch
             {
                 // ignored
                 return html;
+            }
+        }
+
+        private static List<int> GetIgnoredImageIndicies(string html)
+        {
+            return GetIgnoredImageIndicies(FindImgTagsWithinAnchor(html));
+        }
+
+        private static List<int> GetIgnoredImageIndicies(MatchCollection ignoredImages)
+        {
+            if (ignoredImages == null)
+            {
+                return null;
+            }
+
+            var ignoredImageIndicies = new List<int>(ignoredImages.Count);
+            for (var i = 0; i < ignoredImages.Count; i++)
+            {
+                var ignoredImage = ignoredImages[i];
+                var ignoredImgIndex = ignoredImage.Index +
+                                      ignoredImage.Value.IndexOf("<img", StringComparison.InvariantCultureIgnoreCase);
+
+                ignoredImageIndicies.Add(ignoredImgIndex);
+            }
+
+            return ignoredImageIndicies;
+        }
+
+        public static MatchCollection FindImgTagsWithinAnchor(string html)
+        {
+            try
+            {
+                return Regex.Matches(html, @"<a(?: [^<>]+)?>(?:(?!<\s*/\s*a\s*>).)*<img.*?\s*<\s*/\s*a\s*>");
+            }
+            catch
+            {
+                // ignored
+                return null;
             }
         }
 

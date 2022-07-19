@@ -1,4 +1,4 @@
-﻿# 应用程序启动模板
+# 应用程序启动模板
 
 ## 介绍
 
@@ -56,20 +56,6 @@ abp new Acme.BookStore -u angular
 ````bash
 abp new Acme.BookStore -d mongodb
 ````
-
-### 指定移动应用程序框架
-
-此模板支持以下移动应用程序框架:
-
-- `react-native`: React Native
-
-使用 `-m` (或 `--mobile`) 选项指定移动应用程序框架:
-
-````bash
-abp new Acme.BookStore -m react-native
-````
-
-如果未指定,不会创建移动应用程序.
 
 ### 指定移动应用程序框架
 
@@ -253,15 +239,15 @@ ABP有[动态 C# API 客户端](../API/Dynamic-CSharp-API-Clients.md)功能,所�
 
 ![bookstore-visual-studio-solution-tiered](../images/bookstore-visual-studio-solution-tiered.png)
 
-与默认结构不同,我们得到了两个新项目: `.IdentityServer` 和 `.HttpApi.Host`.
+与默认结构不同,我们得到了两个新项目: `.AuthServer` 和 `.HttpApi.Host`.
 
-#### .IdentityServer 项目
+#### .AuthServer 项目
 
-用于其他项目的身份验证服务器. `.Web`项目使用OpenId Connect身份验证从IdentityServer获取当前用户的身份和访问令牌. 然后使用访问令牌调用HTTP API服务器. HTTP API服务器使用bearer token从访问令牌获取声明授权当前用户.
+用于其他项目的身份验证服务器. `.Web`项目使用OpenId AuthServer. 然后使用访问令牌调用HTTP API服务器. HTTP API服务器使用bearer token从访问令牌获取声明授权当前用户.
 
 ![tiered-solution-applications](../images/tiered-solution-applications.png)
 
-ABP使用开源的[IdentityServer4](https://identityserver.io/)框架做应用程序间的身份验证. 有关IdentityServer4和OpenId Connect协议的详细信息请参阅[IdentityServer4文档](http://docs.identityserver.io).
+ABP使用开源的[IdentityServer4](https://identityserver.io/) 和 [OpenIddict](https://github.com/openiddict/) 框架做应用程序间的身份验证. 有关IdentityServer4,OpenIddict和OpenId Connect协议的详细信息请参阅[IdentityServer4文档](http://docs.identityserver.io) [OpenIddict文档](https://documentation.openiddict.com/).
 
 它有自己的`appsettings.json`文件(数据库连接字符串等其他配置).
 
@@ -283,7 +269,7 @@ ABP使用开源的[IdentityServer4](https://identityserver.io/)框架做应用�
 
 你应该按照以下顺序运行应用:
 
-* 首先运行`.IdentityServer`,因为其他应用程序依赖它做身份验证.
+* 首先运行`.AuthServer`,因为其他应用程序依赖它做身份验证.
 * 然后运行`.HttpApi.Host`,因为`.Web`应用程序需要访问HTTI API.
 * 最后运行`.Web`并登录到应用程序(用户名: `admin` 密码: `1q2w3E*`).
 

@@ -1,57 +1,65 @@
 ﻿using System;
-using Microsoft.Extensions.Options;
-using Novell.Directory.Ldap;
+using System.Threading.Tasks;
+using LdapForNet;
+using LdapForNet.Native;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.DependencyInjection;
 
-namespace Volo.Abp.Ldap
+namespace Volo.Abp.Ldap;
+
+public class LdapManager : ILdapManager, ITransientDependency
 {
-    public class LdapManager : ILdapManager, ITransientDependency
+    public ILogger<LdapManager> Logger { get; set; }
+    protected ILdapSettingProvider LdapSettingProvider { get; }
+
+    public LdapManager(ILdapSettingProvider ldapSettingProvider)
     {
-        public ILogger<LdapManager> Logger { get; set; }
-        protected AbpLdapOptions LdapOptions { get; }
+        LdapSettingProvider = ldapSettingProvider;
+        Logger = NullLogger<LdapManager>.Instance;
+    }
 
-        public LdapManager(IOptions<AbpLdapOptions> ldapSettingsOptions)
+    public virtual async Task<bool> AuthenticateAsync(string username, string password)
+    {
+        try
         {
-            LdapOptions = ldapSettingsOptions.Value;
-
-            Logger = NullLogger<LdapManager>.Instance;
-        }
-
-        public bool Authenticate(string username, string password)
-        {
-            try
+            using (var conn = await CreateLdapConnectionAsync())
             {
-                using (var conn = CreateLdapConnection())
-                {
-                    AuthenticateLdapConnection(conn, username, password);
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex);
-                return false;
+                await AuthenticateLdapConnectionAsync(conn, username, password);
+                return true;
             }
         }
-
-        protected virtual ILdapConnection CreateLdapConnection()
+        catch (Exception ex)
         {
-            var ldapConnection = new LdapConnection();
-            ConfigureLdapConnection(ldapConnection);
-            ldapConnection.Connect(LdapOptions.ServerHost, LdapOptions.ServerPort);
-            return ldapConnection;
+            Logger.LogException(ex);
+            return false;
         }
+    }
 
-        protected virtual void ConfigureLdapConnection(ILdapConnection connection)
+    protected virtual async Task<ILdapConnection> CreateLdapConnectionAsync()
+    {
+        var ldapConnection = new LdapConnection();
+        await ConfigureLdapConnectionAsync(ldapConnection);
+        await ConnectAsync(ldapConnection);
+        return ldapConnection;
+    }
+
+    protected virtual Task ConfigureLdapConnectionAsync(ILdapConnection ldapConnection)
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual async Task ConnectAsync(ILdapConnection ldapConnection)
+    {
+        ldapConnection.Connect(await LdapSettingProvider.GetServerHostAsync(), await LdapSettingProvider.GetServerPortAsync());
+    }
+
+    protected virtual async Task AuthenticateLdapConnectionAsync(ILdapConnection connection, string username, string password)
+    {
+        await connection.BindAsync(Native.LdapAuthType.Simple, new LdapCredential()
         {
-
-        }
-
-        protected virtual void AuthenticateLdapConnection(ILdapConnection connection, string username, string password)
-        {
-            connection.Bind(username, password);
-        }
+            UserName = username,
+            Password = password
+        });
     }
 }

@@ -1,11 +1,11 @@
 # Exception Handling
 
-ABP provides a built-in infrastructure and offers a standard model for handling exceptions in a web application.
+ABP provides a built-in infrastructure and offers a standard model for handling exceptions.
 
 * Automatically **handles all exceptions** and sends a standard **formatted error message** to the client for an API/AJAX request.
 * Automatically hides **internal infrastructure errors** and returns a standard error message.
-* Provides a configurable way to **localize** exception messages.
-* Automatically maps standard exceptions to **HTTP status codes** and provides a configurable option to map these to custom exceptions.
+* Provides an easy and configurable way to **localize** exception messages.
+* Automatically maps standard exceptions to **HTTP status codes** and provides a configurable option to map custom exceptions.
 
 ## Automatic Exception Handling
 
@@ -85,7 +85,7 @@ Error **details** in an optional field of the JSON error message. Thrown `Except
 
 ### Logging
 
-Caught exceptions are automatically logged. 
+Caught exceptions are automatically logged.
 
 #### Log Level
 
@@ -300,7 +300,7 @@ In this case, create a class derived from the `ExceptionSubscriber` class in you
 ````csharp
 public class MyExceptionSubscriber : ExceptionSubscriber
 {
-    public override async Task HandleAsync(ExceptionNotificationContext context)
+    public async override Task HandleAsync(ExceptionNotificationContext context)
     {
         //TODO...
     }
@@ -321,13 +321,20 @@ Some exception types are automatically thrown by the framework:
 
 You can also throw these type of exceptions in your code (although it's rarely needed).
 
-## Send exception details to the client
+## AbpExceptionHandlingOptions
 
-You can send exceptions to the client via the `SendExceptionsDetailsToClients` property of the `AbpExceptionHandlingOptions` class:
+`AbpExceptionHandlingOptions` is the main [options object](Options.md) to configure the exception handling system. You can configure it in the `ConfigureServices` method of your [module](Module-Development-Basics.md):
 
 ````csharp
-services.Configure<AbpExceptionHandlingOptions>(options =>
+Configure<AbpExceptionHandlingOptions>(options =>
 {
     options.SendExceptionsDetailsToClients = true;
+    options.SendStackTraceToClients = false;
 });
 ````
+
+Here, a list of the options you can configure:
+
+* `SendExceptionsDetailsToClients` (default: `false`): You can enable or disable sending exception details to the client.
+* `SendStackTraceToClients` (default: `true`): You can enable or disable sending the stack trace of exception to the client. If you want to send the stack trace to the client, you must set both `SendStackTraceToClients` and `SendExceptionsDetailsToClients` options to `true` otherwise, the stack trace will not be sent to the client.
+

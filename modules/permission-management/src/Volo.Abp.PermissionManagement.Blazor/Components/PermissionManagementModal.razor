@@ -1,9 +1,8 @@
 ﻿@using Microsoft.Extensions.Localization
 @using Volo.Abp.PermissionManagement.Localization
-@inject IStringLocalizer<AbpPermissionManagementResource> L
-<Modal @ref="_modal">
-    <ModalBackdrop />
-    <ModalContent Size="ModalSize.Large" IsCentered="true">
+@inherits Volo.Abp.AspNetCore.Components.AbpComponentBase
+<Modal @ref="_modal" Closing="@ClosingModal">
+    <ModalContent Size="ModalSize.Large" Centered="true">
         <ModalHeader>
             <ModalTitle>@L["Permissions"] - @_entityDisplayName</ModalTitle>
             <CloseButton Clicked="CloseModal" />
@@ -11,14 +10,14 @@
         <ModalBody MaxHeight="50">
             
             <Field>
-                <Check Cursor="Cursor.Pointer" Checked="@GrantAll" CheckedChanged="@GrantAllChanged" TValue="bool">@L["SelectAllInAllTabs"]</Check>
+                <Check Cursor="Cursor.Pointer" @bind-Checked="@GrantAll" TValue="bool">@L["SelectAllInAllTabs"]</Check>
             </Field>
             
             <Divider />
             
             @if (_groups != null)
             {
-                <Tabs TabPosition="TabPosition.Left" Pills="true" @bind-SelectedTab="@_selectedTabName">
+                <Tabs TabPosition="TabPosition.Start" Pills="true" @bind-SelectedTab="@_selectedTabName">
                     <Items>
                         @foreach (var group in _groups)
                         {
@@ -47,20 +46,27 @@
                                 <Divider />
                                 
                                 <Field>
-                                    <Check Checked="@(group.Permissions.All(x => x.IsGranted))" Cursor="Cursor.Pointer" CheckedChanged="@(b => GroupGrantAllChanged(b, group.Name))" TValue="bool">@L["SelectAllInThisTab"]</Check>
+                                    <Check
+                                        Checked="@(group.Permissions.All(x => x.IsGranted))"
+                                        Cursor="Cursor.Pointer"
+                                        CheckedChanged="@(b => GroupGrantAllChanged(b, group))"
+                                        TValue="bool">
+                                        @L["SelectAllInThisTab"]
+                                    </Check>
                                 </Field>
 
                                 <Divider />
                                 
                                 @foreach (var permission in group.Permissions)
                                 {
-                                    <Field Margin="permission.ParentName != null ? Blazorise.Margin.Is3.OnAll : Blazorise.Margin.Is0.OnAll">
+                                    <Field Margin="permission.ParentName != null ? Margin.Is3.OnAll : Margin.Is0.OnAll">
                                         <Check
                                             Disabled="@(IsDisabledPermission(permission))"
                                             Cursor="Cursor.Pointer"
-                                            @bind-checked="@permission.IsGranted"
+                                            Checked="@permission.IsGranted"
+                                            CheckedChanged="@(b => PermissionChanged(b, group, permission))"
                                             TValue="bool">
-                                            @permission.DisplayName
+                                            @GetShownName(permission)
                                         </Check>
                                     </Field>
                                 }

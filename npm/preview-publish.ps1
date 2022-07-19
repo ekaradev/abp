@@ -1,12 +1,9 @@
 param(
   [string]$Version,
-  [string]$User,
-  [string]$Pass,
-  [string]$Email,
   [string]$Registry
 )
 
-npm install
+yarn install
 
 $NextVersion = $(node publish-utils.js --nextVersion)
 $RootFolder = (Get-Item -Path "./" -Verbose).FullName
@@ -16,13 +13,13 @@ $Version = $NextVersion;
 }
 
 if(-Not $Registry) {
-$Registry = "https://www.myget.org/F/abp-nightly/auth/8f2a5234-1bce-4dc7-b976-2983078590a9/npm/";
+exit
 }
 
 $commands = (
   "cd ng-packs\scripts",
-  "npm install",
-  "npm run publish-packages -- --nextVersion $Version --preview",
+  "yarn",
+  "npm run publish-packages -- --nextVersion $Version --preview --registry $Registry --skipVersionValidation",
   "cd ../../",
   "npm run lerna -- version $Version --yes --no-commit-hooks --skip-git --force-publish",
   "npm run replace-with-tilde",

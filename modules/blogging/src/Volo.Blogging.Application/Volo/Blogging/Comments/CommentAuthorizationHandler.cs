@@ -8,14 +8,14 @@ namespace Volo.Blogging.Comments
 {
     public class CommentAuthorizationHandler : AuthorizationHandler<OperationAuthorizationRequirement, Comment>
     {
-        private readonly IPermissionChecker _permissionChecker;
+        protected IPermissionChecker PermissionChecker { get; }
 
         public CommentAuthorizationHandler(IPermissionChecker permissionChecker)
         {
-            _permissionChecker = permissionChecker;
+            PermissionChecker = permissionChecker;
         }
 
-        protected override async Task HandleRequirementAsync(
+        protected async override Task HandleRequirementAsync(
             AuthorizationHandlerContext context,
             OperationAuthorizationRequirement requirement,
             Comment resource)
@@ -40,7 +40,7 @@ namespace Volo.Blogging.Comments
                 return true;
             }
 
-            if (await _permissionChecker.IsGrantedAsync(context.User, BloggingPermissions.Comments.Delete))
+            if (await PermissionChecker.IsGrantedAsync(context.User, BloggingPermissions.Comments.Delete))
             {
                 return true;
             }
@@ -55,7 +55,7 @@ namespace Volo.Blogging.Comments
                 return true;
             }
 
-            if (await _permissionChecker.IsGrantedAsync(context.User, BloggingPermissions.Comments.Update))
+            if (await PermissionChecker.IsGrantedAsync(context.User, BloggingPermissions.Comments.Update))
             {
                 return true;
             }

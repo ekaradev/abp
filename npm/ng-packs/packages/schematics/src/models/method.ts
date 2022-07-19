@@ -1,8 +1,11 @@
-import { strings } from '@angular-devkit/core';
 import { eBindingSourceId, eMethodModifier } from '../enums';
+import { camel, camelizeHyphen } from '../utils/text';
+import { getParamName } from '../utils/methods';
 import { ParameterInBody } from './api-definition';
 import { Property } from './model';
 import { Omissible } from './util';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const shouldQuote = require('should-quote');
 
 export class Method {
   body: Body;
@@ -41,20 +44,27 @@ export class Body {
   url: string;
 
   registerActionParameter = (param: ParameterInBody) => {
-    const { bindingSourceId, descriptorName, name, nameOnMethod } = param;
-    const camelName = strings.camelize(name);
-    const value = descriptorName ? `${descriptorName}.${camelName}` : nameOnMethod;
+    const { bindingSourceId, descriptorName, jsonName, name, nameOnMethod } = param;
+    const camelName = camel(name);
+    const paramName = jsonName || camelName;
+    let value = camelizeHyphen(nameOnMethod);
+    if (descriptorName) {
+      value = shouldQuote(paramName)
+        ? `${descriptorName}['${paramName}']`
+        : `${descriptorName}.${paramName}`;
+    }
 
     switch (bindingSourceId) {
       case eBindingSourceId.Model:
       case eBindingSourceId.Query:
-        this.params.push(`${camelName}: ${value}`);
+        this.params.push(paramName === value ? value : `${getParamName(paramName)}: ${value}`);
         break;
       case eBindingSourceId.Body:
         this.body = value;
         break;
       case eBindingSourceId.Path:
-        const regex = new RegExp('{' + camelName + '}', 'g');
+        // eslint-disable-next-line no-case-declarations
+        const regex = new RegExp('{(' + paramName + '|' + camelName + '|' + name + ')}', 'g');
         this.url = this.url.replace(regex, '${' + value + '}');
         break;
       default:
@@ -64,6 +74,11 @@ export class Body {
 
   constructor(options: BodyOptions) {
     Object.assign(this, options);
+    this.setUrlQuotes();
+  }
+
+  private setUrlQuotes() {
+    this.url = /{/.test(this.url) ? `\`/${this.url}\`` : `'/${this.url}'`;
   }
 }
 

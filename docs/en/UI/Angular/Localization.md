@@ -37,7 +37,9 @@ The pipe will replace the key with the localized text.
 You can also specify a default value as shown below:
 
 ```html
-<h1>{%{{{ { key: 'Resource::Key', defaultValue: 'Default Value' } | abpLocalization }}}%}</h1>
+<h1>
+  {%{{{ { key: 'Resource::Key', defaultValue: 'Default Value' } | abpLocalization }}}%}
+</h1>
 ```
 
 To use interpolation, you must give the values for interpolation as pipe parameters, for example:
@@ -79,12 +81,18 @@ After that, you are able to use localization service.
 > You can add interpolation parameters as arguments to `instant()` and `get()` methods.
 
 ```js
-this.localizationService.instant('AbpIdentity::UserDeletionConfirmation', 'John');
+this.localizationService.instant(
+  'AbpIdentity::UserDeletionConfirmation',
+  'John'
+);
 
 // with fallback value
 this.localizationService.instant(
-  { key: 'AbpIdentity::UserDeletionConfirmation', defaultValue: 'Default Value' },
-  'John',
+  {
+    key: 'AbpIdentity::UserDeletionConfirmation',
+    defaultValue: 'Default Value',
+  },
+  'John'
 );
 
 // Output
@@ -97,38 +105,105 @@ To get a localized text as [_Observable_](https://rxjs.dev/guide/observable) use
 this.localizationService.get('Resource::Key');
 
 // with fallback value
-this.localizationService.get({ key: 'Resource::Key', defaultValue: 'Default Value' });
+this.localizationService.get({
+  key: 'Resource::Key',
+  defaultValue: 'Default Value',
+});
 ```
 
-### Using the Config State
+## UI Localizations
 
-In order to you `getLocalization` method you should import ConfigState.
+Localizations can be determined on backend side. Angular UI gets the localizations from the `application-configuration` API's response. You can also determine localizations on the UI side.
 
-```js
-import { ConfigState } from '@abp/ng.core';
+See an example:
+
+```ts
+// app.module.ts
+
+@NgModule({
+  imports: [
+    //...other imports
+    CoreModule.forRoot({
+      localizations: [
+        {
+          culture: 'en',
+          resources: [
+            {
+              resourceName: 'MyProjectName',
+              texts: {
+                Administration: 'Administration',
+                HomePage: 'Home',
+              },
+            },
+          ],
+        },
+        {
+          culture: 'de-DE',
+          resources: [
+            {
+              resourceName: 'MyProjectName',
+              texts: {
+                Administration: 'Verwaltung',
+                HomePage: 'Startseite',
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  ]
+})
 ```
 
-Then you can use it as followed:
+...or, you can determine the localizations in a feature module:
 
-```js
-this.store.selectSnapshot(ConfigState.getLocalization('ResourceName::Key'));
+```ts
+// your feature module
+
+@NgModule({
+  imports: [
+    //...other imports
+    CoreModule.forChild({
+      localizations: [
+        {
+          culture: 'en',
+          resources: [
+            {
+              resourceName: 'MyProjectName',
+              texts: {
+                Administration: 'Administration',
+                HomePage: 'Home',
+              },
+            },
+          ],
+        },
+        {
+          culture: 'de-DE',
+          resources: [
+            {
+              resourceName: 'MyProjectName',
+              texts: {
+                Administration: 'Verwaltung',
+                HomePage: 'Startseite',
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  ]
+})
 ```
 
-`getLocalization` method can be used with both `localization key` and [`LocalizationWithDefault`](https://github.com/abpframework/abp/blob/dev/npm/ng-packs/packages/core/src/lib/models/config.ts#L34) interface.
+The localizations above can be used like this:
 
-```js
-this.store.selectSnapshot(
-  ConfigState.getLocalization(
-    {
-      key: 'AbpIdentity::UserDeletionConfirmation',
-      defaultValue: 'Default Value',
-    },
-    'John',
-  ),
-);
+```html
+<div>{%{{{ 'MyProjectName::Administration' | abpLocalization }}}%}</div>
+
+<div>{%{{{ 'MyProjectName::HomePage' | abpLocalization }}}%}</div>
 ```
 
-Localization resources are stored in the `localization` property of `ConfigState`.
+> **Note:** If you have specified the same localizations in the UI and backend, the backend localizations override the UI localizations.
 
 ## RTL Support
 
@@ -167,7 +242,7 @@ Find [styles configuration in angular.json](https://angular.io/guide/workspace-c
                 "bundleName": "bootstrap-ltr.min"
               },
               "apps/dev-app/src/styles.scss"
-            ],
+            ]
           }
         }
       }
@@ -193,37 +268,127 @@ import { Component } from '@angular/core';
 export class AppComponent {}
 ```
 
-## Mapping of Culture Name to Angular Locale File Name
+## Registering a New Locale
+
+Since ABP has more than one language, Angular locale files loads lazily using [Webpack's import function](https://webpack.js.org/api/module-methods/#import-1) to avoid increasing the bundle size and register to Angular core using the [`registerLocaleData`](https://angular.io/api/common/registerLocaleData) function. The chunks to be included in the bundle are specified by the [Webpack's magic comments](https://webpack.js.org/api/module-methods/#magic-comments) as hard-coded. Therefore a `registerLocale` function that returns Webpack `import` function must be passed to `CoreModule`.
+
+### registerLocaleFn
+
+`registerLocale` function that exported from `@abp/ng.core/locale` package is a higher order function that accepts `cultureNameLocaleFileMap` object and `errorHandlerFn` function as params and returns Webpack `import` function. A `registerLocale` function must be passed to the `forRoot` of the `CoreModule` as shown below:
+
+```js
+// app.module.ts
+
+import { registerLocale } from '@abp/ng.core/locale';
+// if you have commercial license and the language management module, add the below import
+// import { registerLocale } from '@volo/abp.ng.language-management/locale';
+
+
+@NgModule({
+  imports: [
+    // ...
+    CoreModule.forRoot({
+      // ...other options,
+      registerLocaleFn: registerLocale(
+        // you can pass the cultureNameLocaleFileMap and errorHandlerFn as optionally
+        {
+          cultureNameLocaleFileMap: { 'pt-BR': 'pt' },
+          errorHandlerFn: ({ resolve, reject, locale, error }) => {
+            // the error can be handled here
+          },
+        },
+      )
+    }),
+    //...
+  ]
+```
+
+### Mapping of Culture Name to Angular Locale File Name
 
 Some of the culture names defined in .NET do not match Angular locales. In such cases, the Angular app throws an error like below at runtime:
 
 ![locale-error](./images/locale-error.png)
 
-If you see an error like this, you should pass the `cultureNameLocaleFileMap` property like below to CoreModule's forRoot static method.
+If you see an error like this, you should pass the `cultureNameLocaleFileMap` property like below to the `registerLocale` function.
 
 ```js
 // app.module.ts
 
+import { registerLocale } from '@abp/ng.core/locale';
+// if you have commercial license and the language management module, add the below import
+// import { registerLocale } from '@volo/abp.ng.language-management/locale';
+
+
 @NgModule({
   imports: [
-    // other imports
-     CoreModule.forRoot({
-      // other options
-      cultureNameLocaleFileMap: { 
-        "DotnetCultureName": "AngularLocaleFileName",
-        "pt-BR": "pt"  // example
-      }
-    })
+    // ...
+    CoreModule.forRoot({
+      // ...other options,
+      registerLocaleFn: registerLocale(
+        {
+          cultureNameLocaleFileMap: {
+            "DotnetCultureName": "AngularLocaleFileName",
+            "pt-BR": "pt"  // example
+          },
+        },
+      )
+    }),
     //...
 ```
 
 See [all locale files in Angular](https://github.com/angular/angular/tree/master/packages/common/locales).
 
+### Adding a New Culture
+
+Add the below code to the `app.module.ts` by replacing `your-locale` placeholder with a correct locale name.
+
+```js
+//app.module.ts
+
+import { storeLocaleData } from '@abp/ng.core/locale';
+import(
+  /* webpackChunkName: "_locale-your-locale-js"*/
+  /* webpackMode: "eager" */
+  '@angular/common/locales/your-locale.js'
+).then((m) => storeLocaleData(m.default, 'your-locale'));
+```
+
+...or a custom `registerLocale` function can be passed to the `CoreModule`:
+
+```js
+// register-locale.ts
+
+import { differentLocales } from '@abp/ng.core';
+export function registerLocale(locale: string) {
+  return import(
+    /* webpackChunkName: "_locale-[request]"*/
+    /* webpackInclude: /[/\\](en|fr).js/ */
+    /* webpackExclude: /[/\\]global|extra/ */
+    `@angular/common/locales/${differentLocales[locale] || locale}.js`
+  )
+}
+
+// app.module.ts
+
+import { registerLocale } from './register-locale';
+
+@NgModule({
+  imports: [
+    // ...
+    CoreModule.forRoot({
+      // ...other options,
+      registerLocaleFn: registerLocale
+    }),
+    //...
+  ]
+```
+
+After this custom `registerLocale` function, since the en and fr added to the `webpackInclude`, only en and fr locale files will be created as chunks:
+
+![locale chunks](https://user-images.githubusercontent.com/34455572/98203212-acaa2100-1f44-11eb-85af-4eb66d296326.png)
+
+Which locale files you add to `webpackInclude` magic comment, they will be included in the bundle
 
 ## See Also
 
-* [Localization in ASP.NET Core](../../Localization.md)
-
-## What's Next?
-
-* [Permission Management](./Permission-Management.md)
+- [Localization in ASP.NET Core](../../Localization.md)

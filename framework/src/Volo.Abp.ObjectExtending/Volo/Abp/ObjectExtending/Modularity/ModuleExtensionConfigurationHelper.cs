@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
-namespace Volo.Abp.ObjectExtending.Modularity
+namespace Volo.Abp.ObjectExtending.Modularity;
+
+public static class ModuleExtensionConfigurationHelper
 {
-    public static class ModuleExtensionConfigurationHelper
+    private static object SyncLock = new object();
+
+    public static void ApplyEntityConfigurationToEntity(
+        string moduleName,
+        string entityName,
+        Type entityType)
     {
-        public static void ApplyEntityConfigurationToEntity(
-            string moduleName,
-            string entityName,
-            Type entityType)
+        lock (SyncLock)
         {
             foreach (var propertyConfig in GetPropertyConfigurations(moduleName, entityName))
             {
@@ -21,13 +24,16 @@ namespace Volo.Abp.ObjectExtending.Modularity
                 }
             }
         }
+    }
 
-        public static void ApplyEntityConfigurationToApi(
-            string moduleName,
-            string objectName,
-            Type[] getApiTypes = null,
-            Type[] createApiTypes = null,
-            Type[] updateApiTypes = null)
+    public static void ApplyEntityConfigurationToApi(
+        string moduleName,
+        string objectName,
+        Type[] getApiTypes = null,
+        Type[] createApiTypes = null,
+        Type[] updateApiTypes = null)
+    {
+        lock (SyncLock)
         {
             foreach (var propertyConfig in GetPropertyConfigurations(moduleName, objectName))
             {
@@ -55,12 +61,15 @@ namespace Volo.Abp.ObjectExtending.Modularity
                 }
             }
         }
+    }
 
-        public static void ApplyEntityConfigurationToUi(
-            string moduleName,
-            string entityName,
-            Type[] createFormTypes = null,
-            Type[] editFormTypes = null)
+    public static void ApplyEntityConfigurationToUi(
+        string moduleName,
+        string entityName,
+        Type[] createFormTypes = null,
+        Type[] editFormTypes = null)
+    {
+        lock (SyncLock)
         {
             foreach (var propertyConfig in GetPropertyConfigurations(moduleName, entityName))
             {
@@ -82,16 +91,19 @@ namespace Volo.Abp.ObjectExtending.Modularity
                 }
             }
         }
+    }
 
-        public static void ApplyEntityConfigurations(
-            string moduleName,
-            string entityName,
-            Type entityType = null,
-            Type[] createFormTypes = null,
-            Type[] editFormTypes = null,
-            Type[] getApiTypes = null,
-            Type[] createApiTypes = null,
-            Type[] updateApiTypes = null)
+    public static void ApplyEntityConfigurations(
+        string moduleName,
+        string entityName,
+        Type entityType = null,
+        Type[] createFormTypes = null,
+        Type[] editFormTypes = null,
+        Type[] getApiTypes = null,
+        Type[] createApiTypes = null,
+        Type[] updateApiTypes = null)
+    {
+        lock (SyncLock)
         {
             if (entityType != null)
             {
@@ -117,11 +129,14 @@ namespace Volo.Abp.ObjectExtending.Modularity
                 editFormTypes: editFormTypes
             );
         }
+    }
 
-        [NotNull]
-        public static IEnumerable<ExtensionPropertyConfiguration> GetPropertyConfigurations(
-            string moduleName,
-            string entityName)
+    [NotNull]
+    public static IEnumerable<ExtensionPropertyConfiguration> GetPropertyConfigurations(
+        string moduleName,
+        string entityName)
+    {
+        lock (SyncLock)
         {
             var moduleConfig = ObjectExtensionManager.Instance.Modules().GetOrDefault(moduleName);
             if (moduleConfig == null)
@@ -137,10 +152,13 @@ namespace Volo.Abp.ObjectExtending.Modularity
 
             return objectConfig.GetProperties();
         }
+    }
 
-        public static void ApplyPropertyConfigurationToTypes(
-            ExtensionPropertyConfiguration propertyConfig,
-            Type[] types)
+    public static void ApplyPropertyConfigurationToTypes(
+        ExtensionPropertyConfiguration propertyConfig,
+        Type[] types)
+    {
+        lock (SyncLock)
         {
             ObjectExtensionManager.Instance
                 .AddOrUpdateProperty(
@@ -155,6 +173,7 @@ namespace Volo.Abp.ObjectExtending.Modularity
                         property.Validators.AddRange(propertyConfig.Validators);
                         property.DefaultValue = propertyConfig.DefaultValue;
                         property.DefaultValueFactory = propertyConfig.DefaultValueFactory;
+                        property.Lookup = propertyConfig.UI.Lookup;
                     }
                 );
         }

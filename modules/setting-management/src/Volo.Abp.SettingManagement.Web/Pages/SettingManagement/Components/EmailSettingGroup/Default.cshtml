@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.Authorization.Permissions
+@using Volo.Abp.SettingManagement
+@using Volo.Abp.SettingManagement.Localization
+@inject IHtmlLocalizer<AbpSettingManagementResource> L
+@inject IPermissionChecker PermissionChecker
+@model Volo.Abp.SettingManagement.Web.Pages.SettingManagement.Components.EmailSettingGroup.EmailSettingGroupViewComponent.UpdateEmailSettingsViewModel
+
+<abp-script src="/Pages/SettingManagement/Components/EmailSettingGroup/Default.js" />
+
+<form id="EmailSettingsForm" method="post">
+    <abp-row>
+        <abp-column size-md="_12">
+            <div>
+                <abp-input asp-for="DefaultFromDisplayName"/>
+                <abp-input asp-for="DefaultFromAddress"/>
+                <abp-input asp-for="SmtpHost"/>
+                <abp-input asp-for="SmtpPort"/>
+                <abp-input asp-for="SmtpEnableSsl"/>
+                <abp-input asp-for="SmtpUseDefaultCredentials"/>
+                <div id="HideSectionWhenUseDefaultCredentialsIsChecked" @Html.Raw(Model.SmtpUseDefaultCredentials ? "style=\"display: none;\"" : "")>
+                    <abp-input asp-for="SmtpDomain"/>
+                    <abp-input asp-for="SmtpUserName"/>
+                    <abp-input type="password" asp-for="SmtpPassword"/>
+                </div>
+            </div>
+            <hr class="my-4"/>
+            <div>
+                <abp-button button-type="Primary" type="submit">
+                    <i class="fa fa-save"></i> @L["Save"]
+                </abp-button>
+                @if (await PermissionChecker.IsGrantedAsync(SettingManagementPermissions.EmailingTest))
+                {
+                    <abp-button button-type="Primary" id="SendTestEmailButton">
+                        <i class="fa fa-send"></i> @L["SendTestEmail"]
+                    </abp-button>
+                }
+            </div>
+        </abp-column>
+    </abp-row>
+</form>

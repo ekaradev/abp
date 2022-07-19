@@ -1,4 +1,4 @@
-﻿# MVC模块启动模板
+# MVC模块启动模板
 
 可用此模板开发基于[模块开发最佳实践和约定](../Best-Practices/Index.md)的可**复用 [应用程序模块](../Modules/Index.md)** . 它同样适用于开发**微服务**.
 
@@ -133,13 +133,13 @@ abp new Acme.IssueManagement -t module --no-ui
 
 ##### 如何运行?
 
-将其设置成启动项, 使用包管理控制台运行 `Update-Database` 命令迁移数据库,然后运行应用程序. 默认用户名: `admin` 密码: `1q2w3E*`.
+将`host/YourProjectName.Web.Unified`设置成启动项, 使用包管理控制台运行 `Update-Database` 命令迁移数据库,然后运行应用程序. 默认用户名: `admin` 密码: `1q2w3E*`.
 
 #### 分离部署&数据库 场景
 
 在这个场景中,有三个应用程序;
 
-* `.IdentityServer` 应用程序是其他应用程序使用的身份验证服务器,它有自己的 `appsettings.json` 包含数据库连接字符串和其他配置.
+* `.AuthServer` 应用程序是其他应用程序使用的身份验证服务器,它有自己的 `appsettings.json` 包含数据库连接字符串和其他配置.
 * `.HttpApi.Host` 托管模块的HTTP API. 它有自己的 `appsettings.json` 包含数据库连接字符串和其他配置.
 * `.Web.Host` 托管模块的UI. 它包含 `appsettings.json` 文件, 但是其中没有数据库连接字符串, 因为它不需要连接到数据库, 它主要调用远程API服务器和身份认证服务器.
 
@@ -147,7 +147,7 @@ abp new Acme.IssueManagement -t module --no-ui
 
 ![tiered-solution-applications](../images/tiered-solution-applications.png)
 
-`.Web.Host` 项目使用OpenId Connect身份认证从`.IdentityServer`获取当前用户的身份和访问令牌. 然后使用访问令牌调用 `.HttpApi.Host`. HTTP API 服务器使用bearer token验证访问令牌获取当前用户声明并授权用户.
+`.Web.Host` 项目使用OpenId Connect身份认证从`.AuthServer`获取当前用户的身份和访问令牌. 然后使用访问令牌调用 `.HttpApi.Host`. HTTP API 服务器使用bearer token验证访问令牌获取当前用户声明并授权用户.
 
 ##### 前置条件
 
@@ -157,6 +157,6 @@ abp new Acme.IssueManagement -t module --no-ui
 
 你需要按照以下顺序运行应用程序:
 
-- 首先, 运行 `.IdentityServer`,因为其他应用程序依赖它做身份认证.
+- 首先, 运行 `.AuthServer`,因为其他应用程序依赖它做身份认证.
 - 然后运行 `.HttpApi.Host`,因为`.Web.Host`应用程序使用API接口.
 - 最后运行 `.Web.Host` 使用用户名: `admin` 密码: `1q2w3E*` 登录到应用程序.

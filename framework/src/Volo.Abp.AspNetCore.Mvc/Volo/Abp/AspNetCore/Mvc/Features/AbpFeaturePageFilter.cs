@@ -5,40 +5,31 @@ using Volo.Abp.Aspects;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Features;
 
-namespace Volo.Abp.AspNetCore.Mvc.Features
+namespace Volo.Abp.AspNetCore.Mvc.Features;
+
+public class AbpFeaturePageFilter : IAsyncPageFilter, ITransientDependency
 {
-    public class AbpFeaturePageFilter : IAsyncPageFilter, ITransientDependency
+    public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)
     {
-        private readonly IMethodInvocationFeatureCheckerService _methodInvocationAuthorizationService;
+        return Task.CompletedTask;
+    }
 
-        public AbpFeaturePageFilter(IMethodInvocationFeatureCheckerService methodInvocationAuthorizationService)
+    public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        if (context.HandlerMethod == null || !context.ActionDescriptor.IsPageAction())
         {
-            _methodInvocationAuthorizationService = methodInvocationAuthorizationService;
+            await next();
+            return;
         }
-        
-        public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)
+
+        var methodInfo = context.HandlerMethod.MethodInfo;
+
+        using (AbpCrossCuttingConcerns.Applying(context.HandlerInstance, AbpCrossCuttingConcerns.FeatureChecking))
         {
-            return Task.CompletedTask;
-        }
-        
-        public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
-        {
-            if (context.HandlerMethod == null || !context.ActionDescriptor.IsPageAction())
-            {
-                await next();
-                return;
-            }
+            var methodInvocationFeatureCheckerService = context.GetRequiredService<IMethodInvocationFeatureCheckerService>();
+            await methodInvocationFeatureCheckerService.CheckAsync(new MethodInvocationFeatureCheckerContext(methodInfo));
 
-            var methodInfo = context.HandlerMethod.MethodInfo;
-
-            using (AbpCrossCuttingConcerns.Applying(context.HandlerInstance, AbpCrossCuttingConcerns.FeatureChecking))
-            {
-                await _methodInvocationAuthorizationService.CheckAsync(
-                    new MethodInvocationFeatureCheckerContext(methodInfo)
-                );
-
-                await next();
-            }
+            await next();
         }
     }
 }

@@ -1,21 +1,22 @@
 import {
   AuthGuard,
-  DynamicLayoutComponent,
   PermissionGuard,
   ReplaceableComponents,
   ReplaceableRouteContainerComponent,
+  RouterOutletComponent,
 } from '@abp/ng.core';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { TenantsComponent } from './components/tenants/tenants.component';
 import { eTenantManagementComponents } from './enums/components';
+import { TenantManagementExtensionsGuard } from './guards';
 
 const routes: Routes = [
   { path: '', redirectTo: 'tenants', pathMatch: 'full' },
   {
     path: '',
-    component: DynamicLayoutComponent,
-    canActivate: [AuthGuard, PermissionGuard],
+    component: RouterOutletComponent,
+    canActivate: [AuthGuard, PermissionGuard, TenantManagementExtensionsGuard],
     children: [
       {
         path: 'tenants',

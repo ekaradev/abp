@@ -1,4 +1,4 @@
-﻿# ABP CLI
+# ABP CLI
 
 ABP CLI (Command Line Interface) is a command line tool to perform some common operations for ABP based solutions.
 
@@ -18,19 +18,23 @@ dotnet tool update -g Volo.Abp.Cli
 
 ## Global Options
 
-While each command may have a set of options, there are some global options those can be used with any command;
+While each command may have a set of options, there are some global options that can be used with any command;
 
 * `--skip-cli-version-check`: Skips to check the latest version of the ABP CLI. If you don't specify, it will check the latest version and shows a warning message if there is a newer version of the ABP CLI.
 
 ## Commands
 
-Here, the list of all available commands before explaining their details:
+Here, is the list of all available commands before explaining their details:
 
 * **`help`**: Shows help on the usage of the ABP CLI.
+* **`cli`**: Update or remove ABP CLI.
 * **`new`**: Generates a new solution based on the ABP [startup templates](Startup-Templates/Index.md).
 * **`update`**: Automatically updates all ABP related NuGet and NPM packages in a solution.
+* **`clean`**: Deletes all `BIN` and `OBJ` folders in the current folder.
 * **`add-package`**: Adds an ABP package to a project.
 * **`add-module`**: Adds a [multi-package application module](https://docs.abp.io/en/abp/latest/Modules/Index) to a solution.
+* **`list-modules`**: Lists names of open-source application modules.
+* **`list-templates`**: Lists the names of available templates to create a solution.
 * **`get-source`**: Downloads the source code of a module.
 * **`generate-proxy`**: Generates client side proxies to use HTTP API endpoints.
 * **`remove-proxy`**: Removes previously generated client side proxies.
@@ -39,7 +43,10 @@ Here, the list of all available commands before explaining their details:
 * **`switch-to-stable`**: Switches to the latest stable versions of the ABP related packages on a solution.
 * **`translate`**: Simplifies to translate localization files when you have multiple JSON [localization](Localization.md) files in a source control repository.
 * **`login`**: Authenticates on your computer with your [abp.io](https://abp.io/) username and password.
+* **`login-info`**: Shows the current user's login information.
 * **`logout`**: Logouts from your computer if you've authenticated before.
+* **`bundle`**: Generates script and style references for an ABP Blazor project. 
+* **`install-libs`**: Install NPM Packages for MVC / Razor Pages and Blazor Server UI types.
 
 ### help
 
@@ -56,6 +63,25 @@ Examples:
 ````bash
 abp help        # Shows a general help.
 abp help new    # Shows help about the "new" command.
+````
+
+### cli
+
+Update or remove ABP CLI.
+
+Usage:
+
+````bash
+abp cli [command-name]
+````
+
+Examples:
+
+````bash
+abp cli update
+abp cli update --preview
+abp cli update --version 5.0.0
+abp cli remove
 ````
 
 ### new
@@ -77,6 +103,8 @@ abp new Acme.BookStore
 * `Acme.BookStore` is the solution name here.
 * Common convention is to name a solution is like *YourCompany.YourProject*. However, you can use different naming like *YourProject* (single level namespacing) or *YourCompany.YourProduct.YourModule* (three levels namespacing).
 
+For more samples, go to [ABP CLI Create Solution Samples](CLI-New-Command-Samples.md)
+
 #### Options
 
 * `--template` or `-t`: Specifies the template name. Default template name is `app`, which generates a web application. Available templates:
@@ -84,31 +112,60 @@ abp new Acme.BookStore
     * `--ui` or `-u`: Specifies the UI framework. Default framework is `mvc`. Available frameworks:
       * `mvc`: ASP.NET Core MVC. There are some additional options for this template:
         * `--tiered`: Creates a tiered solution where Web and Http API layers are physically separated. If not specified, it creates a layered solution which is less complex and suitable for most scenarios.
-      * `angular`: Angular. There are some additional options for this template:
-        * `--separate-identity-server`: Separates the identity server application from the API host application. If not specified, you will have a single endpoint in the server side.
-      * `blazor`: Blazor. There are some additional options for this template:
-        * `--separate-identity-server`: Separates the identity server application from the API host application. If not specified, you will have a single endpoint in the server side.
-      * `none`: Without UI. There are some additional options for this template:
-        * `--separate-identity-server`: Separates the identity server application from the API host application. If not specified, you will have a single endpoint in the server side.
+      * `angular`: Angular UI. There are some additional options for this template:
+        * `--separate-auth-server`: The Identity Server project comes as a separate project and runs at a different endpoint. It separates the Identity Server from the API Host application. If not specified, you will have a single endpoint in the server side.
+        * `--pwa`: Specifies the project as Progressive Web Application.
+      * `blazor`: Blazor UI. There are some additional options for this template:
+        * `--separate-auth-server`The Identity Server project comes as a separate project and runs at a different endpoint. It separates the Identity Server from the API Host application. If not specified, you will have a single endpoint in the server side.
+        * `--pwa`: Specifies the project as Progressive Web Application.
+      * `blazor-server`: Blazor Server UI. There are some additional options for this template:
+        * `--tiered`: The Identity Server and the API Host project comes as separate projects and run at different endpoints. It has 3 startup projects: *HttpApi.Host*, *AuthServer* and *Blazor* and and each runs on different endpoints. If not specified, you will have a single endpoint for your web project.
+      * `none`: Without UI. No front-end layer will be created. There are some additional options for this template:
+        * `--separate-auth-server`: The Identity Server project comes as a separate project and runs at a different endpoint. It separates the Identity Server from the API Host application. If not specified, you will have a single endpoint in the server side.
     * `--mobile` or `-m`: Specifies the mobile application framework. If not specified, no mobile application will be created. Available options:
       * `react-native`: React Native.
     * `--database-provider` or `-d`: Specifies the database provider. Default provider is `ef`. Available providers:
         * `ef`: Entity Framework Core.
         * `mongodb`: MongoDB.
+    * `--theme`: Specifes the theme. Default theme is `leptonx-lite`. Available themes:
+        * `leptonx-lite`: [LeptonX Lite Theme](/Themes/LeptonXLite/mvc.md).
+        * `basic`: [Basic Theme](/UI/AspNetCore/Basic-Theme.md).
   * **`module`**: [Module template](Startup-Templates/Module.md). Additional options:
     * `--no-ui`: Specifies to not include the UI. This makes possible to create service-only modules (a.k.a. microservices - without UI).
   * **`console`**: [Console template](Startup-Templates/Console.md).
+  * **`app-nolayers`**: [Single-layer application template](Startup-Templates/Application-Single-Layer.md). Additional options:
+    * `--ui` or `-u`: Specifies the UI framework. Default framework is `mvc`. Available frameworks:
+      * `mvc`: ASP.NET Core MVC.
+      * `angular`: Angular UI.
+      * `blazor-server`: Blazor Server UI.
+      * `none`: Without UI.
+    * `--database-provider` or `-d`: Specifies the database provider. Default provider is `ef`. Available providers:
+        * `ef`: Entity Framework Core.
+        * `mongodb`: MongoDB.
+    * `--theme`: Specifes the theme. Default theme is `leptonx-lite`. Available themes:
+        * `leptonx-lite`: [LeptonX Lite Theme](/Themes/LeptonXLite/mvc.md).
+        * `basic`: [Basic Theme](/UI/AspNetCore/Basic-Theme.md).        
 * `--output-folder` or `-o`: Specifies the output folder. Default value is the current directory.
 * `--version` or `-v`: Specifies the ABP & template version. It can be a [release tag](https://github.com/abpframework/abp/releases) or a [branch name](https://github.com/abpframework/abp/branches). Uses the latest release if not specified. Most of the times, you will want to use the latest version.
 * `--preview`: Use latest preview version.
 * `--template-source` or `-ts`: Specifies a custom template source to use to build the project. Local and network sources can be used(Like `D:\local-template` or `https://.../my-template-file.zip`).
 * `--create-solution-folder` or `-csf`: Specifies if the project will be in a new folder in the output folder or directly the output folder.
-* `--connection-string` or `-cs`:  Overwrites the default connection strings in all `appsettings.json` files. The default connection string is `Server=localhost;Database=MyProjectName;Trusted_Connection=True;MultipleActiveResultSets=true` for EF Core and it is configured to use the SQL Server. If you want to use the EF Core, but need to change the DBMS, you can change it as [described here](Entity-Framework-Core-Other-DBMS.md) (after creating the solution).
+* `--connection-string` or `-cs`:  Overwrites the default connection strings in all `appsettings.json` files. The default connection string is `Server=localhost;Database=MyProjectName;Trusted_Connection=True` for EF Core and it is configured to use the SQL Server. If you want to use the EF Core, but need to change the DBMS, you can change it as [described here](Entity-Framework-Core-Other-DBMS.md) (after creating the solution).
+* `--database-management-system` or `-dbms`: Sets the database management system. Default is **SQL Server**. Supported DBMS's:
+  * `SqlServer`
+  * `MySQL`
+  * `SQLite`
+  * `Oracle`
+  * `Oracle-Devart`
+  * `PostgreSQL`
 * `--local-framework-ref --abp-path`: Uses local projects references to the ABP framework instead of using the NuGet packages. This can be useful if you download the ABP Framework source code and have a local reference to the framework from your application.
+* `--no-random-port`: Uses template's default ports.
+
+See some [examples for the new command](CLI-New-Command-Samples.md) here.
 
 ### update
 
-Updating all ABP related packages can be tedious since there are many packages of the framework and modules. This command automatically updates all ABP related NuGet and NPM packages in a solution or project to the latest versions.
+Updating all ABP related packages can be tedious since there are many packages of the framework and modules. This command automatically updates all ABP related NuGet and NPM packages in a solution or project to the latest versions. You can run it in the root folder of your solutions.
 
 Usage:
 
@@ -116,8 +173,11 @@ Usage:
 abp update [options]
 ````
 
-* If you run in a directory with a .sln file, it updates all ABP related packages of the all projects of the solution to the latest versions.
 * If you run in a directory with a .csproj file, it updates all ABP related packages of the project to the latest versions.
+* If you run in a directory with a .sln file, it updates all ABP related packages of the all projects of the solution to the latest versions.
+* If you run in a directory that contains multiple solutions in sub-folders, it can update all the solutions, including Angular projects.
+
+Note that this command can upgrade your solution from a previous version, and also can upgrade it from a preview release to the stable release of the same version.
 
 #### Options
 
@@ -126,6 +186,18 @@ abp update [options]
 * `--solution-path` or `-sp`: Specify the solution path. Use the current directory by default
 * `--solution-name` or `-sn`: Specify the solution name. Search `*.sln` files in the directory by default.
 * `--check-all`: Check the new version of each package separately. Default is `false`.
+* `--version` or `-v`: Specifies the version to use for update. If not specified, latest version is used.
+
+### clean
+
+Deletes all `BIN` and `OBJ` folders in the current folder.
+
+Usage:
+
+````bash
+abp clean
+````
+
 
 ### add-package
 
@@ -145,18 +217,29 @@ abp add-package <package-name> [options]
 Example:
 
 ````
-abp add-package Volo.Abp.MongoDB
+abp add-package Volo.Abp.AspNetCore.Mvc.UI.Theme.Basic
 ````
 
-* This example adds the Volo.Abp.MongoDB package to the project.
+* This example adds the `Volo.Abp.AspNetCore.Mvc.UI.Theme.Basic` package to the project.
 
 #### Options
 
 * `--project` or `-p`: Specifies the project (.csproj) file path. If not specified, CLI tries to find a .csproj file in the current directory.
+* `--with-source-code`: Downloads the source code of the package to your solution folder and uses local project references instead of NuGet/NPM packages.
+* `--add-to-solution-file`: Adds the downloaded package to your solution file, so you will also see the package when you open the solution on a IDE. (only available when `--with-source-code` is True)
+
+> Currently only the source code of the basic theme packages([MVC](https://docs.abp.io/en/abp/latest/UI/AspNetCore/Basic-Theme) and [Blazor](https://docs.abp.io/en/abp/latest/UI/Blazor/Basic-Theme)) can be downloaded.
+> - Volo.Abp.AspNetCore.Mvc.UI.Theme.Basic
+> - Volo.Abp.AspNetCore.Components.WebAssembly.BasicTheme
+> - Volo.Abp.AspNetCore.Components.Web.BasicTheme
+> - Volo.Abp.AspNetCore.Components.Server.BasicTheme
+
 
 ### add-module
 
 Adds a [multi-package application module](Modules/Index) to a solution by finding all packages of the module, finding related projects in the solution and adding each package to the corresponding project in the solution.
+
+It can also create a new module for your solution and add it to your solution. See `--new` option.
 
 > A business module generally consists of several packages (because of layering, different database provider options or other reasons). Using `add-module` command dramatically simplifies adding a module to a solution. However, each module may require some additional configurations which is generally indicated in the documentation of the related module.
 
@@ -166,20 +249,49 @@ Usage
 abp add-module <module-name> [options]
 ````
 
-Example:
+Examples:
 
 ```bash
 abp add-module Volo.Blogging
 ```
 
-* This example add the Volo.Blogging module to the solution.
+* This example adds the `Volo.Blogging` module to the solution.
+
+```bash
+abp add-module ProductManagement --new --add-to-solution-file
+```
+
+* This command creates a fresh new module customized for your solution (named `ProductManagement`) and adds it to your solution.
+
 
 #### Options
 
 * `--solution` or `-s`: Specifies the solution (.sln) file path. If not specified, CLI tries to find a .sln file in the current directory.
 * `--skip-db-migrations`: For EF Core database provider, it automatically adds a new code first migration (`Add-Migration`) and updates the database (`Update-Database`) if necessary. Specify this option to skip this operation.
 * `-sp` or `--startup-project`: Relative path to the project folder of the startup project. Default value is the current folder.
-* `--with-source-code`: Add source code of the module instead of NuGet/NPM packages.
+* `--new`: Creates a fresh new module (customized for your solution) and adds it to your solution.
+* `--with-source-code`: Downloads the source code of the module to your solution folder and uses local project references instead of NuGet/NPM packages. This options is always `True` if `--new` is used.
+* `--add-to-solution-file`: Adds the downloaded/created module to your solution file, so you will also see the projects of the module when you open the solution on a IDE. (only available when `--with-source-code` is `True`.)
+
+### list-modules
+
+Lists names of open-source application modules.
+
+Usage
+
+````bash
+abp list-modules [options]
+````
+
+Example:
+
+```bash
+abp list-modules
+```
+
+#### Options
+
+* `--include-pro-modules`: Includes commercial (pro) modules in the output.
 
 ### get-source
 
@@ -204,47 +316,81 @@ abp get-source Volo.Blogging --local-framework-ref --abp-path D:\GitHub\abp
 * `--output-folder` or `-o`: Specifies the directory that source code will be downloaded in. If not specified, current directory is used.
 * `--version` or `-v`: Specifies the version of the  source code that will be downloaded. If not specified, latest version is used.
 * `--preview`: If no version option is specified, this option specifies if latest [preview version](Previews.md) will be used instead of latest stable version.
-* `-- local-framework-ref --abp-path`: Path of [ABP Framework GitHub repository](https://github.com/abpframework/abp) in your computer. This will be used for converting project references to your local system. If this is not specified, project references will be converted to NuGet references.
+* `--local-framework-ref --abp-path`: Path of [ABP Framework GitHub repository](https://github.com/abpframework/abp) in your computer. This will be used for converting project references to your local system. If this is not specified, project references will be converted to NuGet references.
 
 ### generate-proxy
 
-Generates Angular service proxies for your HTTP APIs to make easy to consume your services from the client side. Your host (server) application must be up and running before running this command.
+Generates Angular, C# or JavaScript service proxies for your HTTP APIs to make easy to consume your services from the client side. Your host (server) application must be up and running before running this command.
 
 Usage:
 
 ````bash
-abp generate-proxy
+abp generate-proxy -t <client-type> [options]
+````
+
+Examples:
+
+````bash
+abp generate-proxy -t ng -url https://localhost:44302/
+abp generate-proxy -t js -url https://localhost:44302/
+abp generate-proxy -t csharp -url https://localhost:44302/
 ````
 
 #### Options
 
+* `--type` or `-t`: The name of client type. Available clients:
+  * `csharp`: C#, work in the `*.HttpApi.Client` project directory. There are some additional options for this client:
+    * `--folder`: Folder name to place generated CSharp code in. Default value: `ClientProxies`.
+  * `ng`: Angular. There are some additional options for this client:
+    * `--api-name` or `-a`: The name of the API endpoint defined in the `/src/environments/environment.ts`. Default value: `default`.
+    * `--source` or `-s`: Specifies the Angular project name to resolve the root namespace & API definition URL from. Default value: `defaultProject`.
+    * `--target`: Specifies the Angular project name to place generated code in. Default value: `defaultProject`.
+    * `--url`: Specifies api definition url. Default value is API Name's url in environment file.
+    * `--prompt` or `-p`: Asks the options from the command line prompt (for the unspecified options).
+  * `js`: JavaScript. work in the `*.Web` project directory. There are some additional options for this client:
+    * `--output` or `-o`: JavaScript file path or folder to place generated code in.
 * `--module` or `-m`: Specifies the name of the backend module you wish to generate proxies for. Default value: `app`.
-* `--api-name` or `-a`: The name of the API endpoint defined in the `/src/environments/environment.ts`. Default value: `default`.
-* `--source` or `-s`: Specifies the Angular project name to resolve the root namespace & API definition URL from. Default value: `defaultProject`.
-* `--target` or `-t`: Specifies the Angular project name to place generated code in. Default value: `defaultProject`.
-* `--prompt` or `-p`: Asks the options from the command line prompt (for the unspecified options).
+* `--working-directory` or `-wd`: Execution directory. For `csharp` and `js` client types.
+* `--url` or `-u`: API definition URL from.
 
 > See the [Angular Service Proxies document](UI/Angular/Service-Proxies.md) for more.
 
 ### remove-proxy
 
-Removes previously generated proxy code from the Angular application. Your host (server) application must be up and running before running this command.
+Removes previously generated proxy code from the Angular, CSharp or JavaScript application. Your host (server) application must be up and running before running this command.
 
 This can be especially useful when you generate proxies for multiple modules before and need to remove one of them later.
 
 Usage:
 
 ````bash
-abp remove-proxy
+abp remove-proxy -t <client-type> [options]
+````
+
+Examples:
+
+````bash
+abp remove-proxy -t ng
+abp remove-proxy -t js -m identity -o Pages/Identity/client-proxies.js
+abp remove-proxy -t csharp --folder MyProxies/InnerFolder
 ````
 
 #### Options
 
-* `--module` or `-m`: Specifies the name of the backend module you wish to remove proxies for. Default value: `app`.
-* `--api-name` or `-a`: The name of the API endpoint defined in the `/src/environments/environment.ts`. Default value: `default`.
-* `--source` or `-s`: Specifies the Angular project name to resolve the root namespace & API definition URL from. Default value: `defaultProject`.
-* `--target` or `-t`: Specifies the Angular project name to place generated code in. Default value: `defaultProject`.
-* `--prompt` or `-p`: Asks the options from the command line prompt (for the unspecified options).
+* `--type` or `-t`: The name of client type. Available clients:
+  * `csharp`: C#, work in the `*.HttpApi.Client` project directory. There are some additional options for this client:
+    * `--folder`: Folder name to place generated CSharp code in. Default value: `ClientProxies`.
+  * `ng`: Angular. There are some additional options for this client:
+    * `--api-name` or `-a`: The name of the API endpoint defined in the `/src/environments/environment.ts`. Default value: `default`.
+    * `--source` or `-s`: Specifies the Angular project name to resolve the root namespace & API definition URL from. Default value: `defaultProject`.
+    * `--target`: Specifies the Angular project name to place generated code in. Default value: `defaultProject`.
+    * `--url`: Specifies api definition url. Default value is API Name's url in environment file.
+    * `--prompt` or `-p`: Asks the options from the command line prompt (for the unspecified options).
+  * `js`: JavaScript. work in the `*.Web` project directory. There are some additional options for this client:
+    * `--output` or `-o`: JavaScript file path or folder to place generated code in.
+* `--module` or `-m`: Specifies the name of the backend module you wish to generate proxies for. Default value: `app`.
+* `--working-directory` or `-wd`: Execution directory. For `csharp` and `js` client types.
+* `--url` or `-u`: API definition URL from.
 
 > See the [Angular Service Proxies document](UI/Angular/Service-Proxies.md) for more.
 
@@ -352,11 +498,55 @@ abp login <username> -p <password> -o <organization>  # You can enter both your 
 
 A new login with an already active session overwrites the previous session.
 
+### login-info
+
+Shows your login information such as **Name**, **Surname**, **Username**, **Email Address** and **Organization**.
+
+```bash
+abp login-info
+```
+
 ### logout
 
 Logs you out by removing the session token from your computer.
 
-```
+```bash
 abp logout
 ```
 
+### bundle
+
+This command generates script and style references for an ABP Blazor WebAssembly project and updates the **index.html** file. It helps developers to manage dependencies required by ABP modules easily.  In order ```bundle``` command to work, its **executing directory** or passed ```--working-directory``` parameter's directory must contain a Blazor project file(*.csproj).
+
+Usage:
+
+````bash
+abp bundle [options]
+````
+
+#### Options
+
+* ```--working-directory``` or ```-wd```: Specifies the working directory. This option is useful when executing directory doesn't contain a Blazor project file.
+* ```--force``` or ```-f```: Forces to build project before generating references.
+
+`bundle` command reads the `appsettings.json` file inside the Blazor project for bundling options. For more details about managing style and script references in Blazor apps, see [Managing Global Scripts & Styles](UI/Blazor/Global-Scripts-Styles.md)
+
+### install-libs
+
+This command install NPM Packages for MVC / Razor Pages and Blazor Server UI types. Its **executing directory** or passed ```--working-directory``` parameter's directory must contain a project file(*.csproj).
+
+`install-libs` command reads the `abp.resourcemapping.js` file to manage package. For more details see [Client Side Package Management](UI/AspNetCore/Client-Side-Package-Management.md).
+
+Usage:
+
+````bash
+abp install-libs [options]
+````
+
+#### Options
+
+* ```--working-directory``` or ```-wd```: Specifies the working directory. This option is useful when executing directory doesn't contain a project file.
+
+## See Also
+
+* [Examples for the new command](CLI-New-Command-Samples.md)

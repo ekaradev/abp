@@ -1,4 +1,6 @@
-import { Config } from '@abp/ng.core';
+import { Environment } from '@abp/ng.core';
+
+const baseUrl = 'http://localhost:4200';
 
 export const environment = {
   production: false,
@@ -8,12 +10,12 @@ export const environment = {
     logoUrl: '',
   },
   oAuthConfig: {
-    issuer: 'https://localhost:44301',
-    clientId: 'MyProjectName_ConsoleTestApp',
-    dummyClientSecret: '1q2w3e*',
-    scope: 'MyProjectName',
-    oidc: false,
-    requireHttps: true,
+    issuer: 'https://localhost:44301/',
+    redirectUri: baseUrl,
+    clientId: 'MyProjectName_App',
+    responseType: 'code',
+    scope: 'offline_access MyProjectName',
+    requireHttps: true
   },
   apis: {
     default: {
@@ -25,4 +27,4 @@ export const environment = {
       rootNamespace: 'MyCompanyName.MyProjectName',
     },
   },
-} as Config.Environment;
+} as Environment;

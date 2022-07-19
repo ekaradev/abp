@@ -2,9 +2,6 @@
   "expo": {
     "name": "MyProjectName",
     "slug": "MyProjectName",
-    "privacy": "public",
-    "sdkVersion": "36.0.0",
-    "platforms": ["ios", "android", "web"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +21,14 @@
     },
     "android": {
       "package": "com.MyCompanyName.MyProjectName",
-      "versionCode": 1
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
     }
   }
 }

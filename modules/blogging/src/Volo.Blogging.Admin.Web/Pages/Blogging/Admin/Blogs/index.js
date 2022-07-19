@@ -1,4 +1,4 @@
-﻿$(function () {
+$(function () {
     var l = abp.localization.getResource('Blogging');
     var _createModal = new abp.ModalManager(
         abp.appPath + 'Blogging/Admin/Blogs/Create'
@@ -49,9 +49,26 @@
                                         .delete(data.record.id)
                                         .then(function () {
                                             _dataTable.ajax.reload();
+                                            abp.notify.success(l('SuccessfullyDeleted'));
                                         });
                                 },
                             },
+                            {
+                                text: l("ClearCache"),
+                                visible: abp.auth.isGranted(
+                                  'Blogging.Blog.ClearCache'
+                                ),
+                                confirmMessage: function (data) {
+                                    return l("ClearCacheConfirmationMessage");
+                                },
+                                action: function (data) {
+                                    volo.blogging.admin.blogManagement
+                                        .clearCache(data.record.id)
+                                        .then(function () {
+                                            _dataTable.ajax.reload();
+                                        })
+                                }
+                            }
                         ],
                     },
                 },
@@ -66,9 +83,7 @@
                 {
                     target: 3,
                     data: 'creationTime',
-                    render: function (date) {
-                        return date;
-                    },
+                    dataFormat: "datetime"
                 },
                 {
                     target: 4,

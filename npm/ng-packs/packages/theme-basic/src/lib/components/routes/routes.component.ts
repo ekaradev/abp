@@ -14,16 +14,18 @@ import {
   templateUrl: 'routes.component.html',
 })
 export class RoutesComponent {
-  @Input() smallScreen: boolean;
+  @Input() smallScreen?: boolean;
 
-  @ViewChildren('childrenContainer') childrenContainers: QueryList<ElementRef<HTMLDivElement>>;
+  @ViewChildren('childrenContainer') childrenContainers!: QueryList<ElementRef<HTMLDivElement>>;
+
+  rootDropdownExpand = {} as { [key: string]: boolean };
 
   trackByFn: TrackByFunction<TreeNode<ABP.Route>> = (_, item) => item.name;
 
-  constructor(public readonly routes: RoutesService, protected renderer: Renderer2) {}
+  constructor(public readonly routesService: RoutesService, protected renderer: Renderer2) {}
 
   isDropdown(node: TreeNode<ABP.Route>) {
-    return !node?.isLeaf || this.routes.hasChildren(node.name);
+    return !node?.isLeaf || this.routesService.hasChildren(node.name);
   }
 
   closeDropdown() {

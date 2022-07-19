@@ -1,53 +1,53 @@
-import { ListService } from '@abp/ng.core';
+import { ListService, PagedResultDto } from '@abp/ng.core';
+import {
+  GetIdentityUsersInput,
+  IdentityRoleDto,
+  IdentityUserDto,
+  IdentityUserService,
+} from '@abp/ng.identity/proxy';
 import { ePermissionManagementComponents } from '@abp/ng.permission-management';
-import { Confirmation, ConfirmationService, getPasswordValidators } from '@abp/ng.theme.shared';
-import { Component, OnInit, TemplateRef, TrackByFunction, ViewChild } from '@angular/core';
+import {Confirmation, ConfirmationService, ToasterService} from '@abp/ng.theme.shared';
 import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
-import { Select, Store } from '@ngxs/store';
-import { Observable } from 'rxjs';
-import { finalize, pluck, switchMap, take } from 'rxjs/operators';
-import snq from 'snq';
+  EXTENSIONS_IDENTIFIER,
+  FormPropData,
+  generateFormFromProps,
+} from '@abp/ng.theme.shared/extensions';
 import {
-  CreateUser,
-  DeleteUser,
-  GetUserById,
-  GetUserRoles,
-  GetUsers,
-  UpdateUser,
-} from '../../actions/identity.actions';
-import { Identity } from '../../models/identity';
-import { IdentityService } from '../../services/identity.service';
-import { IdentityState } from '../../states/identity.state';
+  Component,
+  Injector,
+  OnInit,
+  TemplateRef,
+  TrackByFunction,
+  ViewChild,
+} from '@angular/core';
+import { AbstractControl, FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { finalize, switchMap, tap } from 'rxjs/operators';
+import { eIdentityComponents } from '../../enums/components';
 
 @Component({
   selector: 'abp-users',
   templateUrl: './users.component.html',
-  providers: [ListService],
+  providers: [
+    ListService,
+    {
+      provide: EXTENSIONS_IDENTIFIER,
+      useValue: eIdentityComponents.Users,
+    },
+  ],
 })
 export class UsersComponent implements OnInit {
-  @Select(IdentityState.getUsers)
-  data$: Observable<Identity.UserItem[]>;
-
-  @Select(IdentityState.getUsersTotalCount)
-  totalCount$: Observable<number>;
+  data: PagedResultDto<IdentityUserDto> = { items: [], totalCount: 0 };
 
   @ViewChild('modalContent', { static: false })
   modalContent: TemplateRef<any>;
 
   form: FormGroup;
 
-  selected: Identity.UserItem;
+  selected: IdentityUserDto;
 
-  selectedUserRoles: Identity.RoleItem[];
+  selectedUserRoles: IdentityRoleDto[];
 
-  roles: Identity.RoleItem[];
+  roles: IdentityRoleDto[];
 
   visiblePermissions = false;
 
@@ -59,6 +59,8 @@ export class UsersComponent implements OnInit {
 
   permissionManagementKey = ePermissionManagementComponents.PermissionManagement;
 
+  entityDisplayName: string;
+
   trackByFn: TrackByFunction<AbstractControl> = (index, item) => Object.keys(item)[0] || index;
 
   onVisiblePermissionChange = event => {
@@ -66,15 +68,16 @@ export class UsersComponent implements OnInit {
   };
 
   get roleGroups(): FormGroup[] {
-    return snq(() => (this.form.get('roleNames') as FormArray).controls as FormGroup[], []);
+    return ((this.form.get('roleNames') as FormArray)?.controls as FormGroup[]) || [];
   }
 
   constructor(
-    public readonly list: ListService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private store: Store,
-    private identityService: IdentityService,
+    public readonly list: ListService<GetIdentityUsersInput>,
+    protected confirmationService: ConfirmationService,
+    protected service: IdentityUserService,
+    private toasterService: ToasterService,
+    protected fb: FormBuilder,
+    protected injector: Injector,
   ) {}
 
   ngOnInit() {
@@ -82,40 +85,25 @@ export class UsersComponent implements OnInit {
   }
 
   buildForm() {
-    this.identityService.getUserAssingableRoles().subscribe(({ items }) => {
+    const data = new FormPropData(this.injector, this.selected);
+    this.form = generateFormFromProps(data);
+
+    this.service.getAssignableRoles().subscribe(({ items }) => {
       this.roles = items;
-      this.form = this.fb.group({
-        userName: [this.selected.userName || '', [Validators.required, Validators.maxLength(256)]],
-        email: [
-          this.selected.email || '',
-          [Validators.required, Validators.email, Validators.maxLength(256)],
-        ],
-        name: [this.selected.name || '', [Validators.maxLength(64)]],
-        surname: [this.selected.surname || '', [Validators.maxLength(64)]],
-        phoneNumber: [this.selected.phoneNumber || '', [Validators.maxLength(16)]],
-        lockoutEnabled: [this.selected.lockoutEnabled || (this.selected.id ? false : true)],
-        twoFactorEnabled: [this.selected.twoFactorEnabled || (this.selected.id ? false : true)],
-        roleNames: this.fb.array(
+      this.form.addControl(
+        'roleNames',
+        this.fb.array(
           this.roles.map(role =>
             this.fb.group({
               [role.name]: [
                 this.selected.id
-                  ? !!snq(() => this.selectedUserRoles.find(userRole => userRole.id === role.id))
+                  ? !!this.selectedUserRoles?.find(userRole => userRole.id === role.id)
                   : role.isDefault,
               ],
             }),
           ),
         ),
-      });
-
-      const passwordValidators = getPasswordValidators(this.store);
-
-      this.form.addControl('password', new FormControl('', [...passwordValidators]));
-
-      if (!this.selected.userName) {
-        this.form.get('password').setValidators([...passwordValidators, Validators.required]);
-        this.form.get('password').updateValueAndValidity();
-      }
+      );
     });
   }
 
@@ -125,22 +113,20 @@ export class UsersComponent implements OnInit {
   }
 
   add() {
-    this.selected = {} as Identity.UserItem;
-    this.selectedUserRoles = [] as Identity.RoleItem[];
+    this.selected = {} as IdentityUserDto;
+    this.selectedUserRoles = [] as IdentityRoleDto[];
     this.openModal();
   }
 
   edit(id: string) {
-    this.store
-      .dispatch(new GetUserById(id))
+    this.service
+      .get(id)
       .pipe(
-        switchMap(() => this.store.dispatch(new GetUserRoles(id))),
-        pluck('IdentityState'),
-        take(1),
+        tap(user => (this.selected = user)),
+        switchMap(() => this.service.getRoles(id)),
       )
-      .subscribe((state: Identity.State) => {
-        this.selected = state.selectedUser;
-        this.selectedUserRoles = state.selectedUserRoles || [];
+      .subscribe(userRole => {
+        this.selectedUserRoles = userRole.items || [];
         this.openModal();
       });
   }
@@ -149,27 +135,21 @@ export class UsersComponent implements OnInit {
     if (!this.form.valid || this.modalBusy) return;
     this.modalBusy = true;
 
-    const { roleNames } = this.form.value;
-    const mappedRoleNames = snq(
-      () =>
-        roleNames.filter(role => !!role[Object.keys(role)[0]]).map(role => Object.keys(role)[0]),
-      [],
-    );
+    const { roleNames = [] } = this.form.value;
+    const mappedRoleNames =
+      roleNames.filter(role => !!role[Object.keys(role)[0]]).map(role => Object.keys(role)[0]) ||
+      [];
 
-    this.store
-      .dispatch(
-        this.selected.id
-          ? new UpdateUser({
-              ...this.selected,
-              ...this.form.value,
-              id: this.selected.id,
-              roleNames: mappedRoleNames,
-            })
-          : new CreateUser({
-              ...this.form.value,
-              roleNames: mappedRoleNames,
-            }),
-      )
+    const { id } = this.selected;
+
+    (id
+      ? this.service.update(id, {
+          ...this.selected,
+          ...this.form.value,
+          roleNames: mappedRoleNames,
+        })
+      : this.service.create({ ...this.form.value, roleNames: mappedRoleNames })
+    )
       .pipe(finalize(() => (this.modalBusy = false)))
       .subscribe(() => {
         this.isModalVisible = false;
@@ -184,7 +164,9 @@ export class UsersComponent implements OnInit {
       })
       .subscribe((status: Confirmation.Status) => {
         if (status === Confirmation.Status.confirm) {
-          this.store.dispatch(new DeleteUser(id)).subscribe(() => this.list.get());
+          this.service.delete(id).subscribe(() => {
+            this.toasterService.success('AbpUi::SuccessfullyDeleted');
+            this.list.get()});
         }
       });
   }
@@ -196,11 +178,12 @@ export class UsersComponent implements OnInit {
   }
 
   private hookToQuery() {
-    this.list.hookToQuery(query => this.store.dispatch(new GetUsers(query))).subscribe();
+    this.list.hookToQuery(query => this.service.getList(query)).subscribe(res => (this.data = res));
   }
 
-  openPermissionsModal(providerKey: string) {
+  openPermissionsModal(providerKey: string, entityDisplayName?: string) {
     this.providerKey = providerKey;
+    this.entityDisplayName = entityDisplayName;
     setTimeout(() => {
       this.visiblePermissions = true;
     }, 0);

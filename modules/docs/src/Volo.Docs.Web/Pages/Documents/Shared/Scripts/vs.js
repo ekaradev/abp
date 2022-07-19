@@ -8,6 +8,11 @@
         $('li:not(.last-link) span.plus-icon i.fa-chevron-right').click(
             function () {
                 var $element = $(this).parent();
+                var $filter = $('.docs-version #filter');
+
+                if ($filter && $filter.val() != ''){
+                    return;
+                }
 
                 $element.parent().children('ul.tree').toggle(100);
                 $element.closest('li').toggleClass('selected-tree');
@@ -119,18 +124,15 @@
     });
 
     function handleCustomScrolls() {
-        var wWidth = $(window).width();
-        if (wWidth > 766) {
-            $('#sidebar-scroll').mCustomScrollbar({
-                theme: 'minimal',
-                alwaysShowScrollbar: 0,
-            });
+        $('#sidebar-scroll').mCustomScrollbar({
+            theme: 'minimal',
+            alwaysShowScrollbar: 0,
+        });
 
-            $('#scroll-index').mCustomScrollbar({
-                theme: 'minimal-dark',
-                alwaysShowScrollbar: 0,
-            });
-        }
+        $('#scroll-index').mCustomScrollbar({
+            theme: 'minimal-dark',
+            alwaysShowScrollbar: 0,
+        });
     }
 
     window.Toc.helpers.createNavList = function () {

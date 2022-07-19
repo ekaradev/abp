@@ -4,11 +4,12 @@
 
 ## 提供程序
 
-分布式事件总线系统提供了一个可以被任何提供程序实现的**抽象**. 有两种开箱即用的提供程序:
+分布式事件总线系统提供了一个可以被任何提供程序实现的**抽象**. 有四种开箱即用的提供程序:
 
 * `LocalDistributedEventBus` 是默认实现,实现作为进程内工作的分布式事件总线. 是的!如果没有配置真正的分布式提供程序,**默认实现的工作方式与[本地事件总线](Local-Event-Bus.md)一样**.
 * `RabbitMqDistributedEventBus` 通过[RabbitMQ](https://www.rabbitmq.com/)实现分布式事件总线. 请参阅[RabbitMQ集成文档](Distributed-Event-Bus-RabbitMQ-Integration.md)了解如何配置它.
 * `KafkaDistributedEventBus` 通过[Kafka](https://kafka.apache.org/)实现分布式事件总线. 请参阅[Kafka集成文档](Distributed-Event-Bus-Kafka-Integration.md)了解如何配置它.
+* `RebusDistributedEventBus` 通过[Rebus](http://mookid.dk/category/rebus/)实现分布式事件总线. 请参阅[Rebus集成文档](Distributed-Event-Bus-Rebus-Integration.md)了解如何配置它.
 
 使用本地事件总线作为默认具有一些重要的优点. 最重要的是:它允许你编写与分布式体系结构兼容的代码. 您现在可以编写一个整体应用程序,以后可以拆分成微服务. 最好通过分布式事件而不是本地事件在边界上下文之间(或在应用程序模块之间)进行通信.
 
@@ -44,7 +45,7 @@ namespace AbpDemo
         public virtual async Task ChangeStockCountAsync(Guid productId, int newCount)
         {
             await _distributedEventBus.PublishAsync(
-                new StockCountChangedEvent
+                new StockCountChangedEto
                 {
                     ProductId = productId,
                     NewCount = newCount
@@ -83,7 +84,7 @@ namespace AbpDemo
 
 #### 关于序列化的事件对象
 
-事件传输对象**必须是可序列化**的,因为将其传输到流程外时，它们将被序列化/反序列化为JSON或其他格式.
+事件传输对象**必须是可序列化**的,因为将其传输到进程外时，它们将被序列化/反序列化为JSON或其他格式.
 
 避免循环引用,多态,私有setter,并提供默认(空)构造函数,如果你有其他的构造函数.(虽然某些序列化器可能会正常工作),就像DTO一样.
 
@@ -263,7 +264,7 @@ Configure<AbpDistributedEntityEventOptions>(options =>
 
 因此可以实现 `IDistributedEventHandler<EntityUpdatedEto<EntityEto>>` 订阅事件. 但是订阅这样的通用事件不是一个好方法,你可以为实体类型定义对应的ETO.
 
-**示例: 为 `Product` 声明使用 `ProductDto`**
+**示例: 为 `Product` 声明使用 `ProductEto`**
 
 ````csharp
 Configure<AbpDistributedEntityEventOptions>(options =>

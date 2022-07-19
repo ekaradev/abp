@@ -8,107 +8,103 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.ExceptionHandling;
+using Volo.Abp.Authorization;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ExceptionHandling;
 using Volo.Abp.Http;
 using Volo.Abp.Json;
 
-namespace Volo.Abp.AspNetCore.Mvc.ExceptionHandling
+namespace Volo.Abp.AspNetCore.Mvc.ExceptionHandling;
+
+public class AbpExceptionPageFilter : IAsyncPageFilter, ITransientDependency
 {
-    public class AbpExceptionPageFilter : IAsyncPageFilter, ITransientDependency
+    public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)
     {
-        public ILogger<AbpExceptionPageFilter> Logger { get; set; }
+        return Task.CompletedTask;
+    }
 
-        private readonly IExceptionToErrorInfoConverter _errorInfoConverter;
-        private readonly IHttpExceptionStatusCodeFinder _statusCodeFinder;
-        private readonly IJsonSerializer _jsonSerializer;
-
-        public AbpExceptionPageFilter(
-            IExceptionToErrorInfoConverter errorInfoConverter,
-            IHttpExceptionStatusCodeFinder statusCodeFinder,
-            IJsonSerializer jsonSerializer)
+    public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        if (context.HandlerMethod == null || !ShouldHandleException(context))
         {
-            _errorInfoConverter = errorInfoConverter;
-            _statusCodeFinder = statusCodeFinder;
-            _jsonSerializer = jsonSerializer;
-
-            Logger = NullLogger<AbpExceptionPageFilter>.Instance;
+            await next();
+            return;
         }
 
-        public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)
+        var pageHandlerExecutedContext = await next();
+        if (pageHandlerExecutedContext.Exception == null)
         {
-            return Task.CompletedTask;
+            return; ;
         }
 
-        public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+        await HandleAndWrapException(pageHandlerExecutedContext);
+    }
+
+    protected virtual bool ShouldHandleException(PageHandlerExecutingContext context)
+    {
+        //TODO: Create DontWrap attribute to control wrapping..?
+
+        if (context.ActionDescriptor.IsPageAction() &&
+            ActionResultHelper.IsObjectResult(context.HandlerMethod.MethodInfo.ReturnType, typeof(void)))
         {
-            if (context.HandlerMethod == null || !ShouldHandleException(context))
-            {
-                await next();
-                return;
-            }
-
-            var pageHandlerExecutedContext = await next();
-            if (pageHandlerExecutedContext.Exception == null)
-            {
-                return;;
-            }
-
-            await HandleAndWrapException(pageHandlerExecutedContext);
+            return true;
         }
 
-        protected virtual bool ShouldHandleException(PageHandlerExecutingContext context)
+        if (context.HttpContext.Request.CanAccept(MimeTypes.Application.Json))
         {
-            //TODO: Create DontWrap attribute to control wrapping..?
-
-            if (context.ActionDescriptor.IsPageAction() &&
-                ActionResultHelper.IsObjectResult(context.HandlerMethod.MethodInfo.ReturnType, typeof(void)))
-            {
-                return true;
-            }
-
-            if (context.HttpContext.Request.CanAccept(MimeTypes.Application.Json))
-            {
-                return true;
-            }
-
-            if (context.HttpContext.Request.IsAjax())
-            {
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
-        protected virtual async Task HandleAndWrapException(PageHandlerExecutedContext context)
+        if (context.HttpContext.Request.IsAjax())
         {
-            //TODO: Trigger an AbpExceptionHandled event or something like that.
+            return true;
+        }
 
+        return false;
+    }
+
+    protected virtual async Task HandleAndWrapException(PageHandlerExecutedContext context)
+    {
+        //TODO: Trigger an AbpExceptionHandled event or something like that.
+
+        var exceptionHandlingOptions = context.GetRequiredService<IOptions<AbpExceptionHandlingOptions>>().Value;
+        var exceptionToErrorInfoConverter = context.GetRequiredService<IExceptionToErrorInfoConverter>();
+        var remoteServiceErrorInfo = exceptionToErrorInfoConverter.Convert(context.Exception, options =>
+       {
+           options.SendExceptionsDetailsToClients = exceptionHandlingOptions.SendExceptionsDetailsToClients;
+           options.SendStackTraceToClients = exceptionHandlingOptions.SendStackTraceToClients;
+       });
+
+        var logLevel = context.Exception.GetLogLevel();
+
+        var remoteServiceErrorInfoBuilder = new StringBuilder();
+        remoteServiceErrorInfoBuilder.AppendLine($"---------- {nameof(RemoteServiceErrorInfo)} ----------");
+        remoteServiceErrorInfoBuilder.AppendLine(context.GetRequiredService<IJsonSerializer>().Serialize(remoteServiceErrorInfo, indented: true));
+
+        var logger = context.GetService<ILogger<AbpExceptionFilter>>(NullLogger<AbpExceptionFilter>.Instance);
+        logger.LogWithLevel(logLevel, remoteServiceErrorInfoBuilder.ToString());
+
+        logger.LogException(context.Exception, logLevel);
+
+        await context.GetRequiredService<IExceptionNotifier>().NotifyAsync(new ExceptionNotificationContext(context.Exception));
+
+        if (context.Exception is AbpAuthorizationException)
+        {
+            await context.HttpContext.RequestServices.GetRequiredService<IAbpAuthorizationExceptionHandler>()
+                .HandleAsync(context.Exception.As<AbpAuthorizationException>(), context.HttpContext);
+        }
+        else
+        {
             context.HttpContext.Response.Headers.Add(AbpHttpConsts.AbpErrorFormat, "true");
-            context.HttpContext.Response.StatusCode = (int)_statusCodeFinder.GetStatusCode(context.HttpContext, context.Exception);
-
-            var remoteServiceErrorInfo = _errorInfoConverter.Convert(context.Exception);
+            context.HttpContext.Response.StatusCode = (int)context
+                .GetRequiredService<IHttpExceptionStatusCodeFinder>()
+                .GetStatusCode(context.HttpContext, context.Exception);
 
             context.Result = new ObjectResult(new RemoteServiceErrorResponse(remoteServiceErrorInfo));
-
-            var logLevel = context.Exception.GetLogLevel();
-
-            var remoteServiceErrorInfoBuilder = new StringBuilder();
-            remoteServiceErrorInfoBuilder.AppendLine($"---------- {nameof(RemoteServiceErrorInfo)} ----------");
-            remoteServiceErrorInfoBuilder.AppendLine( _jsonSerializer.Serialize(remoteServiceErrorInfo, indented: true));
-            Logger.LogWithLevel(logLevel, remoteServiceErrorInfoBuilder.ToString());
-
-            Logger.LogException(context.Exception, logLevel);
-
-            await context.HttpContext
-                .RequestServices
-                .GetRequiredService<IExceptionNotifier>()
-                .NotifyAsync(
-                    new ExceptionNotificationContext(context.Exception)
-                );
-
-            context.Exception = null; //Handled!
         }
+
+        context.Exception = null; //Handled!
     }
 }

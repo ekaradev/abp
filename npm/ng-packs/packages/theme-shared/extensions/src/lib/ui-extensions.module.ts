@@ -5,6 +5,7 @@ import {
   NgbDatepickerModule,
   NgbDropdownModule,
   NgbTimepickerModule,
+  NgbTypeaheadModule,
 } from '@ng-bootstrap/ng-bootstrap';
 import { NgxValidateCoreModule } from '@ngx-validate/core';
 import { DateTimePickerComponent } from './components/date-time-picker/date-time-picker.component';
@@ -15,6 +16,7 @@ import { GridActionsComponent } from './components/grid-actions/grid-actions.com
 import { PageToolbarComponent } from './components/page-toolbar/page-toolbar.component';
 import { DisabledDirective } from './directives/disabled.directive';
 import { PropDataDirective } from './directives/prop-data.directive';
+import { CreateInjectorPipe } from './pipes/create-injector.pipe';
 
 @NgModule({
   exports: [
@@ -25,6 +27,7 @@ import { PropDataDirective } from './directives/prop-data.directive';
     ExtensibleTableComponent,
     PropDataDirective,
     DisabledDirective,
+    CreateInjectorPipe,
   ],
   declarations: [
     DateTimePickerComponent,
@@ -35,6 +38,7 @@ import { PropDataDirective } from './directives/prop-data.directive';
     ExtensibleTableComponent,
     PropDataDirective,
     DisabledDirective,
+    CreateInjectorPipe,
   ],
   imports: [
     CoreModule,
@@ -43,6 +47,13 @@ import { PropDataDirective } from './directives/prop-data.directive';
     NgbDatepickerModule,
     NgbDropdownModule,
     NgbTimepickerModule,
+    NgbTypeaheadModule,
   ],
+})
+export class BaseUiExtensionsModule {}
+
+@NgModule({
+  exports: [BaseUiExtensionsModule],
+  imports: [BaseUiExtensionsModule],
 })
 export class UiExtensionsModule {}

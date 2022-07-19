@@ -1,29 +1,43 @@
-﻿# ABP Framework Road Map
+# ABP Framework Road Map
 
-You can always check the milestone planning and the prioritized backlog issues on [the GitHub repository](https://github.com/abpframework/abp/milestones) for a detailed road map.
+This document provides a road map, release schedule and planned features for the ABP Framework.
 
-While we will **continue to add other exciting features**, we will work on the following major items in the **middle term**:
+## Next Versions
 
-* **Blazor UI** for the framework and all the pre-built modules.
-* **.NET 5.0**! As Microsoft has announced that the .NET 5.0 will be released in November 2020, we will prepare for this change before and move to the .NET 5.0 just after Microsoft releases it. We hope a smooth transition.
+### v6.0
 
-Beside this middle term goals, there are many features in the [backlog](https://github.com/abpframework/abp/milestone/2). Here, a list of some major items in the backlog;
+In [6.0 milestone](https://github.com/abpframework/abp/milestone/61), we will be mostly working on the following topics:
 
-* [#2882](https://github.com/abpframework/abp/issues/2882) / Providing a **gRPC integration** infrastructure (while it is [already possible](https://github.com/abpframework/abp-samples/tree/master/GrpcDemo) to create or consume gRPC endpoints for your application, we plan to create endpoints for the [standard application modules](https://docs.abp.io/en/abp/latest/Modules/Index))
-* [#236](https://github.com/abpframework/abp/issues/236) Resource based authorization system
+* Providing an OpenIddict integration to replace current IdentityServer4 integration.
+* Maturing and documenting the [eShopOnAbp](https://github.com/abpframework/eShopOnAbp) project, writing a free e-book that explains the solution.
+* Working on the [LeptonX](https://blog.abp.io/abp/LeptonX-Theme-for-ABP-Framework-Alpha-Release) theme and making it as the default theme for the ABP Framework UI options.
+* Improvements on the existing features and providing more guides.
+
+The planned stable release date for v6.0 is **July, 2022**.
+
+> After the version 6.0, we will be working for ABP 7.0 which will be released in the end of 2022 based on .NET 7.0.
+
+## Backlog Items
+
+The *Next Versions* section above shows the main focus of the planned versions. However, in each release we add new features to the core framework and the [application modules](Modules/Index.md).
+
+Here, a list of major items in the backlog we are considering to work on in the next versions.
+
+* [#2183](https://github.com/abpframework/abp/issues/2183) / Dapr integration
+* [#6655](https://github.com/abpframework/abp/pull/6655) / Use Typescript for the MVC UI
+* [#236](https://github.com/abpframework/abp/issues/236) / Resource based authorization system
+* [#2882](https://github.com/abpframework/abp/issues/2882) / Providing a gRPC integration infrastructure (while it is [already possible](https://github.com/abpframework/abp-samples/tree/master/GrpcDemo) to create or consume gRPC endpoints for your application, we plan to create endpoints for the [standard application modules](https://docs.abp.io/en/abp/latest/Modules/Index))
 * [#1754](https://github.com/abpframework/abp/issues/1754) / Multi-lingual entities
-* [#347](https://github.com/abpframework/abp/issues/347) / Support MongoDB ACID transactions
-* [#633](https://github.com/abpframework/abp/issues/633) / Realtime notification system
 * [#57](https://github.com/abpframework/abp/issues/57) / Built-in CQRS infrastructure
-* [#4222](https://github.com/abpframework/abp/issues/4222) / Kafka integration for the Distributed Event Bus
-* [#336](https://github.com/abpframework/abp/issues/336) / Health Check abstraction
+* [#336](https://github.com/abpframework/abp/issues/336) / Health Check abstractions
 * [#2532](https://github.com/abpframework/abp/issues/2532), [#2564](https://github.com/abpframework/abp/issues/2465) / CosmosDB integration with EF Core and MongoDB API
-* [#1168](https://github.com/abpframework/abp/issues/1168) / Official Vue UI startup template
-* [#1638](https://github.com/abpframework/abp/issues/1638) Official React startup template
 * [#4223](https://github.com/abpframework/abp/issues/4223) / WebHook system
 * [#162](https://github.com/abpframework/abp/issues/162) / Azure ElasticDB Integration for multitenancy
 * [#2296](https://github.com/abpframework/abp/issues/2296) / Feature toggling infrastructure
 
-The backlog items are subject to change. We are adding new items and changing priorities based on the community feedbacks and goals of the project.
+You can always check the milestone planning and the prioritized backlog issues on [the GitHub repository](https://github.com/abpframework/abp/milestones) for a detailed road map. The backlog items are subject to change. We are adding new items and changing priorities based on the community feedbacks and goals of the project.
 
-Vote for your favorite feature on the related GitHub issues (and write your thoughts). You can create an issue on [the GitHub repository](https://github.com/abpframework/abp) for your feature requests, but first search in in the existing issues.
+## Feature Requests
+
+Vote for your favorite feature on the related GitHub issues (and write your thoughts). You can create an issue on [the GitHub repository](https://github.com/abpframework/abp) for your feature requests, but first search in the existing issues.
+

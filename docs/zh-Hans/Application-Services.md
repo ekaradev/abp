@@ -87,7 +87,7 @@ public class CreateBookDto
 }
 ```
 
-有关DTO更的教程,请参见[数据传输对象文档](Entities.md)
+有关DTO更多的教程,请参见[数据传输对象文档](Entities.md)
 
 ### BookAppService(实现)
 
@@ -330,7 +330,7 @@ public class BookAppService :
 }
 ````
 
-`CrudAppService`实现了`ICrudAppService`接口中声明的所有方法. 然后,你可以添加自己的自定义方法或覆盖和自定义实现.
+`CrudAppService`实现了`ICrudAppService`接口中声明的所有方法. 然后,你可以添加自己的自定义方法或重写和自定义实现.
 
 > `CrudAppService` 有不同数量泛型参数的版本,你可以选择适合的使用.
 
@@ -353,12 +353,12 @@ public class DistrictAppService
     {
     }
 
-    protected override async Task DeleteByIdAsync(DistrictKey id)
+    protected async override Task DeleteByIdAsync(DistrictKey id)
     {
         await Repository.DeleteAsync(d => d.CityId == id.CityId && d.Name == id.Name);
     }
 
-    protected override async Task<District> GetEntityByIdAsync(DistrictKey id)
+    protected async override Task<District> GetEntityByIdAsync(DistrictKey id)
     {
         return await AsyncQueryableExecuter.FirstOrDefaultAsync(
             Repository.Where(d => d.CityId == id.CityId && d.Name == id.Name)

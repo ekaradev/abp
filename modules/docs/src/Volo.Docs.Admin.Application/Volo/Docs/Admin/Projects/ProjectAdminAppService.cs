@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Data;
 using Volo.Abp.Guids;
 using Volo.Docs.Documents;
 using Volo.Docs.Documents.FullSearch.Elastic;
@@ -18,13 +19,13 @@ namespace Volo.Docs.Admin.Projects
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IDocumentRepository _documentRepository;
-        private readonly IDocumentFullSearch _documentFullSearch;
+        private readonly IDocumentFullSearch _elasticSearchService;
         private readonly IGuidGenerator _guidGenerator;
 
         public ProjectAdminAppService(
             IProjectRepository projectRepository,
             IDocumentRepository documentRepository,
-            IDocumentFullSearch documentFullSearch,
+            IDocumentFullSearch elasticSearchService,
             IGuidGenerator guidGenerator)
         {
             ObjectMapperContext = typeof(DocsAdminApplicationModule);
@@ -32,7 +33,7 @@ namespace Volo.Docs.Admin.Projects
 
             _projectRepository = projectRepository;
             _documentRepository = documentRepository;
-            _documentFullSearch = documentFullSearch;
+            _elasticSearchService = elasticSearchService;
             _guidGenerator = guidGenerator;
         }
 
@@ -42,9 +43,10 @@ namespace Volo.Docs.Admin.Projects
 
             var totalCount = await _projectRepository.GetCountAsync();
 
-            var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(projects);
-
-            return new PagedResultDto<ProjectDto>(totalCount, dtos);
+            return new PagedResultDto<ProjectDto>(
+                totalCount,
+                ObjectMapper.Map<List<Project>, List<ProjectDto>>(projects)
+                );
         }
 
         public async Task<ProjectDto> GetAsync(Guid id)
@@ -96,6 +98,7 @@ namespace Volo.Docs.Admin.Projects
             project.SetFormat(input.Format);
             project.SetNavigationDocumentName(input.NavigationDocumentName);
             project.SetDefaultDocumentName(input.DefaultDocumentName);
+            project.SetConcurrencyStampIfNotNull(input.ConcurrencyStamp);
 
             project.MinimumVersion = input.MinimumVersion;
             project.MainWebsiteUrl = input.MainWebsiteUrl;
@@ -119,53 +122,38 @@ namespace Volo.Docs.Admin.Projects
 
         public async Task ReindexAsync(ReindexInput input)
         {
-            var project = await _projectRepository.GetAsync(input.ProjectId);
+            _elasticSearchService.ValidateElasticSearchEnabled();
 
-            await _documentFullSearch.DeleteAllByProjectIdAsync(project.Id);
+            await ReindexProjectAsync(input.ProjectId);
+        }
 
-            var docs = await _documentRepository.GetListByProjectId(project.Id);
-
-            foreach (var doc in docs)
+        private async Task ReindexProjectAsync(Guid projectId)
+        {
+            var project = await _projectRepository.FindAsync(projectId);
+            if (project == null)
             {
-                if (doc.FileName == project.NavigationDocumentName)
-                {
-                    continue;
-                }
+                throw new Exception("Cannot find the project with the Id " + projectId);
+            }
 
-                if (doc.FileName == project.ParametersDocumentName)
-                {
-                    continue;
-                }
+            var docs = (await _documentRepository.GetListByProjectId(project.Id))
+                .Where(doc => doc.FileName != project.NavigationDocumentName && doc.FileName != project.ParametersDocumentName)
+                .ToList();
+            await _elasticSearchService.DeleteAllByProjectIdAsync(project.Id);
 
-                await _documentFullSearch.AddOrUpdateAsync(doc);
+            if(docs.Any())
+            {
+                await _elasticSearchService.AddOrUpdateManyAsync(docs);    
             }
         }
 
         public async Task ReindexAllAsync()
         {
-            await _documentFullSearch.DeleteAllAsync();
-
-            var docs = await _documentRepository.GetListAsync();
+            _elasticSearchService.ValidateElasticSearchEnabled();
             var projects = await _projectRepository.GetListAsync();
-            foreach (var doc in docs)
+         
+            foreach (var project in projects)
             {
-                var project = projects.FirstOrDefault(x => x.Id == doc.ProjectId);
-                if (project == null)
-                {
-                    continue;
-                }
-
-                if (doc.FileName == project.NavigationDocumentName)
-                {
-                    continue;
-                }
-
-                if (doc.FileName == project.ParametersDocumentName)
-                {
-                    continue;
-                }
-
-                await _documentFullSearch.AddOrUpdateAsync(doc);
+                await ReindexProjectAsync(project.Id);
             }
         }
     }

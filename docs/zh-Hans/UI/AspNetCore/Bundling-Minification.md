@@ -48,7 +48,7 @@ namespace MyCompany.MyProject
 </abp-style-bundle>
 ````
 
-`abp-script-bundle`定义了一个带有**唯一名称**的样式包:`MyGlobalBundle`. 使用方法很容易理解. 让我们看看它是如何*工作的*:
+`abp-style-bundle`定义了一个带有**唯一名称**的样式包:`MyGlobalBundle`. 使用方法很容易理解. 让我们看看它是如何*工作的*:
 
 * 当首次请求时,ABP从提供的文件中 **(延迟)lazy** 创建. 后续将从 **缓存** 中返回内容. 这意味着如果你有条件地将文件添加到包中,它只执行一次, 并且条件的任何更改都不会影响下一个请求的包.
 * 在`development`环境中ABP会将包文件**单独**添加到页面中, 其他环境(`staging`,`production`...)会自动捆绑和压缩.
@@ -167,7 +167,27 @@ public class MyWebExtensionModule : AbpModule
 }
 ````
 
-> 无法通过代码配置未命名的bundle tag helpers, 因为它们的名称在开发时是未知的. 建议始终使用bundle tag helper的名称.
+你也可以使用 `ConfigureAll` 方法配置所有现有的捆绑包:
+
+````C#
+[DependsOn(typeof(MyWebModule))]
+public class MyWebExtensionModule : AbpModule
+{
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        Configure<AbpBundlingOptions>(options =>
+        {
+            options
+                .ScriptBundles
+                .ConfigureAll(bundle => {
+                    bundle.AddFiles(
+                        "/scripts/my-extension-script.js"
+                    );
+                });
+        });
+    }
+}
+````
 
 ### Bundle 贡献者
 

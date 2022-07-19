@@ -3,88 +3,91 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.Mvc.ApplicationConfigurations;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.Features;
 using Volo.Abp.Validation.StringValues;
 
-namespace Volo.Abp.FeatureManagement.Web.Pages.FeatureManagement
+namespace Volo.Abp.FeatureManagement.Web.Pages.FeatureManagement;
+
+public class FeatureManagementModal : AbpPageModel
 {
-    public class FeatureManagementModal : AbpPageModel
+    [Required]
+    [HiddenInput]
+    [BindProperty(SupportsGet = true)]
+    public string ProviderName { get; set; }
+
+    [HiddenInput]
+    [BindProperty(SupportsGet = true)]
+    public string ProviderKey { get; set; }
+
+    [BindProperty]
+    public List<FeatureGroupViewModel> FeatureGroups { get; set; }
+
+    public GetFeatureListResultDto FeatureListResultDto { get; set; }
+
+    protected IFeatureAppService FeatureAppService { get; }
+
+    protected ILocalEventBus LocalEventBus { get; }
+
+    public FeatureManagementModal(
+        IFeatureAppService featureAppService,
+        ILocalEventBus localEventBus)
     {
-        [Required]
-        [HiddenInput]
-        [BindProperty(SupportsGet = true)]
-        public string ProviderName { get; set; }
+        ObjectMapperContext = typeof(AbpFeatureManagementWebModule);
 
-        [HiddenInput]
-        [BindProperty(SupportsGet = true)]
-        public string ProviderKey { get; set; }
+        FeatureAppService = featureAppService;
+        LocalEventBus = localEventBus;
+    }
 
-        [BindProperty]
-        public List<FeatureGroupViewModel> FeatureGroups { get; set; }
+    public virtual async Task<IActionResult> OnGetAsync()
+    {
+        ValidateModel();
 
-        public GetFeatureListResultDto FeatureListResultDto { get; set; }
+        FeatureListResultDto = await FeatureAppService.GetAsync(ProviderName, ProviderKey);
 
-        protected IFeatureAppService FeatureAppService { get; }
+        return Page();
+    }
 
-        public FeatureManagementModal(IFeatureAppService featureAppService)
+    public virtual async Task<IActionResult> OnPostAsync()
+    {
+        var features = new UpdateFeaturesDto
         {
-            ObjectMapperContext = typeof(AbpFeatureManagementWebModule);
-
-            FeatureAppService = featureAppService;
-        }
-
-        public virtual async Task<IActionResult> OnGetAsync()
-        {
-            ValidateModel();
-
-            FeatureListResultDto = await FeatureAppService.GetAsync(ProviderName, ProviderKey);
-
-            return Page();
-        }
-
-        public virtual async Task<IActionResult> OnPostAsync()
-        {
-            var features = new UpdateFeaturesDto
+            Features = FeatureGroups.SelectMany(g => g.Features).Select(f => new UpdateFeatureDto
             {
-                Features = FeatureGroups.SelectMany(g => g.Features).Select(f => new UpdateFeatureDto
-                {
-                    Name = f.Name,
-                    Value = f.Type == nameof(ToggleStringValueType) ? f.BoolValue.ToString() : f.Value
-                }).ToList()
-            };
+                Name = f.Name,
+                Value = f.Type == nameof(ToggleStringValueType) ? f.BoolValue.ToString() : f.Value
+            }).ToList()
+        };
 
-            await FeatureAppService.UpdateAsync(ProviderName, ProviderKey, features);
+        await FeatureAppService.UpdateAsync(ProviderName, ProviderKey, features);
 
-            return NoContent();
-        }
+        await LocalEventBus.PublishAsync(
+            new CurrentApplicationConfigurationCacheResetEventData()
+        );
 
-        public virtual bool IsDisabled(string providerName)
-        {
-            return providerName != ProviderName && providerName != DefaultValueFeatureValueProvider.ProviderName;
-        }
+        return NoContent();
+    }
 
-        public class ProviderInfoViewModel
-        {
-            public string ProviderName { get; set; }
+    public virtual bool IsDisabled(string providerName)
+    {
+        return providerName != ProviderName && providerName != DefaultValueFeatureValueProvider.ProviderName;
+    }
 
-            public string ProviderKey { get; set; }
-        }
+    public class FeatureGroupViewModel
+    {
+        public List<FeatureViewModel> Features { get; set; }
+    }
 
-        public class FeatureGroupViewModel
-        {
-            public List<FeatureViewModel> Features { get; set; }
-        }
+    public class FeatureViewModel
+    {
+        public string Name { get; set; }
 
-        public class FeatureViewModel
-        {
-            public string Name { get; set; }
+        public string Value { get; set; }
 
-            public string Value { get; set; }
+        public bool BoolValue { get; set; }
 
-            public bool BoolValue { get; set; }
-
-            public string Type { get; set; }
-        }
+        public string Type { get; set; }
     }
 }
