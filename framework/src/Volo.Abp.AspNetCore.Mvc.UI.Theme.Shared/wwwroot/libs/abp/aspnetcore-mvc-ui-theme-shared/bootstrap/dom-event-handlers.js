@@ -56,15 +56,19 @@
     }
 
     abp.dom.initializers.initializeToolTips = function ($tooltips) {
-        $tooltips.tooltip({
-            container: 'body'
-        });
+        for (var i = 0; i < $tooltips.length; i++) {
+            new bootstrap.Tooltip($tooltips[i], {
+                container: `body`
+              });
+        }
     }
 
     abp.dom.initializers.initializePopovers = function ($popovers) {
-        $popovers.popover({
-            container: 'body'
-        });
+        for (var i = 0; i < $popovers.length; i++) {
+            new bootstrap.Popover($popovers[i], {
+                container: `body`
+              });
+        }
     }
 
     abp.dom.initializers.initializeTimeAgos = function ($timeagos) {
@@ -74,20 +78,29 @@
     abp.dom.initializers.initializeAutocompleteSelects = function ($autocompleteSelects) {
         if ($autocompleteSelects.length) {
             $autocompleteSelects.each(function () {
-                var $select = $(this);
-                var url = $(this).data("autocompleteApiUrl");
-                var displayName = $(this).data("autocompleteDisplayProperty");
-                var displayValue = $(this).data("autocompleteValueProperty");
-                var itemsPropertyName = $(this).data("autocompleteItemsProperty");
-                var filterParamName = $(this).data("autocompleteFilterParamName");
-                var selectedText = $(this).data("autocompleteSelectedItemName");
-                var parentSelector = $(this).data("autocompleteParentSelector");
-                if(!parentSelector && $select.parents(".modal.fade").length === 1){
+                let $select = $(this);
+                let url = $(this).data("autocompleteApiUrl");
+                let displayName = $(this).data("autocompleteDisplayProperty");
+                let displayValue = $(this).data("autocompleteValueProperty");
+                let itemsPropertyName = $(this).data("autocompleteItemsProperty");
+                let filterParamName = $(this).data("autocompleteFilterParamName");
+                let selectedText = $(this).data("autocompleteSelectedItemName");
+                let parentSelector = $(this).data("autocompleteParentSelector");
+                let allowClear = $(this).data("autocompleteAllowClear");
+                let placeholder = $(this).data("autocompletePlaceholder");
+                if (allowClear && placeholder == undefined) {
+                    placeholder = " ";
+                }
+
+                if (!parentSelector && $select.parents(".modal.fade").length === 1) {
                     parentSelector = ".modal.fade";
                 }
-                var name = $(this).attr("name");
-                var selectedTextInputName = name.substring(0, name.length - 1) + "_Text]";
-                var selectedTextInput = $('<input>', {
+                let name = $(this).attr("name");
+                let selectedTextInputName = name + "_Text";
+                if(name.indexOf(".ExtraProperties[") > 0) {
+                    selectedTextInputName = name.substring(0, name.length - 1) + "_Text]"
+                }
+                let selectedTextInput = $('<input>', {
                     type: 'hidden',
                     id: selectedTextInputName,
                     name: selectedTextInputName,
@@ -99,15 +112,16 @@
                 $select.select2({
                     ajax: {
                         url: url,
+                        delay: 250,
                         dataType: "json",
                         data: function (params) {
-                            var query = {};
+                            let query = {};
                             query[filterParamName] = params.term;
                             return query;
                         },
                         processResults: function (data) {
-                            var retVal = [];
-                            var items = data;
+                            let retVal = [];
+                            let items = data;
                             if (itemsPropertyName) {
                                 items = data[itemsPropertyName];
                             }
@@ -125,6 +139,12 @@
                     },
                     width: '100%',
                     dropdownParent: parentSelector ? $(parentSelector) : $('body'),
+                    allowClear: allowClear,
+                    language: abp.localization.currentCulture.cultureName,
+                    placeholder: {
+                        id: '-1',
+                        text: placeholder
+                    }
                 });
                 $select.on('select2:select', function (e) {
                     selectedTextInput.val(e.params.data.text);
@@ -177,17 +197,24 @@
             });
     }
 
+   
+
+    abp.dom.initializers.initializeAbpCspStyles =  function ($abpCspStyles){
+        $abpCspStyles.attr("rel", "stylesheet");
+    }
+
     abp.dom.onNodeAdded(function (args) {
-        abp.dom.initializers.initializeToolTips(args.$el.findWithSelf('[data-toggle="tooltip"]'));
-        abp.dom.initializers.initializePopovers(args.$el.findWithSelf('[data-toggle="popover"]'));
+        abp.dom.initializers.initializeToolTips(args.$el.findWithSelf('[data-bs-toggle="tooltip"]'));
+        abp.dom.initializers.initializePopovers(args.$el.findWithSelf('[data-bs-toggle="popover"]'));
         abp.dom.initializers.initializeTimeAgos(args.$el.findWithSelf('.timeago'));
         abp.dom.initializers.initializeForms(args.$el.findWithSelf('form'), true);
         abp.dom.initializers.initializeScript(args.$el);
         abp.dom.initializers.initializeAutocompleteSelects(args.$el.findWithSelf('.auto-complete-select'));
+        abp.dom.initializers.initializeAbpCspStyles(args.$el.findWithSelf("link[abp-csp-style]"));
     });
 
     abp.dom.onNodeRemoved(function (args) {
-        args.$el.findWithSelf('[data-toggle="tooltip"]').each(function () {
+        args.$el.findWithSelf('[data-bs-toggle="tooltip"]').each(function () {
             $('#' + $(this).attr('aria-describedby')).remove();
         });
     });
@@ -195,16 +222,17 @@
     abp.event.on('abp.configurationInitialized', function () {
         abp.libs.bootstrapDatepicker.normalizeLanguageConfig();
     });
+    
 
     $(function () {
-        abp.dom.initializers.initializeToolTips($('[data-toggle="tooltip"]'));
-        abp.dom.initializers.initializePopovers($('[data-toggle="popover"]'));
+        abp.dom.initializers.initializeToolTips($('[data-bs-toggle="tooltip"]'));
+        abp.dom.initializers.initializePopovers($('[data-bs-toggle="popover"]'));
         abp.dom.initializers.initializeTimeAgos($('.timeago'));
         abp.dom.initializers.initializeDatepickers($(document));
         abp.dom.initializers.initializeForms($('form'));
         abp.dom.initializers.initializeAutocompleteSelects($('.auto-complete-select'));
         $('[data-auto-focus="true"]').first().findWithSelf('input,select').focus();
-
+        abp.dom.initializers.initializeAbpCspStyles($("link[abp-csp-style]"));
     });
 
 })(jQuery);

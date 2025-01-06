@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Server;
 using OpenIddict.Server.AspNetCore;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.OpenIddict;
 
@@ -17,12 +18,14 @@ namespace Volo.Abp.Account.Web.Pages.Account;
 public class OpenIddictSupportedLoginModel : LoginModel
 {
     protected AbpOpenIddictRequestHelper OpenIddictRequestHelper { get; }
+
     public OpenIddictSupportedLoginModel(
         IAuthenticationSchemeProvider schemeProvider,
         IOptions<AbpAccountOptions> accountOptions,
         IOptions<IdentityOptions> identityOptions,
+        IdentityDynamicClaimsPrincipalContributorCache identityDynamicClaimsPrincipalContributorCache,
         AbpOpenIddictRequestHelper openIddictRequestHelper)
-        : base(schemeProvider, accountOptions, identityOptions)
+        : base(schemeProvider, accountOptions, identityOptions, identityDynamicClaimsPrincipalContributorCache)
     {
         OpenIddictRequestHelper = openIddictRequestHelper;
     }
@@ -34,7 +37,8 @@ public class OpenIddictSupportedLoginModel : LoginModel
         var request = await OpenIddictRequestHelper.GetFromReturnUrlAsync(ReturnUrl);
         if (request?.ClientId != null)
         {
-            ShowCancelButton = true;
+            // TODO: Find a proper cancel way.
+            // ShowCancelButton = true;
 
             LoginInput.UserNameOrEmailAddress = request.LoginHint;
 

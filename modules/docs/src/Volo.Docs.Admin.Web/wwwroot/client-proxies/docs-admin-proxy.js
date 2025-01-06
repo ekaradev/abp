@@ -61,6 +61,20 @@
       }, ajaxParams));
     };
 
+    volo.docs.admin.documentsAdmin.getFilterItems = function(ajaxParams) {
+      return abp.ajax($.extend(true, {
+        url: abp.appPath + 'api/docs/admin/documents/GetFilterItems',
+        type: 'GET'
+      }, ajaxParams));
+    };
+
+    volo.docs.admin.documentsAdmin.getProjects = function(ajaxParams) {
+      return abp.ajax($.extend(true, {
+        url: abp.appPath + 'api/docs/admin/documents/GetProjects',
+        type: 'GET'
+      }, ajaxParams));
+    };
+
   })();
 
   // controller volo.docs.admin.projectsAdmin
@@ -71,7 +85,7 @@
 
     volo.docs.admin.projectsAdmin.getList = function(input, ajaxParams) {
       return abp.ajax($.extend(true, {
-        url: abp.appPath + 'api/docs/admin/projects' + abp.utils.buildQueryString([{ name: 'skipCount', value: input.skipCount }, { name: 'maxResultCount', value: input.maxResultCount }, { name: 'sorting', value: input.sorting }]) + '',
+        url: abp.appPath + 'api/docs/admin/projects' + abp.utils.buildQueryString([{ name: 'sorting', value: input.sorting }, { name: 'skipCount', value: input.skipCount }, { name: 'maxResultCount', value: input.maxResultCount }]) + '',
         type: 'GET'
       }, ajaxParams));
     };
@@ -112,6 +126,13 @@
         url: abp.appPath + 'api/docs/admin/projects/ReindexAll',
         type: 'POST',
         dataType: null
+      }, ajaxParams));
+    };
+
+    volo.docs.admin.projectsAdmin.getListWithoutDetails = function(ajaxParams) {
+      return abp.ajax($.extend(true, {
+        url: abp.appPath + 'api/docs/admin/projects/GetListProjectWithoutDetailsAsync',
+        type: 'GET'
       }, ajaxParams));
     };
 

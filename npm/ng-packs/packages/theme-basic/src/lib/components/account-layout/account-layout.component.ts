@@ -3,6 +3,7 @@ import { eLayoutType, SubscriptionService } from '@abp/ng.core';
 import { LayoutService } from '../../services/layout.service';
 
 @Component({
+  standalone: false,
   selector: 'abp-layout-account',
   templateUrl: './account-layout.component.html',
   providers: [LayoutService, SubscriptionService],

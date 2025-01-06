@@ -1,26 +1,10 @@
 (function ($) {
     $(function () {
-        $('li:not(.last-link) a.tree-toggle').click(function () {
-            $(this).parent().children('ul.tree').toggle(100);
-            $(this).closest('li').toggleClass('selected-tree');
-        });
 
-        $('li:not(.last-link) span.plus-icon i.fa-chevron-right').click(
-            function () {
-                var $element = $(this).parent();
-                var $filter = $('.docs-version #filter');
-
-                if ($filter && $filter.val() != ''){
-                    return;
-                }
-
-                $element.parent().children('ul.tree').toggle(100);
-                $element.closest('li').toggleClass('selected-tree');
-            }
-        );
+        window.Toc.helpers.initNavEvent();
 
         var scrollTopBtn = $('.scroll-top-btn');
-        var enoughHeight = $('.docs-sidebar-wrapper > .docs-top').height() + 60;
+        var enoughHeight = $('.docs-sidebar-wrapper > .docs-top').height();
         var enoughHeightPlus = 500;
 
         $(window).scroll(function () {
@@ -133,6 +117,12 @@
             theme: 'minimal-dark',
             alwaysShowScrollbar: 0,
         });
+
+        $('.mCustomScrollbar-1').mCustomScrollbar({
+            theme: 'minimal-dark',
+            alwaysShowScrollbar: 0,
+            horizontalScroll: true,
+        });
     }
 
     window.Toc.helpers.createNavList = function () {
@@ -153,9 +143,33 @@
         $li.append($a);
         return $li;
     };
+    
+    window.Toc.helpers.initNavEvent = function () {
+        $('li:not(.last-link) a.tree-toggle').off('click');
+        $('li:not(.last-link) span.plus-icon i.fa-chevron-right').off('click');
+        
+        $('li:not(.last-link) a.tree-toggle').click(function () {
+            $(this).parent().children('ul.tree').toggle(100);
+            $(this).closest('li').toggleClass('selected-tree');
+        });
+
+        $('li:not(.last-link) span.plus-icon i.fa-chevron-right').click(
+            function () {
+                var $element = $(this).parent();
+                var $filter = $('.docs-version #filter');
+
+                if ($filter && $filter.val() != ''){
+                    return;
+                }
+
+                $element.parent().children('ul.tree').toggle(100);
+                $element.closest('li').toggleClass('selected-tree');
+            }
+        );
+    }
 
     function docsCriteria() {
-        var docsContentWidth = $('.docs-content').width() - 20;
+        var docsContentWidth = $('.docs-content').width() - 74;
         $('.alert-criteria').width(docsContentWidth);
     }
     $(document).ready(function () {

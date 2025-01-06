@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -66,6 +67,13 @@ public class AngularSourceCodeAdder : ITransientDependency
         }
     }
 
+    public async Task AddModuleConfigurationAsync(string angularPath, string moduleName)
+    {
+        await AddProjectToEnvironmentTsAsync(angularPath, moduleName);
+        await AddProjectToAppModuleTsAsync(angularPath, moduleName);
+        await AddProjectToAppRoutingTsAsync(angularPath, moduleName);
+    }
+
     private async Task AddProjectsToAngularJsonAsync(string angularPath, List<string> projects)
     {
         var angularJsonFilePath = Path.Combine(angularPath, "angular.json");
@@ -84,7 +92,7 @@ public class AngularSourceCodeAdder : ITransientDependency
                 new JProperty("prefix", "abp"),
                 new JProperty("architect", new JObject(
                     new JProperty("build", new JObject(
-                        new JProperty("builder", "@angular-devkit/build-ng-packagr:build"),
+                        new JProperty("builder", "@angular-devkit/build-angular:ng-packagr"),
                         new JProperty("options", new JObject(
                             new JProperty("tsConfig", $"projects/{project}/tsconfig.lib.json"),
                             new JProperty("project", $"projects/{project}/ng-package.json")
@@ -229,6 +237,87 @@ public class AngularSourceCodeAdder : ITransientDependency
         File.WriteAllText(tsConfigPath, tsConfigAsJson.ToString(Formatting.Indented));
     }
 
+    private async Task AddProjectToEnvironmentTsAsync(string angularPath, string moduleName)
+    {
+        var filePath = Path.Combine(angularPath, "src", "environments", "environment.ts");
+
+        if (!File.Exists(filePath))
+        {
+            return;
+        }
+
+        var fileContent = File.ReadAllText(filePath);
+
+        fileContent = Regex.Replace(fileContent, @"apis\s*:\s*{",
+            "apis: {" + Environment.NewLine +
+            "    " + moduleName.Split(".").Last() + ": {" + Environment.NewLine +
+            "      rootNamespace: '" + moduleName + "'," + Environment.NewLine +
+            "    },");
+
+        File.WriteAllText(filePath, fileContent);
+    }
+
+    private async Task AddProjectToAppModuleTsAsync(string angularPath, string moduleName)
+    {
+        var filePath = Path.Combine(angularPath, "src", "app", "app.module.ts");
+
+        if (!File.Exists(filePath))
+        {
+            return;
+        }
+
+        var fileContent = File.ReadAllText(filePath);
+
+        var moduleNameAsConfigPath = moduleName.ToKebabCase();
+
+        if (moduleName.Contains("."))
+        {
+            var moduleNameSplited = moduleName.Split(".");
+            moduleNameAsConfigPath = moduleNameSplited.Take(moduleNameSplited.Length - 1).JoinAsString(".").ToKebabCase() + "/" + moduleNameSplited.Last().ToKebabCase();
+        }
+
+        fileContent = "import { " + moduleName.Split(".").Last() + "ConfigModule } from '@" + moduleNameAsConfigPath + "/config';" + Environment.NewLine + fileContent;
+
+        fileContent = Regex.Replace(fileContent, "imports\\s*:\\s*\\[",
+            "imports: [" + Environment.NewLine +
+            "    " + moduleName.Split(".").Last() + "ConfigModule.forRoot(),");
+
+        File.WriteAllText(filePath, fileContent);
+    }
+
+    private async Task AddProjectToAppRoutingTsAsync(string angularPath, string moduleName)
+    {
+        string filePath = Path.Combine(angularPath, "src", "app", "app-routing.module.ts");
+
+        if (!File.Exists(filePath))
+        {
+            return;
+        }
+
+        string fileContent = File.ReadAllText(filePath);
+        string moduleNameAsConfigPath = moduleName.ToKebabCase();
+        string path = moduleName.ToKebabCase();
+
+        if (moduleName.Contains("."))
+        {
+            var moduleNameSplitted = moduleName.Split(".");
+            moduleNameAsConfigPath = moduleNameSplitted.Take(moduleNameSplitted.Length - 1).JoinAsString(".").ToKebabCase() + "/" + moduleNameSplitted.Last().ToKebabCase();
+            path = $"{moduleNameSplitted.Last().ToKebabCase()}";
+        }
+
+        string pattern = "Routes\\s*=\\s*\\[";
+        string newContent = $@"Routes = [
+    {{
+        path: '{path.ToKebabCase()}',
+        loadChildren: () => import('@{moduleNameAsConfigPath}')
+            .then(m => m.{(moduleName.Split(".").Length > 1 ? moduleName.Split(".")[1] : moduleName)}Module.forLazy())
+    }},
+";
+
+        fileContent = Regex.Replace(fileContent, pattern, newContent);
+        File.WriteAllText(filePath, fileContent);
+    }
+
     private async Task<List<string>> CopyAndGetNamesOfAngularProjectsAsync(string solutionFilePath,
         string angularProjectsPath)
     {
@@ -256,7 +345,7 @@ public class AngularSourceCodeAdder : ITransientDependency
             {
                 Directory.Delete(vscodeFolder, true);
             }
-            
+
             var projectsInFolder = Directory.GetDirectories(folder);
 
             if (projectsInFolder.Length == 1 && Path.GetFileName(projectsInFolder[0]) == "projects")

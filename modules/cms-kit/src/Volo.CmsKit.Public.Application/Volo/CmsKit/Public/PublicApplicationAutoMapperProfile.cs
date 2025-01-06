@@ -19,25 +19,28 @@ public class PublicApplicationAutoMapperProfile : Profile
 {
     public PublicApplicationAutoMapperProfile()
     {
-        CreateMap<CmsUser, Comments.CmsUserDto>();
+        CreateMap<CmsUser, Comments.CmsUserDto>().MapExtraProperties();
 
         CreateMap<Comment, CommentDto>()
-            .Ignore(x => x.Author);
+            .Ignore(x => x.Author).MapExtraProperties();
 
         CreateMap<Comment, CommentWithDetailsDto>()
             .Ignore(x => x.Replies)
-            .Ignore(x => x.Author);
+            .Ignore(x => x.Author)
+            .MapExtraProperties();
 
         CreateMap<Rating, RatingDto>();
 
-        CreateMap<Page, PageDto>()
-            .Ignore(x => x.ContentFragments);
+        CreateMap<Page, PageCacheItem>().MapExtraProperties();
 
-        CreateMap<BlogPost, BlogPostCommonDto>()
-            .Ignore(x => x.ContentFragments);
+        CreateMap<PageCacheItem, PageDto>().MapExtraProperties();
 
-        CreateMap<MenuItem, MenuItemDto>();
+        CreateMap<Page, PageDto>().MapExtraProperties();
+        
+        CreateMap<BlogPost, BlogPostCommonDto>().MapExtraProperties();
 
-        CreateMap<GlobalResource, GlobalResourceDto>();
+        CreateMap<MenuItem, MenuItemDto>().MapExtraProperties();
+
+        CreateMap<GlobalResource, GlobalResourceDto>().MapExtraProperties();
     }
 }

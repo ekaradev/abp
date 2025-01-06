@@ -28,7 +28,7 @@
     "FilterTopics": "Filter topics",
     "FullSearch": "Search in documents",
     "Volo.Docs.Domain:010001": "Elastic search is not enabled.",
-    "MultipleVersionDocumentInfo": "This document has multiple versions. Select the options best fit for you.",
+    "MultipleVersionDocumentInfo": "There are multiple versions of this document. Pick the options that suit you best.",
     "New": "New",
     "Upd": "Upd",
     "NewExplanation": "Created in the last two weeks.",
@@ -36,6 +36,13 @@
     "Volo.Docs.Domain:010002": "ShortName {ShortName} already exists.",
     "Preview": "preview",
     "Search": "Search",
-    "SearchResults": "Search Results"
+    "SearchResults": "Search Results",
+    "SearchInTheAllDocuments": "Search in the all documents",
+    "Next": "Next",
+    "Previous": "Previous",
+    "ProjectDeletionWarningMessage": "Project will be deleted.",
+    "Docs_Page_Title": "ABP Documentation",
+    "Docs_Page_Description": "Access comprehensive guides and API references in the ABP Documentation, aiding in development and troubleshooting.",
+    "GoogleTranslate": "Google Translate"
   }
 }

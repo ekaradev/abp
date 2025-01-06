@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -30,7 +29,7 @@ public class AbpBackgroundJobsHangfireModule : AbpModule
         }
     }
 
-    private BackgroundJobServer CreateOnlyEnqueueJobServer(IServiceProvider serviceProvider)
+    private BackgroundJobServer? CreateOnlyEnqueueJobServer(IServiceProvider serviceProvider)
     {
         serviceProvider.GetRequiredService<JobStorage>();
         return null;

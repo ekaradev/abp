@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.EntityFrameworkCore.DistributedEvents;
+﻿using Volo.Abp.EntityFrameworkCore.GlobalFilters;
 using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 
@@ -20,7 +19,9 @@ public class AbpEntityFrameworkCorePostgreSqlModule : AbpModule
             }
         });
 
-        context.Services.AddTransient(typeof(IPostgreSqlDbContextEventOutbox<>), typeof(PostgreSqlDbContextEventOutbox<>));
-        context.Services.AddTransient(typeof(IPostgreSqlDbContextEventInbox<>), typeof(PostgreSqlDbContextEventInbox<>));
+        Configure<AbpEfCoreGlobalFilterOptions>(options =>
+        {
+            options.UseDbFunction = true;
+        });
     }
 }

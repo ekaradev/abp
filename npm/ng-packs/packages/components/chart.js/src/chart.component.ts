@@ -16,6 +16,7 @@ import {
 let Chart: any;
 
 @Component({
+  standalone: false,
   selector: 'abp-chart',
   template: `
     <div
@@ -35,7 +36,7 @@ let Chart: any;
   exportAs: 'abpChart',
 })
 export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
-  @Input() type: string;
+  @Input() type!: string;
 
   @Input() data: any = {};
 
@@ -43,9 +44,9 @@ export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   @Input() plugins: any[] = [];
 
-  @Input() width: string;
+  @Input() width?: string;
 
-  @Input() height: string;
+  @Input() height?: string;
 
   @Input() responsive = true;
 
@@ -53,11 +54,14 @@ export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   @Output() initialized = new EventEmitter<boolean>();
 
-  @ViewChild('canvas') canvas: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvas') canvas!: ElementRef<HTMLCanvasElement>;
 
   chart: any;
 
-  constructor(public el: ElementRef, private cdr: ChangeDetectorRef) {}
+  constructor(
+    public el: ElementRef,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngAfterViewInit() {
     import('chart.js/auto').then(module => {
@@ -67,7 +71,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
     });
   }
 
-  onCanvasClick(event) {
+  onCanvasClick(event: MouseEvent) {
     if (this.chart) {
       const element = this.chart.getElementsAtEventForMode(
         event,
@@ -101,6 +105,7 @@ export class ChartComponent implements AfterViewInit, OnDestroy, OnChanges {
       type: this.type as any,
       data: this.data,
       options: this.options,
+      plugins: this.plugins,
     });
   };
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Volo.Abp.Auditing;
@@ -25,7 +26,7 @@ public class AbpAuditingOptions
     /// The name of the application or service writing audit logs.
     /// Default: null.
     /// </summary>
-    public string ApplicationName { get; set; }
+    public string? ApplicationName { get; set; }
 
     /// <summary>
     /// Default: true.
@@ -38,6 +39,12 @@ public class AbpAuditingOptions
     /// </summary>
     public bool AlwaysLogOnException { get; set; }
 
+    /// <summary>
+    /// Disables/enables audit logging for integration services.
+    /// Default: false.
+    /// </summary>
+    public bool IsEnabledForIntegrationServices { get; set; }
+
     public List<Func<AuditLogInfo, Task<bool>>> AlwaysLogSelectors { get; }
 
     public List<AuditLogContributor> Contributors { get; }
@@ -46,11 +53,22 @@ public class AbpAuditingOptions
 
     public IEntityHistorySelectorList EntityHistorySelectors { get; }
 
+    /// <summary>
+    /// Default: true.
+    /// Save entity changes to audit log when any navigation property changes.
+    /// </summary>
+    public bool SaveEntityHistoryWhenNavigationChanges { get; set; } = true;
+
     //TODO: Move this to asp.net core layer or convert it to a more dynamic strategy?
     /// <summary>
     /// Default: false.
     /// </summary>
     public bool IsEnabledForGetRequests { get; set; }
+
+    /// <summary>
+    /// Default: false.
+    /// </summary>
+    public bool DisableLogActionInfo { get; set; }
 
     public AbpAuditingOptions()
     {
@@ -65,7 +83,8 @@ public class AbpAuditingOptions
         IgnoredTypes = new List<Type>
             {
                 typeof(Stream),
-                typeof(Expression)
+                typeof(Expression),
+                typeof(CancellationToken)
             };
 
         EntityHistorySelectors = new EntityHistorySelectorList();

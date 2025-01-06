@@ -18,4 +18,8 @@ public interface IAbpIdentityMongoDbContext : IAbpMongoDbContext
     IMongoCollection<IdentitySecurityLog> SecurityLogs { get; }
 
     IMongoCollection<IdentityLinkUser> LinkUsers { get; }
+
+    IMongoCollection<IdentityUserDelegation> UserDelegations { get; }
+
+    IMongoCollection<IdentitySession> Sessions { get; }
 }

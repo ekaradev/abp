@@ -1,6 +1,7 @@
 {
   "culture": "nl",
   "texts": {
+    "Menu:Account": "Rekening",
     "UserName": "Gebruikersnaam",
     "EmailAddress": "E-mailadres",
     "UserNameOrEmailAddress": "Gebruikersnaam of e-mailadres",
@@ -33,8 +34,11 @@
     "DisplayName:PhoneNumber": "Telefoonnummer",
     "PersonalSettings": "Persoonlijke instellingen",
     "PersonalSettingsSaved": "Persoonlijke instellingen opgeslagen",
+    "PersonalSettingsChangedConfirmationModalTitle": "Persoonlijke gegevens gewijzigd",
+    "PersonalSettingsChangedConfirmationModalDescription": "Als u deze wijzigingen wilt toepassen, moet u inloggen. Wilt u uitloggen?",
     "PasswordChanged": "Wachtwoord veranderd",
     "NewPasswordConfirmFailed": "Bevestig het nieuwe wachtwoord a.u.b.",
+    "NewPasswordSameAsOld": "Het nieuwe wachtwoord moet verschillen van het huidige wachtwoord.",
     "Manage": "Beheer",
     "MyAccount": "Mijn rekening",
     "DisplayName:Abp.Account.IsSelfRegistrationEnabled": "Is zelfregistratie ingeschakeld",
@@ -49,7 +53,7 @@
     "SendPasswordResetLink_Information": "Er wordt een link voor het opnieuw instellen van uw wachtwoord naar uw e-mailadres gestuurd. Als u binnen een paar minuten geen e-mail ontvangt, probeer het dan opnieuw.",
     "PasswordResetMailSentMessage": "Er is een link voor het opnieuw instellen van uw wachtwoord naar uw e-mailadres gestuurd. Als u deze e-mail niet binnen 15 minuten in uw inbox ziet, zoek hem dan in uw map met ongewenste e-mail. Als u de mail daar vindt, markeer hem dan als niet ongewenst.",
     "ResetPassword": "Wachtwoord opnieuw instellen",
-    "ConfirmPassword": "Bevestig (herhaal) het wachtwoord",
+    "ConfirmPassword": "Bevestig het wachtwoord",
     "ResetPassword_Information": "Voer uw nieuwe wachtwoord in.",
     "YourPasswordIsSuccessfullyReset": "Uw wachtwoord is succesvol opnieuw ingesteld.",
     "GoToTheApplication": "Ga naar de applicatie",
@@ -62,6 +66,8 @@
     "PasswordResetInfoInEmail": "We hebben een verzoek ontvangen om uw wachtwoord opnieuw in te stellen. Als u dit verzoek heeft ingediend, klikt u op de volgende link om een nieuw wachtwoord in te stellen.",
     "ResetMyPassword": "Reset mijn wachtwoord",
     "AccessDenied": "Toegang geweigerd!",
-    "AccessDeniedMessage": "U heeft geen toegang tot deze bron."
+    "AccessDeniedMessage": "U heeft geen toegang tot deze bron.",
+    "OrRegisterWith": "Of registreer met:",
+    "RegisterUsingYourProviderAccount": "Registreer met uw {0} -account"
   }
 }

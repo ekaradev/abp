@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace System;
 
@@ -17,6 +17,7 @@ public static class AbpObjectExtensions
     /// <typeparam name="T">Type to be casted</typeparam>
     /// <param name="obj">Object to cast</param>
     /// <returns>Casted object</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T As<T>(this object obj)
         where T : class
     {
@@ -34,7 +35,7 @@ public static class AbpObjectExtensions
     {
         if (typeof(T) == typeof(Guid))
         {
-            return (T)TypeDescriptor.GetConverter(typeof(T)).ConvertFromInvariantString(obj.ToString());
+            return (T)TypeDescriptor.GetConverter(typeof(T)).ConvertFromInvariantString(obj.ToString()!)!;
         }
 
         return (T)Convert.ChangeType(obj, typeof(T), CultureInfo.InvariantCulture);

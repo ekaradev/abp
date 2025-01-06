@@ -1,11 +1,13 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Data;
 using Volo.Abp.Modularity;
+using Volo.Abp.MongoDB.TestApp.FifthContext;
 using Volo.Abp.MongoDB.TestApp.SecondContext;
 using Volo.Abp.MongoDB.TestApp.ThirdDbContext;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.TestApp;
 using Volo.Abp.TestApp.Domain;
+using Volo.Abp.TestApp.MongoDb;
 using Volo.Abp.TestApp.MongoDB;
 
 namespace Volo.Abp.MongoDB;
@@ -18,14 +20,9 @@ public class AbpMongoDbTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        var stringArray = MongoDbFixture.ConnectionString.Split('?');
-        var connectionString = stringArray[0].EnsureEndsWith('/') +
-                                   "Db_" +
-                               Guid.NewGuid().ToString("N") + "/?" + stringArray[1];
-
         Configure<AbpDbConnectionOptions>(options =>
         {
-            options.ConnectionStrings.Default = connectionString;
+            options.ConnectionStrings.Default = MongoDbFixture.GetRandomConnectionString();
         });
 
         context.Services.AddMongoDbContext<TestAppMongoDbContext>(options =>
@@ -34,6 +31,17 @@ public class AbpMongoDbTestModule : AbpModule
             options.AddRepository<City, CityRepository>();
 
             options.ReplaceDbContext<IThirdDbContext>();
+        });
+
+        context.Services.AddMongoDbContext<HostTestAppDbContext>(options =>
+        {
+            options.AddDefaultRepositories<IFifthDbContext>();
+            options.ReplaceDbContext<IFifthDbContext>(MultiTenancySides.Host);
+        });
+
+        context.Services.AddMongoDbContext<TenantTestAppDbContext>(options =>
+        {
+            options.AddDefaultRepositories<IFifthDbContext>();
         });
     }
 }

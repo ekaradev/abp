@@ -5,22 +5,22 @@ using OpenIddict.Server;
 
 namespace Volo.Abp.OpenIddict.WildcardDomains;
 
-public class AbpValidateClientRedirectUri : AbpOpenIddictWildcardDomainBase<OpenIddictServerHandlers.Authentication.ValidateClientRedirectUri, OpenIddictServerEvents.ValidateAuthorizationRequestContext>
+public class AbpValidateClientRedirectUri : AbpOpenIddictWildcardDomainBase<AbpValidateClientRedirectUri, OpenIddictServerHandlers.Authentication.ValidateClientRedirectUri, OpenIddictServerEvents.ValidateAuthorizationRequestContext>
 {
     public static OpenIddictServerHandlerDescriptor Descriptor { get; }
         = OpenIddictServerHandlerDescriptor.CreateBuilder<OpenIddictServerEvents.ValidateAuthorizationRequestContext>()
             .AddFilter<OpenIddictServerHandlerFilters.RequireDegradedModeDisabled>()
             .UseScopedHandler<AbpValidateClientRedirectUri>()
-            .SetOrder(OpenIddictServerHandlers.Authentication.ValidateClientType.Descriptor.Order + 1_000)
+            .SetOrder(OpenIddictServerHandlers.Authentication.ValidateResponseType.Descriptor.Order + 1_000)
             .SetType(OpenIddictServerHandlerType.BuiltIn)
             .Build();
 
     public AbpValidateClientRedirectUri(
         IOptions<AbpOpenIddictWildcardDomainOptions> wildcardDomainsOptions,
         IOpenIddictApplicationManager applicationManager)
-        : base(wildcardDomainsOptions, false)
+        : base(wildcardDomainsOptions, new OpenIddictServerHandlers.Authentication.ValidateClientRedirectUri(applicationManager))
     {
-        Handler = new OpenIddictServerHandlers.Authentication.ValidateClientRedirectUri(applicationManager);
+        OriginalHandler = new OpenIddictServerHandlers.Authentication.ValidateClientRedirectUri(applicationManager);
     }
 
     public async override ValueTask HandleAsync(OpenIddictServerEvents.ValidateAuthorizationRequestContext context)
@@ -32,6 +32,6 @@ public class AbpValidateClientRedirectUri : AbpOpenIddictWildcardDomainBase<Open
             return;
         }
 
-        await Handler.HandleAsync(context);
+        await OriginalHandler.HandleAsync(context);
     }
 }

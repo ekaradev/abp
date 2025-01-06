@@ -2,10 +2,25 @@
   "culture": "sk",
   "texts": {
     "Settings": "Nastavenia",
-    "SuccessfullySaved": "Úspešne uložené",
+    "SavedSuccessfully": "Úspešne uložené",
     "Permission:SettingManagement": "Správa nastavení",
     "Permission:Emailing": "Posielanie emailov",
+    "Permission:EmailingTest": "Test odosielania e-mailov",
+    "Permission:TimeZone": "Časové pásmo",
+    "SendTestEmail": "Odoslať testovací e-mail",
+    "SenderEmailAddress": "E-mailová adresa odosielateľa",
+    "TargetEmailAddress": "Cieľová e-mailová adresa",
+    "Subject": "Predmet",
+    "Body": "Telo",
+    "TestEmailSubject": "Testovací e-mail {0}",
+    "TestEmailBody": "Tu otestujte telo e-mailu",
+    "SuccessfullySent": "Úspešne odoslané",
+    "MailSendingFailed": "Odoslanie emailu zlyhalo. Skontrolujte konfiguráciu emailu a skúste to znova.",
+    "Send": "Odoslať",
     "Menu:Emailing": "Posielanie emailov",
+    "Menu:TimeZone": "Časové Pásmo",
+    "DisplayName:Timezone": "Časové pásmo",
+    "TimezoneHelpText": "Toto nastavenie sa používa pre celú aplikáciu alebo pre nájomníkov.",
     "SmtpHost": "Host",
     "SmtpPort": "Port",
     "SmtpUserName": "Meno používateľa",
@@ -19,6 +34,7 @@
     "Feature:SettingManagementEnable": "Povoliť správu nastavení",
     "Feature:SettingManagementEnableDescription": "Povoliť systém správy nastavení v aplikácii.",
     "Feature:AllowChangingEmailSettings": "Povoliť zmenu nastavení e-mailu.",
-    "Feature:AllowChangingEmailSettingsDescription": "Povoliť zmenu nastavení e-mailu."
+    "Feature:AllowChangingEmailSettingsDescription": "Povoliť zmenu nastavení e-mailu.",
+    "SmtpPasswordPlaceholder": "Zadajte hodnotu pre aktualizáciu hesla"
   }
 }

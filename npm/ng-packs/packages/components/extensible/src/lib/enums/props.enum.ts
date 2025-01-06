@@ -1,0 +1,16 @@
+export const enum ePropType {
+  Boolean = 'boolean',
+  Date = 'date',
+  DateTime = 'datetime',
+  Email = 'email',
+  Enum = 'enum',
+  Hidden = 'hidden',
+  MultiSelect = 'multiselect',
+  Number = 'number',
+  Password = 'password',
+  PasswordInputGroup = 'passwordinputgroup',
+  String = 'string',
+  Text = 'text',
+  Time = 'time',
+  Typeahead = 'typeahead',
+}

@@ -7,6 +7,8 @@
         "MVC": "MVC / Razor Pages",
         "Blazor": "Blazor WebAssembly",
         "BlazorServer": "Blazor Server",
+        "BlazorWebApp": "Blazor WebApp",
+        "MAUIBlazor": "MAUI Blazor (Hybrid)",
         "NG": "Angular"
       }
     },

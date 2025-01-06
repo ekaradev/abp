@@ -1,7 +1,6 @@
 ﻿@page
 
-@using Volo.Abp.Data
-@using Volo.CmsKit.Public.Blogs
+@using Volo.Abp.Users;
 @using Volo.CmsKit.Public.Web.Pages.CmsKit.Shared.Components.Blogs.BlogPostComment
 @using Volo.CmsKit.Public.Web.Pages
 @using Volo.Abp.GlobalFeatures
@@ -11,39 +10,38 @@
 @using Volo.CmsKit.Public.Web.Pages.CmsKit.Shared.Components.Tags
 @using Volo.Abp.AspNetCore.Mvc.UI.Packages.HighlightJs
 @using Volo.CmsKit.Contents
-@using Volo.CmsKit.Web.Renderers
+@using Volo.CmsKit.Web
+@using Volo.CmsKit.Web.Pages.CmsKit.Components.Contents
 
 @inherits CmsKitPublicPageBase
 
 @model Volo.CmsKit.Public.Web.Pages.Public.CmsKit.Blogs.BlogPostModel
 
-@inject IMarkdownToHtmlRenderer MarkdownRenderer
-
+@inject ICurrentUser CurrentUser
 
 @{
-    string dummyImageSource = "https://dummyimage.com/1280x720/a3a3a3/fff.png?text=" + Model.BlogPost.Title;
+    const string dummyImageSource = "/cms-kit/dummy-placeholder-1280x720.png";
     var isScrollIndexEnabled = GlobalFeatureManager.Instance.IsEnabled<BlogPostScrollIndexFeature>() && Model.BlogPostScrollIndexFeature?.IsEnabled == true;
 }
 
 @section styles{
     @if (isScrollIndexEnabled)
     {
-        <abp-abp-style-bundle>
+        <abp-style-bundle>
             <abp-style src="/Pages/Public/CmsKit/Blogs/bootstrap-toc.css" />
-        </abp-abp-style-bundle>
+        </abp-style-bundle>
     }
-    
-    <abp-abp-style-bundle>
+    <abp-style-bundle>
         <abp-style src="/Pages/Public/CmsKit/Blogs/blogPost.css" />
         <abp-style type="typeof(HighlightJsStyleContributor)" />
-    </abp-abp-style-bundle>
+    </abp-style-bundle>
 }
 
 @section scripts{
     @if (isScrollIndexEnabled)
     {
         <abp-script-bundle>
-            <abp-style src="/Pages/Public/CmsKit/Blogs/bootstrap-toc.js" />
+            <abp-script src="/Pages/Public/CmsKit/Blogs/bootstrap-toc.js" />
             <abp-script src="/Pages/Public/CmsKit/Blogs/blogpost-scroll-index.js" />
         </abp-script-bundle>
     }
@@ -51,45 +49,51 @@
     <abp-script-bundle>
         <abp-script type="typeof(HighlightJsScriptContributor)" />
         <abp-script src="/Pages/Public/CmsKit/highlightOnLoad.js" />
+        <abp-script src="/Pages/Public/CmsKit/Blogs/blogPost.js" />
     </abp-script-bundle>
 }
 
-
-<div class="row">
-    <div @Html.Raw(isScrollIndexEnabled ? "class=\"col-md-10 col-sm-12\"" : "class=\"col-md-12\"")>
-        <abp-card class="mb-4">
-            <img src="/api/cms-kit/media/@Model.BlogPost.CoverImageMediaId" class="card-img-top" onerror="this.src='@dummyImageSource'" />
-            <abp-card-body>
-                <abp-row>
-                    <div class="col-lg-8 col-md-10 mx-auto pb-4">
-                        <h1 class="mt-lg-4 mt-md-3">@Model.BlogPost.Title</h1>
-                        <p class="mb-lg-5 mb-md-3">
-                            <a href="/blogs/@Model.BlogSlug?authorId=@Model.BlogPost.Author.Id">
-                                <span class="font-weight-bold">@@@Model.BlogPost.Author?.UserName</span>
-                            </a>
-                            <small style="opacity:.65;">@Model.BlogPost.CreationTime</small>
-                        </p>
-                        @await Component.InvokeAsync("ContentFragment", new { contentDto = Model.BlogPost })
-                        <p class="mb-3">
-                            @if (Model.BlogPost.LastModificationTime != null)
+    <div class="row">
+        <div @Html.Raw(isScrollIndexEnabled ? "class=\"col-md-10 col-sm-12\"" : "class=\"col-md-12\"")>
+            <abp-card class="mb-4">
+            <img src="/api/cms-kit/media/@Model.ViewModel.CoverImageMediaId" class="card-img-ratio" onerror="this.src='@dummyImageSource'" />
+                <input hidden id="BlogId" value="@Model.ViewModel.Id" />
+                <abp-card-body>
+                    <abp-row>
+                        <div class="col-lg-8 col-md-10 mx-auto pb-4">
+                            <h1 class="mt-lg-4 mt-md-3">@Model.ViewModel.Title</h1>
+                            <p class="mb-lg-5 mb-md-3">
+                            <a href="/@CmsBlogsWebConsts.BlogsRoutePrefix/@Model.BlogSlug?authorId=@Model.ViewModel.Author.Id">
+                                    <span class="font-weight-bold">@@@Model.ViewModel.Author?.UserName</span>
+                                </a>
+                                <small style="opacity:.65;">@Model.ViewModel.CreationTime</small>
+                            </p>
+                            @(await Component.InvokeAsync(typeof(ContentFragmentViewComponent), new DefaultContentDto
                             {
-                                <small style="opacity:.65;">@L["LastModification"].Value : @Model.BlogPost.LastModificationTime</small>
-                            }
-                        </p>
-                        <hr />
-
-                        @if (GlobalFeatureManager.Instance.IsEnabled<TagsFeature>())
-                        {
-                            if (Model.TagsFeature?.IsEnabled == true)
-                            {
-                                @await Component.InvokeAsync(typeof(TagViewComponent), new
+                                ContentFragments = Model.ViewModel.ContentFragments,
+                                AllowHtmlTags = true,
+                                PreventXSS = Model.PreventXssFeature.IsEnabled,
+                            }))
+                            <p class="mb-3">
+                                @if (Model.ViewModel.LastModificationTime != null)
                                 {
-                                    entityType = Volo.CmsKit.Blogs.BlogPostConsts.EntityType,
-                                    entityId = Model.BlogPost.Id.ToString(),
-                                    urlFormat = $"/blogs/{Model.BlogSlug}?tagId={{TagId}}"
-                                })
+                                    <small style="opacity:.65;">@L["LastModification"].Value : @Model.ViewModel.LastModificationTime</small>
+                                }
+                            </p>
+                            <hr />
+
+                            @if (GlobalFeatureManager.Instance.IsEnabled<TagsFeature>())
+                            {
+                                if (Model.TagsFeature?.IsEnabled == true)
+                                {
+                                    @await Component.InvokeAsync(typeof(TagViewComponent), new
+                                    {
+                                        entityType = Volo.CmsKit.Blogs.BlogPostConsts.EntityType,
+                                        entityId = Model.ViewModel.Id.ToString(),
+                                        urlFormat = $"/{CmsBlogsWebConsts.BlogsRoutePrefix}/{Model.BlogSlug}?tagId={{TagId}}"
+                                    })
+                                }
                             }
-                        }
                     </div>
                 </abp-row>
 
@@ -102,7 +106,7 @@
                                 @await Component.InvokeAsync(typeof(ReactionSelectionViewComponent), new
                                 {
                                     entityType = Volo.CmsKit.Blogs.BlogPostConsts.EntityType,
-                                    entityId = Model.BlogPost.Id.ToString()
+                                    entityId = Model.ViewModel.Id.ToString()
                                 })
                             }
                         }
@@ -115,7 +119,7 @@
                                 @await Component.InvokeAsync(typeof(RatingViewComponent), new
                                 {
                                     entityType = Volo.CmsKit.Blogs.BlogPostConsts.EntityType,
-                                    entityId = Model.BlogPost.Id.ToString()
+                                    entityId = Model.ViewModel.Id.ToString()
                                 })
                             }
                         }
@@ -124,15 +128,25 @@
             </abp-card-body>
         </abp-card>
     </div>
-    
-    @if (isScrollIndexEnabled)
-    {
-        <div class="col-md-2 d-sm-none d-md-block">
+
+    <div class="col-md-2 d-sm-none d-md-block">
+        @if (Model.ViewModel.Author.Id == CurrentUser.Id)
+        {
+            <button id="deleteBlogPost" class="btn btn-danger">
+                <i class="fa fa-remove">
+                </i>
+                    @L["Delete"]
+            </button>
+
+            <hr />
+        }
+        @if (isScrollIndexEnabled)
+        {
             <div id="scroll-index" class="docs-inner-anchors mt-2">
                 <h5>@L["InThisDocument"]</h5>
                 <nav id="blog-post-sticky-index" class="navbar index-scroll pt-0">
                 </nav>
-    
+
                 <div class="row">
                     <div class="col p-0 py-3">
                         <a href="#" class="scroll-top-btn">
@@ -141,8 +155,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 
 </div>
 
@@ -153,7 +167,7 @@
         @await Component.InvokeAsync(typeof(DefaultBlogPostCommentViewComponent), new
         {
             entityType = Volo.CmsKit.Blogs.BlogPostConsts.EntityType,
-            entityId = Model.BlogPost.Id.ToString()
+            entityId = Model.ViewModel.Id.ToString()
         })
     }
 }

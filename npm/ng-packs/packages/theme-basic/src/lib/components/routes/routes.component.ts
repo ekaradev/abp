@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'abp-routes',
   templateUrl: 'routes.component.html',
 })
@@ -22,7 +23,10 @@ export class RoutesComponent {
 
   trackByFn: TrackByFunction<TreeNode<ABP.Route>> = (_, item) => item.name;
 
-  constructor(public readonly routesService: RoutesService, protected renderer: Renderer2) {}
+  constructor(
+    public readonly routesService: RoutesService,
+    protected renderer: Renderer2,
+  ) {}
 
   isDropdown(node: TreeNode<ABP.Route>) {
     return !node?.isLeaf || this.routesService.hasChildren(node.name);

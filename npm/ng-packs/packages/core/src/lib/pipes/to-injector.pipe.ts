@@ -5,6 +5,7 @@ export const INJECTOR_PIPE_DATA_TOKEN = new InjectionToken<PipeTransform>(
 );
 
 @Pipe({
+  standalone: false,
   name: 'toInjector',
 })
 export class ToInjectorPipe implements PipeTransform {

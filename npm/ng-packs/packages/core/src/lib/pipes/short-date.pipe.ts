@@ -4,6 +4,7 @@ import { ConfigStateService } from '../services';
 import { getShortDateFormat } from '../utils/date-utils';
 
 @Pipe({
+  standalone: false,
   name: 'shortDate',
   pure: true,
 })

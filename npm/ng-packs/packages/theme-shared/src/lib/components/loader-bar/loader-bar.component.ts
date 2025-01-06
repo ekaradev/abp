@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { combineLatest, Subscription, timer } from 'rxjs';
 
 @Component({
+  standalone: false,
   selector: 'abp-loader-bar',
   template: `
     <div id="abp-loader-bar" [ngClass]="containerClass" [class.is-loading]="isLoading">
@@ -13,7 +14,7 @@ import { combineLatest, Subscription, timer } from 'rxjs';
         [style.width.vw]="progressLevel"
         [ngStyle]="{
           'background-color': color,
-          'box-shadow': boxShadow
+          'box-shadow': boxShadow,
         }"
       ></div>
     </div>

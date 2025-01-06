@@ -1,11 +1,204 @@
 {
   "name": "Volo.Abp.TenantManagement.HttpApi",
-  "hash": "0c2fe9349a905f12458f6fea6d44a5fc",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.TenantManagement",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.TenantManagement.Application.Contracts",
+          "namespace": "Volo.Abp.TenantManagement",
+          "name": "AbpTenantManagementApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.FeatureManagement.HttpApi",
+          "namespace": "Volo.Abp.FeatureManagement",
+          "name": "AbpFeatureManagementHttpApiModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc",
+          "namespace": "Volo.Abp.AspNetCore.Mvc",
+          "name": "AbpAspNetCoreMvcModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpTenantManagementHttpApiModule"
+      "name": "AbpTenantManagementHttpApiModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "api/multi-tenancy/tenants/{id}",
+          "method": "GET",
+          "groupName": "Tenant",
+          "responseType": "Volo.Abp.TenantManagement.TenantDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants",
+          "method": "GET",
+          "groupName": "Tenant",
+          "responseType": "Volo.Abp.Application.Dtos.PagedResultDto`1[Volo.Abp.TenantManagement.TenantDto]",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "Filter",
+              "type": "String"
+            },
+            {
+              "name": "Sorting",
+              "type": "String"
+            },
+            {
+              "name": "SkipCount",
+              "type": "Int32"
+            },
+            {
+              "name": "MaxResultCount",
+              "type": "Int32"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants",
+          "method": "POST",
+          "groupName": "Tenant",
+          "responseType": "Volo.Abp.TenantManagement.TenantDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "TenantCreateDto"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants/{id}",
+          "method": "PUT",
+          "groupName": "Tenant",
+          "responseType": "Volo.Abp.TenantManagement.TenantDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            },
+            {
+              "name": "input",
+              "type": "TenantUpdateDto"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants/{id}",
+          "method": "DELETE",
+          "groupName": "Tenant",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants/{id}/default-connection-string",
+          "method": "GET",
+          "groupName": "Tenant",
+          "responseType": "System.String",
+          "responseTypeAsJson": "\"string\"",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants/{id}/default-connection-string",
+          "method": "PUT",
+          "groupName": "Tenant",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            },
+            {
+              "name": "defaultConnectionString",
+              "type": "String"
+            }
+          ]
+        },
+        {
+          "path": "api/multi-tenancy/tenants/{id}/default-connection-string",
+          "method": "DELETE",
+          "groupName": "Tenant",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "id",
+              "type": "Guid"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
     }
   ]
 }

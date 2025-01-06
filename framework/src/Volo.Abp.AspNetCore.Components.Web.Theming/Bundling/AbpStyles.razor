@@ -1,0 +1,33 @@
+@inject IComponentBundleManager BundleManager
+@if (StyleFiles != null)
+{
+    foreach (var file in StyleFiles)
+    {
+        <link rel="stylesheet" href="@file" />
+    }
+}
+
+@code {
+    [Parameter]
+    public List<string>? WebAssemblyStyleFiles { get; set; }
+
+    [Parameter]
+    public string? BundleName { get; set; }
+
+    private List<string>? StyleFiles { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        StyleFiles = new List<string>();
+
+        if (!BundleName.IsNullOrWhiteSpace())
+        {
+            StyleFiles = (await BundleManager.GetStyleBundleFilesAsync(BundleName!)).ToList();
+        }
+
+        if (OperatingSystem.IsBrowser() && WebAssemblyStyleFiles != null)
+        {
+            StyleFiles.AddIfNotContains(WebAssemblyStyleFiles);
+        }
+    }
+}

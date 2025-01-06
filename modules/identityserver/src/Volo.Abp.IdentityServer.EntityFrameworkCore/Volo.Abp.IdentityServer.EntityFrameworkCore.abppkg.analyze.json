@@ -1,134 +1,170 @@
 {
   "name": "Volo.Abp.IdentityServer.EntityFrameworkCore",
-  "hash": "318cb62a76fa2873fa488ccea5bfc666",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.IdentityServer.EntityFrameworkCore",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.IdentityServer.Domain",
+          "namespace": "Volo.Abp.IdentityServer",
+          "name": "AbpIdentityServerDomainModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.EntityFrameworkCore",
+          "namespace": "Volo.Abp.EntityFrameworkCore",
+          "name": "AbpEntityFrameworkCoreModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpIdentityServerEntityFrameworkCoreModule"
+      "name": "AbpIdentityServerEntityFrameworkCoreModule",
+      "summary": null
     },
     {
       "namespace": "Volo.Abp.IdentityServer.EntityFrameworkCore",
       "connectionStringName": "AbpIdentityServer",
-      "databaseTables": [
+      "databaseTables": [],
+      "replacedDbContexts": [],
+      "modelBuilderExtensionMethods": [
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiResources.ApiResource",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiResources"
+          "returnType": "Void",
+          "namespace": "Volo.Abp.IdentityServer.EntityFrameworkCore",
+          "name": "ConfigureIdentityServer",
+          "summary": null,
+          "isAsync": false,
+          "isPublic": true,
+          "isPrivate": false,
+          "isStatic": true,
+          "parameters": [
+            {
+              "type": "ModelBuilder",
+              "name": "builder",
+              "isOptional": false
+            }
+          ]
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IInfrastructure<IServiceProvider>",
+          "namespace": "Microsoft.EntityFrameworkCore.Infrastructure",
+          "declaringAssemblyName": "Microsoft.EntityFrameworkCore",
+          "fullName": "Microsoft.EntityFrameworkCore.Infrastructure.IInfrastructure<IServiceProvider>"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiResources.ApiResourceClaim",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiResourceClaims"
+          "name": "IDbContextDependencies",
+          "namespace": "Microsoft.EntityFrameworkCore.Internal",
+          "declaringAssemblyName": "Microsoft.EntityFrameworkCore",
+          "fullName": "Microsoft.EntityFrameworkCore.Internal.IDbContextDependencies"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiResources.ApiResourceProperty",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiResourceProperties"
+          "name": "IDbSetCache",
+          "namespace": "Microsoft.EntityFrameworkCore.Internal",
+          "declaringAssemblyName": "Microsoft.EntityFrameworkCore",
+          "fullName": "Microsoft.EntityFrameworkCore.Internal.IDbSetCache"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiResources.ApiResourceScope",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiResourceScopes"
+          "name": "IDbContextPoolable",
+          "namespace": "Microsoft.EntityFrameworkCore.Internal",
+          "declaringAssemblyName": "Microsoft.EntityFrameworkCore",
+          "fullName": "Microsoft.EntityFrameworkCore.Internal.IDbContextPoolable"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiResources.ApiResourceSecret",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiResourceSecrets"
+          "name": "IResettableService",
+          "namespace": "Microsoft.EntityFrameworkCore.Infrastructure",
+          "declaringAssemblyName": "Microsoft.EntityFrameworkCore",
+          "fullName": "Microsoft.EntityFrameworkCore.Infrastructure.IResettableService"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiScopes.ApiScope",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiScopes"
+          "name": "IDisposable",
+          "namespace": "System",
+          "declaringAssemblyName": "System.Private.CoreLib",
+          "fullName": "System.IDisposable"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiScopes.ApiScopeClaim",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiScopeClaims"
+          "name": "IAsyncDisposable",
+          "namespace": "System",
+          "declaringAssemblyName": "System.Private.CoreLib",
+          "fullName": "System.IAsyncDisposable"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.ApiScopes.ApiScopeProperty",
-          "contentType": "databaseTable",
-          "name": "IdentityServerApiScopeProperties"
+          "name": "IAbpEfCoreDbContext",
+          "namespace": "Volo.Abp.EntityFrameworkCore",
+          "declaringAssemblyName": "Volo.Abp.EntityFrameworkCore",
+          "fullName": "Volo.Abp.EntityFrameworkCore.IAbpEfCoreDbContext"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.Client",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClients"
+          "name": "IEfCoreDbContext",
+          "namespace": "Volo.Abp.EntityFrameworkCore",
+          "declaringAssemblyName": "Volo.Abp.EntityFrameworkCore",
+          "fullName": "Volo.Abp.EntityFrameworkCore.IEfCoreDbContext"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientClaim",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientClaims"
+          "name": "IAbpEfCoreDbFunctionContext",
+          "namespace": "Volo.Abp.EntityFrameworkCore.GlobalFilters",
+          "declaringAssemblyName": "Volo.Abp.EntityFrameworkCore",
+          "fullName": "Volo.Abp.EntityFrameworkCore.GlobalFilters.IAbpEfCoreDbFunctionContext"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientCorsOrigin",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientCorsOrigins"
+          "name": "ITransientDependency",
+          "namespace": "Volo.Abp.DependencyInjection",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.DependencyInjection.ITransientDependency"
         },
         {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientGrantType",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientGrantTypes"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientIdPRestriction",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientIdPRestrictions"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientPostLogoutRedirectUri",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientPostLogoutRedirectUris"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientProperty",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientProperties"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientRedirectUri",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientRedirectUris"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientScope",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientScopes"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Clients.ClientSecret",
-          "contentType": "databaseTable",
-          "name": "IdentityServerClientSecrets"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Devices.DeviceFlowCodes",
-          "contentType": "databaseTable",
-          "name": "IdentityServerDeviceFlowCodes"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.Grants.PersistedGrant",
-          "contentType": "databaseTable",
-          "name": "IdentityServerPersistedGrants"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.IdentityResources.IdentityResource",
-          "contentType": "databaseTable",
-          "name": "IdentityServerIdentityResources"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.IdentityResources.IdentityResourceClaim",
-          "contentType": "databaseTable",
-          "name": "IdentityServerIdentityResourceClaims"
-        },
-        {
-          "entityFullName": "Volo.Abp.IdentityServer.IdentityResources.IdentityResourceProperty",
-          "contentType": "databaseTable",
-          "name": "IdentityServerIdentityResourceProperties"
+          "name": "IIdentityServerDbContext",
+          "namespace": "Volo.Abp.IdentityServer.EntityFrameworkCore",
+          "declaringAssemblyName": "Volo.Abp.IdentityServer.EntityFrameworkCore",
+          "fullName": "Volo.Abp.IdentityServer.EntityFrameworkCore.IIdentityServerDbContext"
         }
       ],
       "contentType": "efCoreDbContext",
-      "name": "IdentityServerDbContext"
+      "name": "IdentityServerDbContext",
+      "summary": null
     }
   ]
 }

@@ -13,7 +13,7 @@ namespace Volo.Abp.Http.ProxyScripting.Generators.JQuery;
 public class JQueryProxyScriptGenerator : IProxyScriptGenerator, ITransientDependency
 {
     //TODO: Should move this to Ddd package by adding an option to AbpHttpAbstractions module. Also duplicated of ApplicationService.CommonPostfixes
-    private static string[] AppServiceCommonPostfixes { get; } = { "AppService", "ApplicationService", "Service" };
+    private static string[] AppServiceCommonPostfixes { get; } = { "AppService", "ApplicationService",  "IntService", "IntegrationService", "Service" };
 
     /// <summary>
     /// "jquery".
@@ -114,7 +114,21 @@ public class JQueryProxyScriptGenerator : IProxyScriptGenerator, ITransientDepen
         if (versionParam != null)
         {
             var version = FindBestApiVersion(action);
-            script.AppendLine($"      var {ProxyScriptingJsFuncHelper.NormalizeJsVariableName(versionParam.Name)} = api_version ? api_version : '{version}';");
+            if (parameterList.Contains("api_version"))
+            {
+                script.AppendLine($"      var {ProxyScriptingJsFuncHelper.NormalizeJsVariableName(versionParam.Name)} = api_version ? api_version : '{version}';");
+            }
+            else
+            {
+                var apiVersion = action.Parameters.FirstOrDefault(p =>
+                    p.BindingSourceId.IsIn(ParameterBindingSources.ModelBinding, ParameterBindingSources.Query) &&
+                    p.Name == "api-version");
+                if (apiVersion != null && parameterList.Contains(apiVersion.NameOnMethod))
+                {
+                    var apiVersionVariable = ProxyScriptingJsFuncHelper.GetParamNameInJsFunc(apiVersion);
+                    script.AppendLine($"      {apiVersionVariable} = {apiVersionVariable} ? {apiVersionVariable} : '{version}';");
+                }
+            }
         }
 
         script.AppendLine("      return abp.ajax($.extend(true, {");
@@ -135,16 +149,16 @@ public class JQueryProxyScriptGenerator : IProxyScriptGenerator, ITransientDepen
     private static string FindBestApiVersion(ActionApiDescriptionModel action)
     {
         //var configuredVersion = GetConfiguredApiVersion(); //TODO: Implement
-        string configuredVersion = null;
+        string? configuredVersion = null;
 
         if (action.SupportedVersions.IsNullOrEmpty())
         {
             return configuredVersion ?? "1.0";
         }
 
-        if (action.SupportedVersions.Contains(configuredVersion))
+        if (action.SupportedVersions!.Contains(configuredVersion!))
         {
-            return configuredVersion;
+            return configuredVersion!;
         }
 
         return action.SupportedVersions.Last(); //TODO: Ensure to get the latest version!

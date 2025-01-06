@@ -30,6 +30,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
         DateTime? endTime = null,
         string httpMethod = null,
         string url = null,
+        string clientId = null,
         Guid? userId = null,
         string userName = null,
         string applicationName = null,
@@ -47,6 +48,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
             endTime,
             httpMethod,
             url,
+            clientId,
             userId,
             userName,
             applicationName,
@@ -72,6 +74,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
         DateTime? endTime = null,
         string httpMethod = null,
         string url = null,
+        string clientId = null,
         Guid? userId = null,
         string userName = null,
         string applicationName = null,
@@ -88,6 +91,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
             endTime,
             httpMethod,
             url,
+            clientId,
             userId,
             userName,
             applicationName,
@@ -111,6 +115,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
         DateTime? endTime = null,
         string httpMethod = null,
         string url = null,
+        string clientId = null,
         Guid? userId = null,
         string userName = null,
         string applicationName = null,
@@ -128,13 +133,14 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
             .WhereIf(endTime.HasValue, auditLog => auditLog.ExecutionTime <= endTime)
             .WhereIf(hasException.HasValue && hasException.Value, auditLog => auditLog.Exceptions != null && auditLog.Exceptions != "")
             .WhereIf(hasException.HasValue && !hasException.Value, auditLog => auditLog.Exceptions == null || auditLog.Exceptions == "")
-            .WhereIf(httpMethod != null, auditLog => auditLog.HttpMethod == httpMethod)
-            .WhereIf(url != null, auditLog => auditLog.Url != null && auditLog.Url.Contains(url))
+            .WhereIf(!httpMethod.IsNullOrEmpty(), auditLog => auditLog.HttpMethod == httpMethod)
+            .WhereIf(!url.IsNullOrEmpty(), auditLog => auditLog.Url != null && auditLog.Url.Contains(url))
+            .WhereIf(!clientId.IsNullOrEmpty(), auditLog => auditLog.ClientId == clientId)
             .WhereIf(userId != null, auditLog => auditLog.UserId == userId)
-            .WhereIf(userName != null, auditLog => auditLog.UserName == userName)
-            .WhereIf(applicationName != null, auditLog => auditLog.ApplicationName == applicationName)
-            .WhereIf(clientIpAddress != null, auditLog => auditLog.ClientIpAddress == clientIpAddress)
-            .WhereIf(correlationId != null, auditLog => auditLog.CorrelationId == correlationId)
+            .WhereIf(!userName.IsNullOrEmpty(), auditLog => auditLog.UserName == userName)
+            .WhereIf(!applicationName.IsNullOrEmpty(), auditLog => auditLog.ApplicationName == applicationName)
+            .WhereIf(!clientIpAddress.IsNullOrEmpty(), auditLog => auditLog.ClientIpAddress == clientIpAddress)
+            .WhereIf(!correlationId.IsNullOrEmpty(), auditLog => auditLog.CorrelationId == correlationId)
             .WhereIf(httpStatusCode != null && httpStatusCode > 0, auditLog => auditLog.HttpStatusCode == (int?)httpStatusCode)
             .WhereIf(maxDuration != null && maxDuration > 0, auditLog => auditLog.ExecutionDuration <= maxDuration)
             .WhereIf(minDuration != null && minDuration > 0, auditLog => auditLog.ExecutionDuration >= minDuration);
@@ -262,7 +268,7 @@ public class MongoAuditLogRepository : MongoDbRepository<IAuditLoggingMongoDbCon
                 .WhereIf(auditLogId.HasValue, e => e.Id == auditLogId)
                 .WhereIf(startTime.HasValue, e => e.ChangeTime >= startTime)
                 .WhereIf(endTime.HasValue, e => e.ChangeTime <= endTime)
-                .WhereIf(changeType.HasValue, e => e.ChangeType == changeType)
+                .WhereIf(changeType.HasValue, e => e.ChangeType == changeType.Value)
                 .WhereIf(!string.IsNullOrWhiteSpace(entityId), e => e.EntityId == entityId)
                 .WhereIf(!string.IsNullOrWhiteSpace(entityTypeFullName),
                     e => e.EntityTypeFullName.Contains(entityTypeFullName));

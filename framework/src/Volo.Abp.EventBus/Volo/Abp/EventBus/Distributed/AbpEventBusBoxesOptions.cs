@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Linq.Expressions;
 
-namespace Volo.Abp.EventBus.Boxes;
+namespace Volo.Abp.EventBus.Distributed;
 
 public class AbpEventBusBoxesOptions
 {
@@ -15,9 +16,19 @@ public class AbpEventBusBoxesOptions
     public int InboxWaitingEventMaxCount { get; set; }
 
     /// <summary>
+    /// Default: null, means all events
+    /// </summary>
+    public Expression<Func<IIncomingEventInfo, bool>>? InboxProcessorFilter { get; set; }
+
+    /// <summary>
     /// Default: 1000
     /// </summary>
     public int OutboxWaitingEventMaxCount { get; set; }
+
+    /// <summary>
+    /// Default: null, means all events
+    /// </summary>
+    public Expression<Func<IOutgoingEventInfo, bool>>? OutboxProcessorFilter { get; set; }
 
     /// <summary>
     /// Period time of <see cref="InboxProcessor"/> and <see cref="OutboxSender"/>
@@ -34,7 +45,7 @@ public class AbpEventBusBoxesOptions
     /// Default: 2 hours
     /// </summary>
     public TimeSpan WaitTimeToDeleteProcessedInboxEvents { get; set; }
-    
+
     /// <summary>
     /// Default: true
     /// </summary>
@@ -44,7 +55,9 @@ public class AbpEventBusBoxesOptions
     {
         CleanOldEventTimeIntervalSpan = TimeSpan.FromHours(6);
         InboxWaitingEventMaxCount = 1000;
+        InboxProcessorFilter = null;
         OutboxWaitingEventMaxCount = 1000;
+        OutboxProcessorFilter = null;
         PeriodTimeSpan = TimeSpan.FromSeconds(2);
         DistributedLockWaitDuration = TimeSpan.FromSeconds(15);
         WaitTimeToDeleteProcessedInboxEvents = TimeSpan.FromHours(2);

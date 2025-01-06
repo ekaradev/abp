@@ -31,6 +31,7 @@ public partial class FeatureManagementModal
 
     protected string ProviderName;
     protected string ProviderKey;
+    protected string ProviderKeyDisplayName;
 
     protected string SelectedTabName;
 
@@ -40,7 +41,7 @@ public partial class FeatureManagementModal
 
     protected Dictionary<string, string> SelectionStringValues;
 
-    public virtual async Task OpenAsync([NotNull] string providerName, string providerKey = null)
+    public virtual async Task OpenAsync([NotNull] string providerName, string providerKey = null, string providerKeyDisplayName = null)
     {
         try
         {
@@ -50,9 +51,14 @@ public partial class FeatureManagementModal
             ToggleValues = new Dictionary<string, bool>();
             SelectionStringValues = new Dictionary<string, string>();
 
-            Groups = (await FeatureAppService.GetAsync(ProviderName, ProviderKey))?.Groups;
+            if (!providerKeyDisplayName.IsNullOrWhiteSpace())
+            {
+                ProviderKeyDisplayName = $" - {providerKeyDisplayName}";
+            }
 
-            Groups ??= new List<FeatureGroupDto>();
+            var result = await FeatureAppService.GetAsync(ProviderName, ProviderKey);
+
+            Groups = result?.Groups ?? new List<FeatureGroupDto>();
 
             if (Groups.Any())
             {
@@ -107,6 +113,26 @@ public partial class FeatureManagementModal
             await CurrentApplicationConfigurationCacheResetService.ResetAsync();
 
             await InvokeAsync(Modal.Hide);
+            await Notify.Success(L["SavedSuccessfully"]);
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex);
+        }
+    }
+
+    public virtual async Task DeleteAsync([NotNull] string providerName, string providerKey = null)
+    {
+        try
+        {
+            if (!await Message.Confirm(L["AreYouSureToResetToDefault"]))
+            {
+                return;
+            }
+            await FeatureAppService.DeleteAsync(ProviderName, ProviderKey);
+            await Message.Success(L["ResetedToDefault"]);
+
+            await CloseModal();
         }
         catch (Exception ex)
         {
@@ -194,8 +220,8 @@ public partial class FeatureManagementModal
 
     protected virtual IStringLocalizer CreateStringLocalizer(string resourceName)
     {
-        var resource = LocalizationOptions.Value.Resources.Values.FirstOrDefault(x => x.ResourceName == resourceName);
-        return HtmlLocalizerFactory.Create(resource != null ? resource.ResourceType : LocalizationOptions.Value.DefaultResourceType);
+        return StringLocalizerFactory.CreateByResourceNameOrNull(resourceName) ??
+               StringLocalizerFactory.CreateDefaultOrNull();
     }
 
     protected virtual Task ClosingModal(ModalClosingEventArgs eventArgs)

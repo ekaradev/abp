@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Volo.Abp.Cli.ProjectBuilding.Files;
-using Volo.Abp.Cli.ProjectBuilding.Templates.App;
 
 namespace Volo.Abp.Cli.ProjectBuilding.Building.Steps;
 
@@ -98,7 +97,13 @@ public class DatabaseManagementSystemChangeStep : ProjectBuildPipelineStep
 
         var oldUseMethod = "UseSqlServer";
 
-        var efCoreModuleClass = context.Files.First(f => f.Name.EndsWith("EntityFrameworkCoreModule.cs", StringComparison.OrdinalIgnoreCase));
+        var efCoreModuleClass = context.Files.FirstOrDefault(f => f.Name.EndsWith("EntityFrameworkCoreModule.cs", StringComparison.OrdinalIgnoreCase));
+        
+        if(efCoreModuleClass == null)
+        {
+            return;
+        }
+        
         efCoreModuleClass.ReplaceText(oldUseMethod, newUseMethodForEfModule);
 
         var dbContextFactoryFile = context.Files.FirstOrDefault(f => f.Name.EndsWith($"{(_hasDbMigrations ? "Migrations" : string.Empty)}DbContextFactoryBase.cs", StringComparison.OrdinalIgnoreCase))

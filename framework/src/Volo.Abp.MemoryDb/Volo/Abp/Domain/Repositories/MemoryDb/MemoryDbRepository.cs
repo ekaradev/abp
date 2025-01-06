@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +24,7 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity> : RepositoryBase<TEnt
     [Obsolete("Use GetCollectionAsync method.")]
     public virtual IMemoryDatabaseCollection<TEntity> Collection => Database.Collection<TEntity>();
 
-    public async Task<IMemoryDatabaseCollection<TEntity>> GetCollectionAsync()
+    public virtual async Task<IMemoryDatabaseCollection<TEntity>> GetCollectionAsync()
     {
         return (await GetDatabaseAsync()).Collection<TEntity>();
     }
@@ -157,6 +156,11 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity> : RepositoryBase<TEnt
         AuditPropertySetter.SetDeletionProperties(entity);
     }
 
+    protected virtual void IncrementEntityVersionProperty(TEntity entity)
+    {
+        AuditPropertySetter.IncrementEntityVersionProperty(entity);
+    }
+
     protected virtual void TriggerEntityCreateEvents(TEntity entity)
     {
         EntityChangeEventHelper.PublishEntityCreatedEvent(entity);
@@ -187,7 +191,7 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity> : RepositoryBase<TEnt
         TriggerDomainEvents(entity);
     }
 
-    public override async Task<TEntity> FindAsync(
+    public override async Task<TEntity?> FindAsync(
         Expression<Func<TEntity, bool>> predicate,
         bool includeDetails = true,
         CancellationToken cancellationToken = default)
@@ -203,6 +207,11 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity> : RepositoryBase<TEnt
         var entities = (await GetQueryableAsync()).Where(predicate).ToList();
 
         await DeleteManyAsync(entities, autoSave, cancellationToken);
+    }
+
+    public override async Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        await DeleteAsync(predicate, true, cancellationToken);
     }
 
     public override async Task<TEntity> InsertAsync(
@@ -222,6 +231,7 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity> : RepositoryBase<TEnt
         bool autoSave = false,
         CancellationToken cancellationToken = default)
     {
+        IncrementEntityVersionProperty(entity);
         SetModificationAuditProperties(entity);
 
         if (entity is ISoftDelete softDeleteEntity && softDeleteEntity.IsDeleted)
@@ -329,14 +339,14 @@ public class MemoryDbRepository<TMemoryDbContext, TEntity, TKey> : MemoryDbRepos
         return entity;
     }
 
-    public virtual async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity?> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
     {
-        return (await GetQueryableAsync()).FirstOrDefault(e => e.Id.Equals(id));
+        return (await GetQueryableAsync()).FirstOrDefault(e => e.Id!.Equals(id));
     }
 
     public virtual async Task DeleteAsync(TKey id, bool autoSave = false, CancellationToken cancellationToken = default)
     {
-        await DeleteAsync(x => x.Id.Equals(id), autoSave, cancellationToken);
+        await DeleteAsync(x => x.Id!.Equals(id), autoSave, cancellationToken);
     }
 
     public virtual async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)

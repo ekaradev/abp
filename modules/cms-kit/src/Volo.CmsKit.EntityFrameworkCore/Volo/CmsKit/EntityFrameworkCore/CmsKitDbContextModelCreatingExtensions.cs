@@ -7,6 +7,7 @@ using Volo.CmsKit.Blogs;
 using Volo.CmsKit.Comments;
 using Volo.CmsKit.GlobalFeatures;
 using Volo.CmsKit.GlobalResources;
+using Volo.CmsKit.MarkedItems;
 using Volo.CmsKit.MediaDescriptors;
 using Volo.CmsKit.Menus;
 using Volo.CmsKit.Pages;
@@ -79,6 +80,8 @@ public static class CmsKitDbContextModelCreatingExtensions
                 b.Property(x => x.EntityId).IsRequired().HasMaxLength(CommentConsts.MaxEntityIdLength);
                 b.Property(x => x.Text).IsRequired().HasMaxLength(CommentConsts.MaxTextLength);
                 b.Property(x => x.RepliedCommentId);
+                b.Property(x => x.Url).HasMaxLength(CommentConsts.MaxUrlLength);
+                b.Property(x => x.IdempotencyToken).HasMaxLength(CommentConsts.MaxIdempotencyTokenLength);
 
                 b.HasIndex(x => new { x.TenantId, x.EntityType, x.EntityId });
                 b.HasIndex(x => new { x.TenantId, x.RepliedCommentId });
@@ -258,6 +261,8 @@ public static class CmsKitDbContextModelCreatingExtensions
                 b.Property(x => x.DisplayName).IsRequired().HasMaxLength(MenuItemConsts.MaxDisplayNameLength);
 
                 b.Property(x => x.Url).IsRequired().HasMaxLength(MenuItemConsts.MaxUrlLength);
+                
+                b.Property(x => x.RequiredPermissionName).HasMaxLength(MenuItemConsts.MaxRequiredPermissionNameLength);
             });
         }
         else
@@ -281,6 +286,28 @@ public static class CmsKitDbContextModelCreatingExtensions
         else
         {
             builder.Ignore<GlobalResource>();
+        }
+
+        if (GlobalFeatureManager.Instance.IsEnabled<MarkedItemsFeature>())
+        {
+            builder.Entity<UserMarkedItem>(b =>
+            {
+                b.ToTable(AbpCmsKitDbProperties.DbTablePrefix + "UserMarkedItems", AbpCmsKitDbProperties.DbSchema);
+
+                b.ConfigureByConvention();
+
+                b.Property(x => x.EntityType).IsRequired();
+                b.Property(x => x.EntityId).IsRequired();
+
+                b.HasIndex(x => new { x.TenantId, x.EntityType, x.EntityId });
+                b.HasIndex(x => new { x.TenantId, x.CreatorId, x.EntityType, x.EntityId });
+
+                b.ApplyObjectExtensionMappings();
+            });
+        }
+        else
+        {
+            builder.Ignore<UserMarkedItem>();
         }
 
         builder.TryConfigureObjectExtensions<CmsKitDbContext>();

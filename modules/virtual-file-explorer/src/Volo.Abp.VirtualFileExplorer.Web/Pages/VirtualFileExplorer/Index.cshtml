@@ -28,18 +28,11 @@
 }
 
 <abp-card id="VirtualFileExplorerWrapper">
-    <abp-card-header>
-        <abp-row>
-            <abp-column size-md="_6">
-                <abp-card-title>@L["VirtualFileExplorer"]</abp-card-title>
-            </abp-column>
-        </abp-row>
-    </abp-card-header>
     <abp-card-body>
 
         @Html.Raw(Model.PathNavigation)
 
-        <abp-table striped-rows="true" class="nowrap dataTable no-footer">
+        <abp-table  class="nowrap dataTable no-footer">
             <thead>
             <tr>
                 <th>@UiLocalizer["Actions"]</th>
@@ -69,10 +62,10 @@
                                     <div class="dropdown action-button">
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a onclick="showContent('@item.FilePath')">@L["FileContent"]</a>
+                                                <a class="dropdown-item" onclick="showContent('@item.FilePath')">@L["FileContent"]</a>
                                             </li>
                                         </ul>
-                                        <button class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                                             <i class="fa fa-cog me-1"></i>@UiLocalizer["Actions"]
                                         </button>
                                     </div>

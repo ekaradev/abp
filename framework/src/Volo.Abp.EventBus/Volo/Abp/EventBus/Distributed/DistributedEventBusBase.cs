@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.Guids;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Timing;
+using Volo.Abp.Tracing;
 using Volo.Abp.Uow;
 
 namespace Volo.Abp.EventBus.Distributed;
@@ -16,6 +18,8 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
     protected IGuidGenerator GuidGenerator { get; }
     protected IClock Clock { get; }
     protected AbpDistributedEventBusOptions AbpDistributedEventBusOptions { get; }
+    protected ILocalEventBus LocalEventBus { get; }
+    protected ICorrelationIdProvider CorrelationIdProvider { get; }
 
     protected DistributedEventBusBase(
         IServiceScopeFactory serviceScopeFactory,
@@ -24,8 +28,9 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
         IOptions<AbpDistributedEventBusOptions> abpDistributedEventBusOptions,
         IGuidGenerator guidGenerator,
         IClock clock,
-        IEventHandlerInvoker eventHandlerInvoker
-    ) : base(
+        IEventHandlerInvoker eventHandlerInvoker,
+        ILocalEventBus localEventBus,
+        ICorrelationIdProvider correlationIdProvider) : base(
         serviceScopeFactory,
         currentTenant,
         unitOfWorkManager,
@@ -34,6 +39,8 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
         GuidGenerator = guidGenerator;
         Clock = clock;
         AbpDistributedEventBusOptions = abpDistributedEventBusOptions.Value;
+        LocalEventBus = localEventBus;
+        CorrelationIdProvider = correlationIdProvider;
     }
 
     public IDisposable Subscribe<TEvent>(IDistributedEventHandler<TEvent> handler) where TEvent : class
@@ -78,6 +85,13 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
             }
         }
 
+        await TriggerDistributedEventSentAsync(new DistributedEventSent()
+        {
+            Source = DistributedEventSource.Direct,
+            EventName = EventNameAttribute.GetNameOrDefault(eventType),
+            EventData = eventData
+        });
+
         await PublishToEventBusAsync(eventType, eventData);
     }
 
@@ -95,7 +109,7 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
         IncomingEventInfo incomingEvent,
         InboxConfig inboxConfig);
 
-    private async Task<bool> AddToOutboxAsync(Type eventType, object eventData)
+    protected virtual async Task<bool> AddToOutboxAsync(Type eventType, object eventData)
     {
         var unitOfWork = UnitOfWorkManager.Current;
         if (unitOfWork == null)
@@ -107,17 +121,25 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
         {
             if (outboxConfig.Selector == null || outboxConfig.Selector(eventType))
             {
-                var eventOutbox =
-                    (IEventOutbox)unitOfWork.ServiceProvider.GetRequiredService(outboxConfig.ImplementationType);
+                var eventOutbox = (IEventOutbox)unitOfWork.ServiceProvider.GetRequiredService(outboxConfig.ImplementationType);
                 var eventName = EventNameAttribute.GetNameOrDefault(eventType);
-                await eventOutbox.EnqueueAsync(
-                    new OutgoingEventInfo(
-                        GuidGenerator.Create(),
-                        eventName,
-                        Serialize(eventData),
-                        Clock.Now
-                    )
+
+                await OnAddToOutboxAsync(eventName, eventType, eventData);
+
+                var outgoingEventInfo = new OutgoingEventInfo(
+                    GuidGenerator.Create(),
+                    eventName,
+                    Serialize(eventData),
+                    Clock.Now
                 );
+
+                var correlationId = CorrelationIdProvider.Get();
+                if (correlationId != null)
+                {
+                    outgoingEventInfo.SetCorrelationId(correlationId);
+                }
+
+                await eventOutbox.EnqueueAsync(outgoingEventInfo);
                 return true;
             }
         }
@@ -125,11 +147,17 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
         return false;
     }
 
+    protected virtual Task OnAddToOutboxAsync(string eventName, Type eventType, object eventData)
+    {
+        return Task.CompletedTask;
+    }
+
     protected async Task<bool> AddToInboxAsync(
-        string messageId,
+        string? messageId,
         string eventName,
         Type eventType,
-        byte[] eventBytes)
+        object eventData,
+        string? correlationId)
     {
         if (AbpDistributedEventBusOptions.Inboxes.Count <= 0)
         {
@@ -147,21 +175,21 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
 
                     if (!messageId.IsNullOrEmpty())
                     {
-                        if (await eventInbox.ExistsByMessageIdAsync(messageId))
+                        if (await eventInbox.ExistsByMessageIdAsync(messageId!))
                         {
                             continue;
                         }
                     }
 
-                    await eventInbox.EnqueueAsync(
-                        new IncomingEventInfo(
-                            GuidGenerator.Create(),
-                            messageId,
-                            eventName,
-                            eventBytes,
-                            Clock.Now
-                        )
+                    var incomingEventInfo = new IncomingEventInfo(
+                        GuidGenerator.Create(),
+                        messageId!,
+                        eventName,
+                        Serialize(eventData),
+                        Clock.Now
                     );
+                    incomingEventInfo.SetCorrelationId(correlationId!);
+                    await eventInbox.EnqueueAsync(incomingEventInfo);
                 }
             }
         }
@@ -170,4 +198,52 @@ public abstract class DistributedEventBusBase : EventBusBase, IDistributedEventB
     }
 
     protected abstract byte[] Serialize(object eventData);
+
+    protected virtual async Task TriggerHandlersDirectAsync(Type eventType, object eventData)
+    {
+        await TriggerDistributedEventReceivedAsync(new DistributedEventReceived
+        {
+            Source = DistributedEventSource.Direct,
+            EventName = EventNameAttribute.GetNameOrDefault(eventType),
+            EventData = eventData
+        });
+
+        await TriggerHandlersAsync(eventType, eventData);
+    }
+
+    protected virtual async Task TriggerHandlersFromInboxAsync(Type eventType, object eventData, List<Exception> exceptions, InboxConfig? inboxConfig = null)
+    {
+        await TriggerDistributedEventReceivedAsync(new DistributedEventReceived
+        {
+            Source = DistributedEventSource.Inbox,
+            EventName = EventNameAttribute.GetNameOrDefault(eventType),
+            EventData = eventData
+        });
+
+        await TriggerHandlersAsync(eventType, eventData, exceptions, inboxConfig);
+    }
+
+    public virtual async Task TriggerDistributedEventSentAsync(DistributedEventSent distributedEvent)
+    {
+        try
+        {
+            await LocalEventBus.PublishAsync(distributedEvent);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+    }
+
+    public virtual async Task TriggerDistributedEventReceivedAsync(DistributedEventReceived distributedEvent)
+    {
+        try
+        {
+            await LocalEventBus.PublishAsync(distributedEvent);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+    }
 }

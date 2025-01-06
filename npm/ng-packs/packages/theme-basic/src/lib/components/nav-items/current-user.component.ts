@@ -10,6 +10,7 @@ import { Component, Inject, TrackByFunction } from '@angular/core';
 import { Observable } from 'rxjs';
 
 @Component({
+  standalone: false,
   selector: 'abp-current-user',
   templateUrl: './current-user.component.html',
 })

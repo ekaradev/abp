@@ -21,7 +21,7 @@ public class MongoIdentitySecurityLogRepository :
 
     public virtual async Task<List<IdentitySecurityLog>> GetListAsync(
         string sorting = null,
-        int maxResultCount = 50,
+        int maxResultCount = int.MaxValue,
         int skipCount = 0,
         DateTime? startTime = null,
         DateTime? endTime = null,
@@ -32,6 +32,7 @@ public class MongoIdentitySecurityLogRepository :
         string userName = null,
         string clientId = null,
         string correlationId = null,
+        string clientIpAddress = null,
         bool includeDetails = false,
         CancellationToken cancellationToken = default)
     {
@@ -45,6 +46,7 @@ public class MongoIdentitySecurityLogRepository :
             userName,
             clientId,
             correlationId,
+            clientIpAddress,
             cancellationToken
         );
 
@@ -64,6 +66,7 @@ public class MongoIdentitySecurityLogRepository :
         string userName = null,
         string clientId = null,
         string correlationId = null,
+        string clientIpAddress = null,
         CancellationToken cancellationToken = default)
     {
         var query = await GetListQueryAsync(
@@ -76,6 +79,7 @@ public class MongoIdentitySecurityLogRepository :
             userName,
             clientId,
             correlationId,
+            clientIpAddress,
             cancellationToken
         );
 
@@ -101,19 +105,19 @@ public class MongoIdentitySecurityLogRepository :
         string userName = null,
         string clientId = null,
         string correlationId = null,
+        string clientIpAddress = null,
         CancellationToken cancellationToken = default)
     {
         return (await GetMongoQueryableAsync(cancellationToken))
             .WhereIf(startTime.HasValue, securityLog => securityLog.CreationTime >= startTime.Value)
             .WhereIf(endTime.HasValue, securityLog => securityLog.CreationTime < endTime.Value.AddDays(1).Date)
-            .WhereIf(!applicationName.IsNullOrWhiteSpace(),
-                securityLog => securityLog.ApplicationName == applicationName)
+            .WhereIf(!applicationName.IsNullOrWhiteSpace(), securityLog => securityLog.ApplicationName == applicationName)
             .WhereIf(!identity.IsNullOrWhiteSpace(), securityLog => securityLog.Identity == identity)
             .WhereIf(!action.IsNullOrWhiteSpace(), securityLog => securityLog.Action == action)
             .WhereIf(userId.HasValue, securityLog => securityLog.UserId == userId)
             .WhereIf(!userName.IsNullOrWhiteSpace(), securityLog => securityLog.UserName == userName)
             .WhereIf(!clientId.IsNullOrWhiteSpace(), securityLog => securityLog.ClientId == clientId)
-            .WhereIf(!correlationId.IsNullOrWhiteSpace(),
-                securityLog => securityLog.CorrelationId == correlationId);
+            .WhereIf(!correlationId.IsNullOrWhiteSpace(), securityLog => securityLog.CorrelationId == correlationId)
+            .WhereIf(!clientIpAddress.IsNullOrWhiteSpace(), securityLog => securityLog.ClientIpAddress == clientIpAddress);
     }
 }

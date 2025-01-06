@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
-using Volo.Abp.Cli.NuGet;
+using Volo.Abp.Cli.Version;
 using Volo.Abp.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -15,14 +15,14 @@ namespace Volo.Abp.Cli.ProjectModification;
 
 public class VoloNugetPackagesVersionUpdater : ITransientDependency
 {
-    private readonly NuGetService _nuGetService;
+    private readonly PackageVersionCheckerService _packageVersionCheckerService;
     private readonly MyGetPackageListFinder _myGetPackageListFinder;
     public ILogger<VoloNugetPackagesVersionUpdater> Logger { get; set; }
     public static Encoding DefaultEncoding = Encoding.UTF8;
 
-    public VoloNugetPackagesVersionUpdater(NuGetService nuGetService, MyGetPackageListFinder myGetPackageListFinder)
+    public VoloNugetPackagesVersionUpdater(PackageVersionCheckerService packageVersionCheckerService, MyGetPackageListFinder myGetPackageListFinder)
     {
-        _nuGetService = nuGetService;
+        _packageVersionCheckerService = packageVersionCheckerService;
         _myGetPackageListFinder = myGetPackageListFinder;
         Logger = NullLogger<VoloNugetPackagesVersionUpdater>.Instance;
     }
@@ -37,9 +37,10 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
         }
         else
         {
-            var latestVersionFromNuget = await _nuGetService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: includeReleaseCandidates);
-            var latestReleaseCandidateVersionFromNuget = await _nuGetService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: true);
+            var latestVersionInfo = await _packageVersionCheckerService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: includeReleaseCandidates);
+            var latestReleaseCandidateVersionInfo = await _packageVersionCheckerService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: true);
             var latestVersionFromMyGet = await GetLatestVersionFromMyGet("Volo.Abp.Core");
+            var latestStableVersions = await _packageVersionCheckerService.GetLatestStableVersionsAsync();
 
             async Task UpdateAsync(string filePath)
             {
@@ -53,10 +54,11 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
                             includePreviews,
                             includeReleaseCandidates,
                             switchToStable,
-                            latestVersionFromNuget,
-                            latestReleaseCandidateVersionFromNuget,
+                            latestVersionInfo.Version,
+                            latestReleaseCandidateVersionInfo.Version,
                             latestVersionFromMyGet,
-                            version);
+                            version,
+                            latestStableVersions: latestStableVersions);
 
                         fs.Seek(0, SeekOrigin.Begin);
                         fs.SetLength(0);
@@ -81,9 +83,10 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
         }
         else
         {
-            var latestVersionFromNuget = await _nuGetService.GetLatestVersionOrNullAsync("Volo.Abp.Core");
-            var latestReleaseCandidateVersionFromNuget = await _nuGetService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: true);
+            var latestVersionInfo = await _packageVersionCheckerService.GetLatestVersionOrNullAsync("Volo.Abp.Core");
+            var latestReleaseCandidateVersionInfo = await _packageVersionCheckerService.GetLatestVersionOrNullAsync("Volo.Abp.Core", includeReleaseCandidates: true);
             var latestVersionFromMyGet = await GetLatestVersionFromMyGet("Volo.Abp.Core");
+            var latestStableVersions = await _packageVersionCheckerService.GetLatestStableVersionsAsync();
 
             using (var fs = File.Open(projectPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
             {
@@ -95,10 +98,11 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
                         includeNightlyPreviews,
                         includeReleaseCandidates,
                         switchToStable,
-                        latestVersionFromNuget,
-                        latestReleaseCandidateVersionFromNuget,
+                        latestVersionInfo.Version,
+                        latestReleaseCandidateVersionInfo.Version,
                         latestVersionFromMyGet,
-                        version);
+                        version,
+                        latestStableVersions: latestStableVersions);
 
                     fs.Seek(0, SeekOrigin.Begin);
                     fs.SetLength(0);
@@ -115,13 +119,20 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
 
     protected virtual async Task UpdateInternalAsync(string projectPath, bool includeNightlyPreviews = false, bool includeReleaseCandidates = false, bool switchToStable = false)
     {
+        var latestStableVersions = await _packageVersionCheckerService.GetLatestStableVersionsAsync();
+        
         using (var fs = File.Open(projectPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
         {
             using (var sr = new StreamReader(fs, Encoding.Default, true))
             {
                 var fileContent = await sr.ReadToEndAsync();
 
-                var updatedContent = await UpdateVoloPackagesAsync(fileContent, includeNightlyPreviews, includeReleaseCandidates, switchToStable);
+                var updatedContent = await UpdateVoloPackagesAsync(
+                    fileContent, 
+                    includeNightlyPreviews, 
+                    includeReleaseCandidates, 
+                    switchToStable,
+                    latestStableVersions: latestStableVersions);
 
                 fs.Seek(0, SeekOrigin.Begin);
                 fs.SetLength(0);
@@ -137,11 +148,11 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
 
     protected virtual async Task<bool> SpecifiedVersionExists(string version, string packageId)
     {
-        var versionList = await _nuGetService.GetPackageVersionListAsync(packageId);
+        var versionList = await _packageVersionCheckerService.GetPackageVersionListAsync(packageId);
 
         if (versionList.All(v => !v.Equals(version, StringComparison.OrdinalIgnoreCase)))
         {
-            versionList = await _nuGetService.GetPackageVersionListAsync(packageId, true);
+            versionList = await _packageVersionCheckerService.GetPackageVersionListAsync(packageId, true);
         }
 
         return versionList.Any(v => v.Equals(version, StringComparison.OrdinalIgnoreCase));
@@ -154,7 +165,8 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
         SemanticVersion latestNugetVersion = null,
         SemanticVersion latestNugetReleaseCandidateVersion = null,
         string latestMyGetVersion = null,
-        string specifiedVersion = null)
+        string specifiedVersion = null,
+        List<PackageVersionCheckerService.LatestStableVersionResult> latestStableVersions = null)
     {
         string packageId = null;
 
@@ -181,53 +193,105 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
                     packageId = package.Attributes["Include"].Value;
 
                     var versionAttribute = package.Attributes["Version"];
+                    if (versionAttribute == null)
+                    {
+                        Logger.LogWarning("Package: {PackageId} uses central package management. Skipped!", packageId);
+                        continue;
+                    }
                     var currentVersion = versionAttribute.Value;
-                    var currentSemanticVersion = SemanticVersion.Parse(currentVersion);
                     
                     var isLeptonXPackage = packageId.Contains("LeptonX");
+                    var isStudioPackage = packageId.StartsWith("Volo.Abp.Studio.");
+                    if(isLeptonXPackage)
+                    {
+                        //'SemanticVersion.TryParse' can not parse the version if the version contains floating version resolution, such as '*-*'
+                        currentVersion = currentVersion.Replace("*-*", "0").Replace("*", "0");
+                    }
 
-                    Logger.LogDebug("Checking package: \"{0}\" - Current version: {1}", packageId, currentSemanticVersion);
+                    var isVersionParsed = SemanticVersion.TryParse(currentVersion, out var currentSemanticVersion);
+                    if (!isVersionParsed)
+                    {
+                        Logger.LogWarning("Could not parse package \"{PackageId}\" version v{CurrentVersion}. Skipped!", packageId, currentVersion);
+                        continue;
+                    }
+
+                    Logger.LogDebug("Checking package: \"{PackageId}\" - Current version: {CurrentSemanticVersion}", packageId, currentSemanticVersion);
 
                     if (!specifiedVersion.IsNullOrWhiteSpace())
                     {
-                        if (isLeptonXPackage)
+                        var leptonXPackageVersion = latestStableVersions?
+                            .FirstOrDefault(v => v.Version.Equals(specifiedVersion, StringComparison.InvariantCultureIgnoreCase))?.LeptonX?.Version;
+                        
+                        if ((isLeptonXPackage && string.IsNullOrWhiteSpace(leptonXPackageVersion)) || isStudioPackage)
                         {
+                            Logger.LogWarning("Package: {PackageId} could not be updated. Please manually update the package version yourself to prevent version mismatches!", packageId);
                             continue;
                         }
-                        
-                        if (await SpecifiedVersionExists(specifiedVersion, packageId))
+
+                        var isLeptonXPackageWithVersion = isLeptonXPackage && !string.IsNullOrWhiteSpace(leptonXPackageVersion);
+
+                        if (isLeptonXPackageWithVersion || await SpecifiedVersionExists(specifiedVersion, packageId))
                         {
-                            var specifiedSemanticVersion = SemanticVersion.Parse(specifiedVersion);
-                            if (specifiedSemanticVersion > currentSemanticVersion)
-                            {
-                                Logger.LogInformation("Updating package \"{0}\" from v{1} to v{2}.", packageId, currentVersion, specifiedVersion);
-                                versionAttribute.Value = specifiedVersion;
-                            }
-                            else
-                            {
-                                Logger.LogWarning("Unable to update package \"{0}\" version v{1} to v{2}.", packageId, currentVersion, specifiedVersion);
-                            }
+                            TryUpdatingPackage(isLeptonXPackageWithVersion ? leptonXPackageVersion : specifiedVersion);
                         }
                         else
                         {
-                            Logger.LogWarning("Package \"{0}\" specified version v{1} does not exist.", packageId, specifiedVersion);
+                            Logger.LogWarning("Package \"{PackageId}\" specified version v{SpecifiedVersion} does not exist!", packageId, specifiedVersion);
+                        }
+                        
+                        void TryUpdatingPackage(string versionToUpdate)
+                        {
+                            var specifiedSemanticVersion = SemanticVersion.Parse(versionToUpdate);
+                            if (specifiedSemanticVersion > currentSemanticVersion)
+                            {
+                                Logger.LogInformation("Updating package \"{PackageId}\" from v{CurrentVersion} to v{SpecifiedVersion}", packageId, currentVersion, versionToUpdate);
+                                versionAttribute.Value = versionToUpdate;
+                            }
+                            else
+                            {
+                                Logger.LogWarning("Unable to update package \"{PackageId}\" version v{CurrentVersion} to v{SpecifiedVersion}", packageId, currentVersion, versionToUpdate);
+                            }
                         }
                     }
                     else
                     {
                         if ((includeNightlyPreviews || (currentVersion.Contains("-preview") && !switchToStable)) && !includeReleaseCandidates)
                         {
-                            var latestVersion = latestMyGetVersion == null || isLeptonXPackage ?
-                                await GetLatestVersionFromMyGet(packageId) : latestMyGetVersion;
+                            string latestVersion;
+                            if(isLeptonXPackage)
+                            {
+                                var leptonXPackageName = packageId;
+                                if(includeNightlyPreviews) 
+                                {
+                                    //use LeptonX Lite package as the package name to be able to get the package version from the 'abp-nightly' feed.
+                                    leptonXPackageName = "Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite";
+                                }
+
+                                latestVersion = (await _packageVersionCheckerService.GetLatestVersionOrNullAsync(leptonXPackageName, includeNightlyPreviews, includeReleaseCandidates))?.Version?.ToString();
+                            }
+                            else if(isStudioPackage)
+                            {
+                                latestVersion = (await _packageVersionCheckerService.GetLatestVersionOrNullAsync(packageId, includeNightlyPreviews, includeReleaseCandidates))?.Version?.ToString();
+                            }
+                            else
+                            {
+                                latestVersion = latestMyGetVersion ?? await GetLatestVersionFromMyGet(packageId);
+                            }
+
+                            if(latestVersion == null)
+                            {
+                                Logger.LogWarning("Package: {PackageId} could not be updated. Please manually update the package version yourself to prevent version mismatches!", packageId);
+                                continue;
+                            }
 
                             if (currentVersion != latestVersion)
                             {
-                                Logger.LogInformation("Updating package \"{0}\" from v{1} to v{2}.", packageId, currentVersion, latestVersion);
+                                Logger.LogInformation("Updating package \"{PackageId}\" from v{CurrentVersion} to v{LatestVersion}", packageId, currentVersion, latestVersion);
                                 versionAttribute.Value = latestVersion;
                             }
                             else
                             {
-                                Logger.LogDebug("Package: \"{0}-v{1}\" is up to date.", packageId, currentVersion);
+                                Logger.LogDebug("Package: \"{PackageId}-v{CurrentVersion}\" is up to date", packageId, currentVersion);
                             }
                         }
                         else
@@ -235,23 +299,25 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
                             SemanticVersion latestVersion;
                             if (currentSemanticVersion.IsPrerelease && !switchToStable)
                             {
-                                latestVersion = latestNugetReleaseCandidateVersion == null || isLeptonXPackage ? 
-                                    await _nuGetService.GetLatestVersionOrNullAsync(packageId, includeReleaseCandidates: true) : latestNugetReleaseCandidateVersion;
+                                latestVersion = latestNugetReleaseCandidateVersion == null || isLeptonXPackage || isStudioPackage
+                                    ? (await _packageVersionCheckerService.GetLatestVersionOrNullAsync(packageId, includeReleaseCandidates: true))?.Version 
+                                    : latestNugetReleaseCandidateVersion;
                             }
                             else
                             {
-                                latestVersion = latestNugetVersion == null || isLeptonXPackage ? 
-                                    await _nuGetService.GetLatestVersionOrNullAsync(packageId, includeReleaseCandidates: includeReleaseCandidates) : latestNugetVersion;
+                                latestVersion = latestNugetVersion == null || isLeptonXPackage || isStudioPackage
+                                    ? (await _packageVersionCheckerService.GetLatestVersionOrNullAsync(packageId, includeReleaseCandidates: includeReleaseCandidates))?.Version 
+                                    : latestNugetVersion;
                             }
 
                             if (latestVersion != null && (currentSemanticVersion < latestVersion || (currentSemanticVersion.IsPrerelease && switchToStable)))
                             {
-                                Logger.LogInformation("Updating package \"{0}\" from v{1} to v{2}.", packageId, currentSemanticVersion.ToString(), latestVersion.ToString());
+                                Logger.LogInformation("Updating package \"{PackageId}\" from v{CurrentSemanticVersion} to v{LatestVersion}", packageId, currentSemanticVersion.ToString(), latestVersion.ToString());
                                 versionAttribute.Value = latestVersion.ToString();
                             }
                             else
                             {
-                                Logger.LogInformation("Package: \"{0}-v{1}\" is up to date.", packageId, currentSemanticVersion);
+                                Logger.LogInformation("Package: \"{PackageId}-v{CurrentSemanticVersion}\" is up to date", packageId, currentSemanticVersion);
                             }
                         }
                     }
@@ -262,7 +328,7 @@ public class VoloNugetPackagesVersionUpdater : ITransientDependency
         }
         catch (Exception ex)
         {
-            Logger.LogError("Cannot update Volo.* packages! An error occurred while updating the package \"{0}\". Error: {1}", packageId, ex.Message);
+            Logger.LogError("Cannot update Volo.* packages! An error occurred while updating the package \"{PackageId}\". Error: {ErrorMessage}", packageId, ex.Message);
             Logger.LogException(ex);
         }
 

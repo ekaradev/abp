@@ -2,12 +2,9 @@
 using System.IO;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel;
 using Microsoft.Extensions.Logging;
-using Volo.Abp.Cli.Commands;
 using Volo.Abp.Cli.Http;
 using Volo.Abp.Cli.ProjectBuilding;
 using Volo.Abp.DependencyInjection;
@@ -58,7 +55,7 @@ public class AuthService : IAuthService, ITransientDependency
         {
             if (!response.IsSuccessStatusCode)
             {
-                Logger.LogError("Remote server returns '{response.StatusCode}'");
+                Logger.LogError($"Remote server returns '{response.StatusCode}'");
                 return null;
             }
 
@@ -74,9 +71,9 @@ public class AuthService : IAuthService, ITransientDependency
     {
         var configuration = new IdentityClientConfiguration(
             CliUrls.AccountAbpIo,
-            "role email abpio abpio_www abpio_commercial offline_access",
+            "abpio offline_access",
             "abp-cli",
-            "1q2w3e*",
+            null,
             OidcConstants.GrantTypes.Password,
             userName,
             password
@@ -88,7 +85,11 @@ public class AuthService : IAuthService, ITransientDependency
         }
 
         var accessToken = await AuthenticationService.GetAccessTokenAsync(configuration);
-
+        
+        if (!Directory.Exists(CliPaths.Root))
+        {
+            Directory.CreateDirectory(CliPaths.Root);                        
+        }
         File.WriteAllText(CliPaths.AccessToken, accessToken, Encoding.UTF8);
     }
 
@@ -96,9 +97,9 @@ public class AuthService : IAuthService, ITransientDependency
     {
         var configuration = new IdentityClientConfiguration(
             CliUrls.AccountAbpIo,
-            "role email abpio abpio_www abpio_commercial openid offline_access",
+            "abpio offline_access",
             "abp-cli",
-            "1q2w3e*",
+            null,
             OidcConstants.GrantTypes.DeviceCode
         );
 
@@ -124,6 +125,26 @@ public class AuthService : IAuthService, ITransientDependency
             }
 
             File.Delete(CliPaths.Lic);
+        }
+    }
+
+    public async Task<bool> CheckMultipleOrganizationsAsync(string username)
+    {
+        var url = $"{CliUrls.WwwAbpIo}api/license/check-multiple-organizations?username={username}";
+
+        var client = CliHttpClientFactory.CreateClient();
+
+        using (var response = await client.GetHttpResponseMessageWithRetryAsync(url, CancellationTokenProvider.Token, Logger))
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"ERROR: Remote server returns '{response.StatusCode}'");
+            }
+
+            await RemoteServiceExceptionHandler.EnsureSuccessfulHttpResponseAsync(response);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<bool>(responseContent);
         }
     }
 

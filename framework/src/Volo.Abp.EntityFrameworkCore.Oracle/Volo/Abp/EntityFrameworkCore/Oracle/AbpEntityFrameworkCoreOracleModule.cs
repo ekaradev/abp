@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.EntityFrameworkCore.DistributedEvents;
+﻿using Volo.Abp.EntityFrameworkCore.GlobalFilters;
 using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 
@@ -18,7 +17,9 @@ public class AbpEntityFrameworkCoreOracleModule : AbpModule
             }
         });
 
-        context.Services.AddTransient(typeof(IOracleDbContextEventOutbox<>), typeof(OracleDbContextEventOutbox<>));
-        context.Services.AddTransient(typeof(IOracleDbContextEventInbox<>), typeof(OracleDbContextEventInbox<>));
+        Configure<AbpEfCoreGlobalFilterOptions>(options =>
+        {
+            options.UseDbFunction = true;
+        });
     }
 }

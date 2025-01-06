@@ -9,19 +9,19 @@ namespace MyCompanyName.MyProjectName.Pages;
 
 public class IndexModel : AbpPageModel
 {
-    public List<OpenIddictApplication> Applications { get; protected set; }
+    public List<OpenIddictApplication>? Applications { get; protected set; }
 
-    public IReadOnlyList<LanguageInfo> Languages { get; protected set; }
+    public IReadOnlyList<LanguageInfo>? Languages { get; protected set; }
 
-    public string CurrentLanguage { get; protected set; }
+    public string? CurrentLanguage { get; protected set; }
 
     protected IOpenIddictApplicationRepository OpenIdApplicationRepository { get; }
 
     protected ILanguageProvider LanguageProvider { get; }
 
-    public IndexModel(IOpenIddictApplicationRepository openIdApplicationmRepository, ILanguageProvider languageProvider)
+    public IndexModel(IOpenIddictApplicationRepository openIdApplicationRepository, ILanguageProvider languageProvider)
     {
-        OpenIdApplicationRepository = openIdApplicationmRepository;
+        OpenIdApplicationRepository = openIdApplicationRepository;
         LanguageProvider = languageProvider;
     }
 

@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Authorization;
 using Volo.Abp.Features;
 using Volo.Abp.GlobalFeatures;
+using Volo.Abp.Users;
 using Volo.CmsKit.Blogs;
 using Volo.CmsKit.Contents;
 using Volo.CmsKit.Features;
 using Volo.CmsKit.GlobalFeatures;
+using Volo.CmsKit.Tags;
 using Volo.CmsKit.Users;
 
 namespace Volo.CmsKit.Public.Blogs;
@@ -20,16 +24,20 @@ public class BlogPostPublicAppService : CmsKitPublicAppServiceBase, IBlogPostPub
     protected IBlogRepository BlogRepository { get; }
 
     protected IBlogPostRepository BlogPostRepository { get; }
-    protected ContentParser ContentParser { get; }
+
+    protected ITagRepository TagRepository { get; }
+    protected BlogPostManager BlogPostManager { get; }
 
     public BlogPostPublicAppService(
         IBlogRepository blogRepository,
         IBlogPostRepository blogPostRepository,
-        ContentParser contentParser)
+        ITagRepository tagRepository,
+        BlogPostManager blogPostManager)
     {
         BlogRepository = blogRepository;
         BlogPostRepository = blogPostRepository;
-        ContentParser = contentParser;
+        TagRepository = tagRepository;
+        BlogPostManager = blogPostManager;
     }
 
     public virtual async Task<BlogPostCommonDto> GetAsync(
@@ -39,17 +47,17 @@ public class BlogPostPublicAppService : CmsKitPublicAppServiceBase, IBlogPostPub
 
         var blogPost = await BlogPostRepository.GetBySlugAsync(blog.Id, blogPostSlug);
 
-        var blogPostDto = ObjectMapper.Map<BlogPost, BlogPostCommonDto>(blogPost);
-        blogPostDto.ContentFragments = await ContentParser.ParseAsync(blogPost.Content);
-
-        return blogPostDto;
+        return ObjectMapper.Map<BlogPost, BlogPostCommonDto>(blogPost);
     }
 
     public virtual async Task<PagedResultDto<BlogPostCommonDto>> GetListAsync([NotNull] string blogSlug, BlogPostGetListInput input)
     {
         var blog = await BlogRepository.GetBySlugAsync(blogSlug);
 
+        Guid? favoriteUserId = await GetFavoriteUserIdAsync(input.FilterOnFavorites);
+
         var blogPosts = await BlogPostRepository.GetListAsync(null, blog.Id, input.AuthorId, input.TagId,
+            favoriteUserId,
             BlogPostStatus.Published, input.MaxResultCount,
             input.SkipCount, input.Sorting);
 
@@ -69,10 +77,40 @@ public class BlogPostPublicAppService : CmsKitPublicAppServiceBase, IBlogPostPub
             authorDtos);
     }
 
-    public async Task<CmsUserDto> GetAuthorHasBlogPostAsync(Guid id)
+    public virtual async Task<CmsUserDto> GetAuthorHasBlogPostAsync(Guid id)
     {
         var author = await BlogPostRepository.GetAuthorHasBlogPostAsync(id);
 
         return ObjectMapper.Map<CmsUser, CmsUserDto>(author);
+    }
+
+    [Authorize]
+    public virtual async Task DeleteAsync(Guid id)
+    {
+        var rating = await BlogPostRepository.GetAsync(id);
+
+        if (rating.CreatorId != CurrentUser.GetId())
+        {
+            throw new AbpAuthorizationException();
+        }
+
+        await BlogPostManager.DeleteAsync(id);
+    }
+
+    public async Task<string> GetTagNameAsync([NotNull] Guid tagId)
+    {
+        var tag = await TagRepository.GetAsync(tagId);
+
+        return tag.Name;
+    }
+
+    protected virtual async Task<Guid?> GetFavoriteUserIdAsync(bool? filterOnFavorites)
+    {
+        if (!filterOnFavorites.GetValueOrDefault() || !CurrentUser.IsAuthenticated)
+        {
+            return null;
+        }
+
+        return CurrentUser.GetId();
     }
 }

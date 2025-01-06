@@ -5,10 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Shouldly;
 using Volo.Abp.Http;
-using Volo.Abp.Json.SystemTextJson;
 using Volo.Abp.Timing;
 using Xunit;
 
@@ -17,15 +15,6 @@ namespace Volo.Abp.AspNetCore.Mvc.ModelBinding;
 public abstract class ModelBindingController_Tests : AspNetCoreMvcTestBase
 {
     protected DateTimeKind Kind { get; set; }
-
-    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
-    {
-        services.Configure<AbpSystemTextJsonSerializerOptions>(options =>
-        {
-            options.UnsupportedTypes.Add<GetDateTimeKindModel>();
-            options.UnsupportedTypes.Add<GetDateTimeKindModel.GetDateTimeKindInnerModel>();
-        });
-    }
 
     [Fact]
     public async Task DateTimeKind_Test()
@@ -114,26 +103,38 @@ public abstract class ModelBindingController_Tests : AspNetCoreMvcTestBase
         var resultAsString = await response.Content.ReadAsStringAsync();
         resultAsString.ShouldBe($"local_{Kind.ToString().ToLower()}_{Kind.ToString().ToLower()}_local");
     }
+
+    [Fact]
+    public async Task Guid_Json_Test()
+    {
+        var guid = Guid.NewGuid();
+        var json = $"{{\"UserId\":\"{guid:B}\",\"UserId2\":\"{guid:N}\",\"UserId3\":\"{guid:D}\",\"UserId4\":\"{guid:P}\",\"UserId5\":\"{guid:x}\",\"TenantId\":null,\"TenantId2\":\"\"}}";
+        var response = await Client.PostAsync("/api/model-Binding-test/Guid_Json_Test", new StringContent(json, Encoding.UTF8, MimeTypes.Application.Json));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var resultAsString = await response.Content.ReadAsStringAsync();
+        resultAsString.ShouldBe($"{{\"userId\":\"{guid:D}\",\"userId2\":\"{guid:D}\",\"userId3\":\"{guid:D}\",\"userId4\":\"{guid:D}\",\"userId5\":\"{guid:D}\",\"tenantId\":null,\"tenantId2\":null}}");
+    }
 }
 
 public class ModelBindingController_Utc_Tests : ModelBindingController_Tests
 {
-    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+    protected override void ConfigureServices(IServiceCollection services)
     {
         Kind = DateTimeKind.Utc;
         services.Configure<AbpClockOptions>(x => x.Kind = Kind);
 
-        base.ConfigureServices(context, services);
+        base.ConfigureServices(services);
     }
 }
 
 public class ModelBindingController_Local_Tests : ModelBindingController_Tests
 {
-    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+    protected override void ConfigureServices(IServiceCollection services)
     {
         Kind = DateTimeKind.Local;
         services.Configure<AbpClockOptions>(x => x.Kind = Kind);
 
-        base.ConfigureServices(context, services);
+        base.ConfigureServices(services);
     }
 }

@@ -33,6 +33,12 @@ public class AbpBackgroundJobWorkerOptions
     /// </summary>
     public double DefaultWaitFactor { get; set; }
 
+    /// <summary>
+    /// Distributed lock name for the worker.
+    /// Default value: "AbpBackgroundJobWorker".
+    /// </summary>
+    public string  DistributedLockName { get; set; }
+
     public AbpBackgroundJobWorkerOptions()
     {
         MaxJobFetchCount = 1000;
@@ -40,5 +46,6 @@ public class AbpBackgroundJobWorkerOptions
         DefaultFirstWaitDuration = 60;
         DefaultTimeout = 172800;
         DefaultWaitFactor = 2.0;
+        DistributedLockName = "AbpBackgroundJobWorker";
     }
 }

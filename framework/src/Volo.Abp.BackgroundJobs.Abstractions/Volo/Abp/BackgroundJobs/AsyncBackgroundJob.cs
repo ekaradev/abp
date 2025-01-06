@@ -6,7 +6,7 @@ namespace Volo.Abp.BackgroundJobs;
 
 public abstract class AsyncBackgroundJob<TArgs> : IAsyncBackgroundJob<TArgs>
 {
-    //TODO: Add UOW, Localization and other useful properties..?
+    //TODO: Add UOW, Localization, CancellationTokenProvider and other useful properties..?
 
     public ILogger<AsyncBackgroundJob<TArgs>> Logger { get; set; }
 

@@ -1,13 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Localization;
-using System;
+﻿using Microsoft.Extensions.Localization;
 using System.Collections.Generic;
-using System.Linq;
-using Blazorise;
-using Volo.Abp.AspNetCore.Components.Web;
 using Volo.Abp.Data;
-using Volo.Abp.Localization;
-using Volo.Abp.ObjectExtending;
 
 namespace Volo.Abp.BlazoriseUI.Components.ObjectExtending;
 
@@ -30,7 +23,7 @@ public partial class SelectExtensionProperty<TEntity, TResourceType>
             selectItems.Add(new SelectItem<int>
             {
                 Value = (int)enumValue,
-                Text = EnumHelper.GetLocalizedMemberName(PropertyInfo.Type, enumValue, StringLocalizerFactory)
+                Text = AbpEnumLocalizer.GetString(PropertyInfo.Type, enumValue, new []{ StringLocalizerFactory.CreateDefaultOrNull() })
             });
         }
 
@@ -44,13 +37,13 @@ public partial class SelectExtensionProperty<TEntity, TResourceType>
 
         if (!Entity.HasProperty(PropertyInfo.Name))
         {
-            SelectedValue = (int)PropertyInfo.Type.GetEnumValues().GetValue(0);
+            SelectedValue = (int)PropertyInfo.Type.GetEnumValues().GetValue(0)!;
         }
     }
 }
 
 public class SelectItem<TValue>
 {
-    public string Text { get; set; }
-    public TValue Value { get; set; }
+    public string Text { get; set; } = default!;
+    public TValue Value { get; set; } = default!;
 }

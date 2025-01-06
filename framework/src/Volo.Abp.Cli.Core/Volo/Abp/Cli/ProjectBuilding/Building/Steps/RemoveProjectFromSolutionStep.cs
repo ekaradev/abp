@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Volo.Abp.Cli.ProjectBuilding.Files;
 
 namespace Volo.Abp.Cli.ProjectBuilding.Building.Steps;
 
@@ -45,7 +43,7 @@ public class RemoveProjectFromSolutionStep : ProjectBuildPipelineStep
 
     private void RemoveProjectFromAbpmdlFile(ProjectBuildContext context)
     {
-        var abpmdlFile = context.FindFile(_solutionFilePath.RemovePostFix(".sln") + ".abpmdl.json");
+        var abpmdlFile = context.FindFile(_solutionFilePath.RemovePostFix(".sln") + ".abpmdl");
 
         if (abpmdlFile == null)
         {

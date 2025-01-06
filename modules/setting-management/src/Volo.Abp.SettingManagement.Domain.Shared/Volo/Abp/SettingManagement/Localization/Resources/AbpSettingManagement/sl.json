@@ -2,10 +2,25 @@
   "culture": "sl",
   "texts": {
     "Settings": "Nastavitve",
-    "SuccessfullySaved": "Uspešno shranjeno",
+    "SavedSuccessfully": "Uspešno shranjeno",
     "Permission:SettingManagement": "Upravljanje nastavitev",
     "Permission:Emailing": "Pošiljanje po e-pošti",
+    "Permission:EmailingTest": "Test pošiljanja po e-pošti",
+    "Permission:TimeZone": "Časovni pas",
+    "SendTestEmail": "Pošlji testno e-pošto",
+    "SenderEmailAddress": "E-poštni naslov pošiljatelja",
+    "TargetEmailAddress": "Ciljni e-poštni naslov",
+    "Subject": "Predmet",
+    "Body": "Telo",
+    "TestEmailSubject": "Preskusno e-poštno sporočilo {0}",
+    "TestEmailBody": "Tukaj preizkusite telo e-poštnega sporočila",
+    "SuccessfullySent": "Uspešno poslano",
+    "MailSendingFailed": "Pošiljanje e-pošte ni uspelo, preverite konfiguracijo e-pošte in poskusite znova.",
+    "Send": "Pošlji",
     "Menu:Emailing": "Pošiljanje po e-pošti",
+    "Menu:TimeZone": "Časovni Pas",
+    "DisplayName:Timezone": "Časovni pas",
+    "TimezoneHelpText": "Ta nastavitev se uporablja za celotno aplikacijo ali za najemnika.",
     "SmtpHost": "Gostitelj",
     "SmtpPort": "pristanišče",
     "SmtpUserName": "Uporabniško ime",
@@ -19,6 +34,7 @@
     "Feature:SettingManagementEnable": "Omogoči upravljanje nastavitev",
     "Feature:SettingManagementEnableDescription": "Omogočite nastavitev sistema upravljanja v aplikaciji.",
     "Feature:AllowChangingEmailSettings": "Dovoli spreminjanje e-poštnih nastavitev.",
-    "Feature:AllowChangingEmailSettingsDescription": "Dovoli spreminjanje e-poštnih nastavitev."
+    "Feature:AllowChangingEmailSettingsDescription": "Dovoli spreminjanje e-poštnih nastavitev.",
+    "SmtpPasswordPlaceholder": "Vnesite vrednost za posodobitev gesla"
   }
 }

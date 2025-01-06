@@ -21,7 +21,7 @@
         <abp-modal-body>
             <abp-tabs name="create-user-modal-tabs">
                 <abp-tab title="@L["UserInformations"].Value">
-                    <div class="mt-3" >
+                    <div >
                         @* TODO: Can we use dynamic form? *@
                         <abp-input asp-for="UserInfo.UserName" />
                         <abp-input asp-for="UserInfo.Name" />
@@ -29,7 +29,7 @@
                         <div class="mb-3">
                             <label asp-for="UserInfo.Password" class="form-label">@L["Password"] *</label>
                             <div class="input-group">
-                                <input type="password" class="form-control" maxlength="@IdentityUserConsts.MaxPasswordLength" asp-for="UserInfo.Password" />
+                                <input type="password" class="form-control" autocomplete="new-password" maxlength="@IdentityUserConsts.MaxPasswordLength" asp-for="UserInfo.Password" />
                                 <button class="btn btn-secondary" type="button" id="PasswordVisibilityButton"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>
                             </div>
                             <span asp-validation-for="UserInfo.Password"></span>
@@ -37,9 +37,9 @@
                         <abp-input asp-for="UserInfo.Email" />
                         <abp-input asp-for="UserInfo.PhoneNumber" />
                         <abp-input asp-for="UserInfo.IsActive" />
-                        <abp-input asp-for="UserInfo.LockoutEnabled" />
+                        <abp-input asp-for="UserInfo.LockoutEnabled" label-tooltip="@L.GetString("Description:LockoutEnabled")"  />
 
-                        @foreach (var propertyInfo in ObjectExtensionManager.Instance.GetProperties<CreateModalModel.UserInfoViewModel>())
+                        @foreach (var propertyInfo in await ObjectExtensionManager.Instance.GetPropertiesAndCheckPolicyAsync<CreateModalModel.UserInfoViewModel>(HttpContext.RequestServices))
                         {
                             if (!propertyInfo.Name.EndsWith("_Text"))
                             {
@@ -72,7 +72,7 @@
                     </div>
                 </abp-tab>
                 <abp-tab title="@L["Roles"].Value">
-                    <div class="mt-3" >
+                    <div>
                         @for (var i = 0; i < Model.Roles.Length; i++)
                         {
                             var role = Model.Roles[i];

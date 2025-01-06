@@ -7,7 +7,6 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Content;
@@ -40,8 +39,7 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
         HttpClientProxyingOptions = httpClientProxyingOptions.Value;
     }
 
-    [CanBeNull]
-    public virtual async Task<HttpContent> BuildContentAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments, IJsonSerializer jsonSerializer, ApiVersionInfo apiVersion)
+    public virtual async Task<HttpContent?> BuildContentAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments, IJsonSerializer jsonSerializer, ApiVersionInfo apiVersion)
     {
         var body = await GenerateBodyAsync(action, methodArguments, jsonSerializer);
         if (body != null)
@@ -54,7 +52,7 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
         return body;
     }
 
-    protected virtual Task<HttpContent> GenerateBodyAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments, IJsonSerializer jsonSerializer)
+    protected virtual Task<HttpContent?> GenerateBodyAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments, IJsonSerializer jsonSerializer)
     {
         var parameters = action
             .Parameters
@@ -63,7 +61,7 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
 
         if (parameters.Length <= 0)
         {
-            return Task.FromResult<HttpContent>(null);
+            return Task.FromResult<HttpContent?>(null);
         }
 
         if (parameters.Length > 1)
@@ -76,13 +74,13 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
         var value = HttpActionParameterHelper.FindParameterValue(methodArguments, parameters[0]);
         if (value == null)
         {
-            return Task.FromResult<HttpContent>(null);
+            return Task.FromResult<HttpContent?>(null);
         }
 
-        return Task.FromResult<HttpContent>(new StringContent(jsonSerializer.Serialize(value), Encoding.UTF8, MimeTypes.Application.Json));
+        return Task.FromResult<HttpContent?>(new StringContent(jsonSerializer.Serialize(value), Encoding.UTF8, MimeTypes.Application.Json));
     }
 
-    protected virtual async Task<HttpContent> GenerateFormPostDataAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments)
+    protected virtual async Task<HttpContent?> GenerateFormPostDataAsync(ActionApiDescriptionModel action, IReadOnlyDictionary<string, object> methodArguments)
     {
         var parameters = action
             .Parameters
@@ -108,7 +106,7 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
             {
                 using (var scope = ServiceScopeFactory.CreateScope())
                 {
-                    var formDataContents = await (Task<List<KeyValuePair<string, HttpContent>>>)CallObjectToFormDataAsyncMethod
+                    var formDataContents = await (Task<List<KeyValuePair<string, HttpContent>>?>)CallObjectToFormDataAsyncMethod
                         .MakeGenericMethod(value.GetType())
                         .Invoke(this, new object[]
                         {
@@ -116,7 +114,7 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
                             action,
                             parameter,
                             value
-                        });
+                        })!;
 
                     if (formDataContents != null)
                     {
@@ -158,12 +156,12 @@ public class ClientProxyRequestPayloadBuilder : ITransientDependency
             {
                 foreach (var item in (IEnumerable) value)
                 {
-                    formData.Add(new StringContent(item.ToString(), Encoding.UTF8), parameter.Name);
+                    formData.Add(new StringContent(item.ToString()!, Encoding.UTF8), parameter.Name);
                 }
             }
             else
             {
-                formData.Add(new StringContent(value.ToString(), Encoding.UTF8), parameter.Name);
+                formData.Add(new StringContent(value.ToString()!, Encoding.UTF8), parameter.Name);
             }
         }
 

@@ -9,6 +9,10 @@ public class AbpCardTagHelperService : AbpTagHelperService<AbpCardTagHelper>
     {
         output.TagName = "div";
         output.Attributes.AddClass("card");
+        if (TagHelper.AddMarginBottomClass)
+        {
+            output.Attributes.AddClass("mb-3");
+        }
 
         SetBorder(context, output);
     }

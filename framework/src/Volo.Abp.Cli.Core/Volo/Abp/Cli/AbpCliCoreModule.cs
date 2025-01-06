@@ -1,18 +1,17 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Cli.Commands;
+using Volo.Abp.Cli.Commands.Internal;
 using Volo.Abp.Cli.Http;
-using Volo.Abp.Cli.LIbs;
 using Volo.Abp.Cli.ServiceProxying;
 using Volo.Abp.Cli.ServiceProxying.Angular;
 using Volo.Abp.Cli.ServiceProxying.CSharp;
 using Volo.Abp.Cli.ServiceProxying.JavaScript;
 using Volo.Abp.Domain;
 using Volo.Abp.Http;
-using Volo.Abp.Http.ProxyScripting.Generators.JQuery;
 using Volo.Abp.IdentityModel;
 using Volo.Abp.Json;
-using Volo.Abp.Json.SystemTextJson;
+using Volo.Abp.Localization;
 using Volo.Abp.Minify;
 using Volo.Abp.Modularity;
 
@@ -23,7 +22,8 @@ namespace Volo.Abp.Cli;
     typeof(AbpJsonModule),
     typeof(AbpIdentityModelModule),
     typeof(AbpMinifyModule),
-    typeof(AbpHttpModule)
+    typeof(AbpHttpModule),
+    typeof(AbpLocalizationModule)
 )]
 public class AbpCliCoreModule : AbpModule
 {
@@ -32,12 +32,12 @@ public class AbpCliCoreModule : AbpModule
         context.Services.AddHttpClient(CliConsts.HttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => new CliHttpClientHandler());
 
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        Configure<AbpSystemTextJsonSerializerOptions>(options =>
+        context.Services.AddHttpClient(CliConsts.GithubHttpClientName, client =>
         {
-            options.UnsupportedTypes.Add(typeof(ResourceMapping));
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("MyAgent/1.0");
         });
+
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         Configure<AbpCliOptions>(options =>
         {
@@ -59,6 +59,8 @@ public class AbpCliCoreModule : AbpModule
             options.Commands[SwitchToPreviewCommand.Name] = typeof(SwitchToPreviewCommand);
             options.Commands[SwitchToStableCommand.Name] = typeof(SwitchToStableCommand);
             options.Commands[SwitchToNightlyCommand.Name] = typeof(SwitchToNightlyCommand);
+            options.Commands[SwitchToPreRcCommand.Name] = typeof(SwitchToPreRcCommand);
+            options.Commands[SwitchToLocal.Name] = typeof(SwitchToLocal);
             options.Commands[TranslateCommand.Name] = typeof(TranslateCommand);
             options.Commands[BuildCommand.Name] = typeof(BuildCommand);
             options.Commands[BundleCommand.Name] = typeof(BundleCommand);
@@ -66,6 +68,12 @@ public class AbpCliCoreModule : AbpModule
             options.Commands[InstallLibsCommand.Name] = typeof(InstallLibsCommand);
             options.Commands[CleanCommand.Name] = typeof(CleanCommand);
             options.Commands[CliCommand.Name] = typeof(CliCommand);
+            options.Commands[ClearDownloadCacheCommand.Name] = typeof(ClearDownloadCacheCommand);
+            options.Commands[RecreateInitialMigrationCommand.Name] = typeof(RecreateInitialMigrationCommand);
+            options.Commands[GenerateRazorPage.Name] = typeof(GenerateRazorPage);
+
+            options.DisabledModulesToAddToSolution.Add("Volo.Abp.LeptonXTheme.Pro");
+            options.DisabledModulesToAddToSolution.Add("Volo.Abp.LeptonXTheme.Lite");
         });
 
         Configure<AbpCliServiceProxyOptions>(options =>

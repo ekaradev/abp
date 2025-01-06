@@ -1,10 +1,18 @@
-import { ABP, getRoutePath, RouterEvents, RoutesService, SubscriptionService, TreeNode } from '@abp/ng.core';
+import {
+  ABP,
+  getRoutePath,
+  RouterEvents,
+  RoutesService,
+  SubscriptionService,
+  TreeNode,
+} from '@abp/ng.core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, startWith } from 'rxjs/operators';
 import { eThemeSharedRouteNames } from '../../enums/route-names';
 
 @Component({
+  standalone: false,
   selector: 'abp-breadcrumb',
   templateUrl: './breadcrumb.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

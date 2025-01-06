@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using Volo.Abp.EventBus.Boxes;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.Timing;
 using Volo.Abp.Uow;
@@ -51,16 +51,24 @@ public class MongoDbContextEventInbox<TMongoDbContext> : IMongoDbContextEventInb
     }
 
     [UnitOfWork]
-    public virtual async Task<List<IncomingEventInfo>> GetWaitingEventsAsync(int maxCount, CancellationToken cancellationToken = default)
+    public virtual async Task<List<IncomingEventInfo>> GetWaitingEventsAsync(int maxCount, Expression<Func<IIncomingEventInfo, bool>>? filter = null, CancellationToken cancellationToken = default)
     {
         var dbContext = await DbContextProvider.GetDbContextAsync(cancellationToken);
+
+        Expression<Func<IncomingEventRecord, bool>>? transformedFilter = null;
+        if (filter != null)
+        {
+            transformedFilter = InboxOutboxFilterExpressionTransformer.Transform<IIncomingEventInfo, IncomingEventRecord>(filter)!;
+        }
 
         var outgoingEventRecords = await dbContext
             .IncomingEvents
             .AsQueryable()
             .Where(x => !x.Processed)
+            .WhereIf(transformedFilter != null, transformedFilter!)
             .OrderBy(x => x.CreationTime)
             .Take(maxCount)
+            .As<IMongoQueryable<IncomingEventRecord>>()
             .ToListAsync(cancellationToken: cancellationToken);
 
         return outgoingEventRecords

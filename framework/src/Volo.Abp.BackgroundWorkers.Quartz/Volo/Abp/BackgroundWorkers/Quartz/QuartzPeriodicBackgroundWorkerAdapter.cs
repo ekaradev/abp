@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using Volo.Abp.DynamicProxy;
 using Volo.Abp.Threading;
@@ -12,8 +13,8 @@ public class QuartzPeriodicBackgroundWorkerAdapter<TWorker> : QuartzBackgroundWo
     IQuartzBackgroundWorkerAdapter
     where TWorker : IBackgroundWorker
 {
-    private readonly MethodInfo _doWorkAsyncMethod;
-    private readonly MethodInfo _doWorkMethod;
+    private readonly MethodInfo? _doWorkAsyncMethod;
+    private readonly MethodInfo? _doWorkMethod;
 
     public QuartzPeriodicBackgroundWorkerAdapter()
     {
@@ -38,14 +39,7 @@ public class QuartzPeriodicBackgroundWorkerAdapter<TWorker> : QuartzBackgroundWo
 
             var timer = workerType.GetProperty("Timer", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(worker);
 
-            if (worker is AsyncPeriodicBackgroundWorkerBase)
-            {
-                period = ((AbpAsyncTimer)timer)?.Period;
-            }
-            else
-            {
-                period = ((AbpTimer)timer)?.Period;
-            }
+            period = worker is AsyncPeriodicBackgroundWorkerBase ? ((AbpAsyncTimer?)timer)?.Period : ((AbpTimer?)timer)?.Period;
         }
         else
         {
@@ -59,17 +53,17 @@ public class QuartzPeriodicBackgroundWorkerAdapter<TWorker> : QuartzBackgroundWo
 
         JobDetail = JobBuilder
             .Create<QuartzPeriodicBackgroundWorkerAdapter<TWorker>>()
-            .WithIdentity(workerType.FullName)
+            .WithIdentity(BackgroundWorkerNameAttribute.GetName<TWorker>())
             .Build();
         Trigger = TriggerBuilder.Create()
-            .WithIdentity(workerType.FullName)
+            .WithIdentity(BackgroundWorkerNameAttribute.GetName<TWorker>())
             .WithSimpleSchedule(builder => builder.WithInterval(TimeSpan.FromMilliseconds(period.Value)).RepeatForever())
             .Build();
     }
 
     public async override Task Execute(IJobExecutionContext context)
     {
-        var worker = (IBackgroundWorker) ServiceProvider.GetService(typeof(TWorker));
+        var worker = (IBackgroundWorker) ServiceProvider.GetRequiredService(typeof(TWorker));
         var workerContext = new PeriodicBackgroundWorkerContext(ServiceProvider, context.CancellationToken);
 
         switch (worker)
@@ -78,7 +72,7 @@ public class QuartzPeriodicBackgroundWorkerAdapter<TWorker> : QuartzBackgroundWo
             {
                 if (_doWorkAsyncMethod != null)
                 {
-                    await (Task) _doWorkAsyncMethod.Invoke(asyncWorker, new object[] {workerContext});
+                    await (Task) (_doWorkAsyncMethod.Invoke(asyncWorker, new object[] {workerContext})!);
                 }
 
                 break;

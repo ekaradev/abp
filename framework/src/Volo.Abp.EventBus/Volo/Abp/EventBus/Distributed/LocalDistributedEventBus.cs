@@ -28,6 +28,30 @@ public class LocalDistributedEventBus : IDistributedEventBus, ISingletonDependen
         ServiceScopeFactory = serviceScopeFactory;
         AbpDistributedEventBusOptions = distributedEventBusOptions.Value;
         Subscribe(distributedEventBusOptions.Value.Handlers);
+
+        // For unit testing
+        if (localEventBus is LocalEventBus eventBus)
+        {
+            eventBus.OnEventHandleInvoking = async (eventType, eventData) =>
+            {
+                await localEventBus.PublishAsync(new DistributedEventReceived()
+                {
+                    Source = DistributedEventSource.Direct,
+                    EventName = EventNameAttribute.GetNameOrDefault(eventType),
+                    EventData = eventData
+                }, onUnitOfWorkComplete: false);
+            };
+
+            eventBus.OnPublishing = async (eventType, eventData) =>
+            {
+                await localEventBus.PublishAsync(new DistributedEventSent()
+                {
+                    Source = DistributedEventSource.Direct,
+                    EventName = EventNameAttribute.GetNameOrDefault(eventType),
+                    EventData = eventData
+                }, onUnitOfWorkComplete: false);
+            };
+        }
     }
 
     public virtual void Subscribe(ITypeList<IEventHandler> handlers)
@@ -57,88 +81,88 @@ public class LocalDistributedEventBus : IDistributedEventBus, ISingletonDependen
         return Subscribe(typeof(TEvent), handler);
     }
 
-    public IDisposable Subscribe<TEvent>(Func<TEvent, Task> action) where TEvent : class
+    public virtual IDisposable Subscribe<TEvent>(Func<TEvent, Task> action) where TEvent : class
     {
         return _localEventBus.Subscribe(action);
     }
 
-    public IDisposable Subscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : class
+    public virtual IDisposable Subscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : class
     {
         return _localEventBus.Subscribe(handler);
     }
 
-    public IDisposable Subscribe<TEvent, THandler>() where TEvent : class where THandler : IEventHandler, new()
+    public virtual IDisposable Subscribe<TEvent, THandler>() where TEvent : class where THandler : IEventHandler, new()
     {
         return _localEventBus.Subscribe<TEvent, THandler>();
     }
 
-    public IDisposable Subscribe(Type eventType, IEventHandler handler)
+    public virtual IDisposable Subscribe(Type eventType, IEventHandler handler)
     {
         return _localEventBus.Subscribe(eventType, handler);
     }
 
-    public IDisposable Subscribe<TEvent>(IEventHandlerFactory factory) where TEvent : class
+    public virtual IDisposable Subscribe<TEvent>(IEventHandlerFactory factory) where TEvent : class
     {
         return _localEventBus.Subscribe<TEvent>(factory);
     }
 
-    public IDisposable Subscribe(Type eventType, IEventHandlerFactory factory)
+    public virtual IDisposable Subscribe(Type eventType, IEventHandlerFactory factory)
     {
         return _localEventBus.Subscribe(eventType, factory);
     }
 
-    public void Unsubscribe<TEvent>(Func<TEvent, Task> action) where TEvent : class
+    public virtual void Unsubscribe<TEvent>(Func<TEvent, Task> action) where TEvent : class
     {
         _localEventBus.Unsubscribe(action);
     }
 
-    public void Unsubscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : class
+    public virtual void Unsubscribe<TEvent>(ILocalEventHandler<TEvent> handler) where TEvent : class
     {
         _localEventBus.Unsubscribe(handler);
     }
 
-    public void Unsubscribe(Type eventType, IEventHandler handler)
+    public virtual void Unsubscribe(Type eventType, IEventHandler handler)
     {
         _localEventBus.Unsubscribe(eventType, handler);
     }
 
-    public void Unsubscribe<TEvent>(IEventHandlerFactory factory) where TEvent : class
+    public virtual void Unsubscribe<TEvent>(IEventHandlerFactory factory) where TEvent : class
     {
         _localEventBus.Unsubscribe<TEvent>(factory);
     }
 
-    public void Unsubscribe(Type eventType, IEventHandlerFactory factory)
+    public virtual void Unsubscribe(Type eventType, IEventHandlerFactory factory)
     {
         _localEventBus.Unsubscribe(eventType, factory);
     }
 
-    public void UnsubscribeAll<TEvent>() where TEvent : class
+    public virtual void UnsubscribeAll<TEvent>() where TEvent : class
     {
         _localEventBus.UnsubscribeAll<TEvent>();
     }
 
-    public void UnsubscribeAll(Type eventType)
+    public virtual void UnsubscribeAll(Type eventType)
     {
         _localEventBus.UnsubscribeAll(eventType);
     }
 
-    public Task PublishAsync<TEvent>(TEvent eventData, bool onUnitOfWorkComplete = true)
+    public virtual Task PublishAsync<TEvent>(TEvent eventData, bool onUnitOfWorkComplete = true)
         where TEvent : class
     {
         return _localEventBus.PublishAsync(eventData, onUnitOfWorkComplete);
     }
 
-    public Task PublishAsync(Type eventType, object eventData, bool onUnitOfWorkComplete = true)
+    public virtual Task PublishAsync(Type eventType, object eventData, bool onUnitOfWorkComplete = true)
     {
         return _localEventBus.PublishAsync(eventType, eventData, onUnitOfWorkComplete);
     }
-    
-    public Task PublishAsync<TEvent>(TEvent eventData, bool onUnitOfWorkComplete = true, bool useOutbox = true) where TEvent : class
+
+    public virtual Task PublishAsync<TEvent>(TEvent eventData, bool onUnitOfWorkComplete = true, bool useOutbox = true) where TEvent : class
     {
         return _localEventBus.PublishAsync(eventData, onUnitOfWorkComplete);
     }
 
-    public Task PublishAsync(Type eventType, object eventData, bool onUnitOfWorkComplete = true, bool useOutbox = true)
+    public virtual Task PublishAsync(Type eventType, object eventData, bool onUnitOfWorkComplete = true, bool useOutbox = true)
     {
         return _localEventBus.PublishAsync(eventType, eventData, onUnitOfWorkComplete);
     }

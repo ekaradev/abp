@@ -25,6 +25,14 @@ public class AbpIdentityDomainModule : AbpModule
 {
     private static readonly OneTimeRunner OneTimeRunner = new OneTimeRunner();
 
+    public override void PreConfigureServices(ServiceConfigurationContext context)
+    {
+        PreConfigure<AbpClaimsPrincipalFactoryOptions>(options =>
+        {
+            options.IsRemoteRefreshEnabled = false;
+        });
+    }
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddAutoMapperObjectMapper<AbpIdentityDomainModule>();
@@ -90,6 +98,12 @@ public class AbpIdentityDomainModule : AbpModule
                 IdentityModuleExtensionConsts.ModuleName,
                 IdentityModuleExtensionConsts.EntityNames.OrganizationUnit,
                 typeof(OrganizationUnit)
+            );
+
+            ModuleExtensionConfigurationHelper.ApplyEntityConfigurationToEntity(
+                IdentityModuleExtensionConsts.ModuleName,
+                IdentityModuleExtensionConsts.EntityNames.IdentitySession,
+                typeof(IdentitySession)
             );
         });
     }

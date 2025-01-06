@@ -44,8 +44,14 @@ public static class BlazoriseUiObjectExtensionPropertyInfoExtensions
             typeof(PhoneAttribute)
         };
 
-    public static string GetDateEditInputFormatOrNull(this IBasicObjectExtensionPropertyInfo property)
+    public static string? GetDateEditInputFormatOrNull(this IBasicObjectExtensionPropertyInfo property)
     {
+        var dataFormatString = property.GetDataFormatStringOrNull();
+        if (dataFormatString != null)
+        {
+            return dataFormatString;
+        }
+
         if (property.IsDate())
         {
             return "{0:yyyy-MM-dd}";
@@ -59,7 +65,15 @@ public static class BlazoriseUiObjectExtensionPropertyInfoExtensions
         return null;
     }
 
-    public static string GetTextInputValueOrNull(this IBasicObjectExtensionPropertyInfo property, object value)
+    public static string? GetDataFormatStringOrNull(this IBasicObjectExtensionPropertyInfo property)
+    {
+        return property
+            .Attributes
+            .OfType<DisplayFormatAttribute>()
+            .FirstOrDefault()?.DataFormatString;
+    }
+
+    public static string? GetTextInputValueOrNull(this IBasicObjectExtensionPropertyInfo property, object? value)
     {
         if (value == null)
         {
@@ -74,7 +88,7 @@ public static class BlazoriseUiObjectExtensionPropertyInfoExtensions
         return value.ToString();
     }
 
-    public static T GetInputValueOrDefault<T>(this IBasicObjectExtensionPropertyInfo property, object value)
+    public static T? GetInputValueOrDefault<T>(this IBasicObjectExtensionPropertyInfo property, object? value)
     {
         if (value == null)
         {
@@ -204,7 +218,7 @@ public static class BlazoriseUiObjectExtensionPropertyInfoExtensions
                ?? typeof(TextExtensionProperty<,>); //default
     }
 
-    private static Type GetInputTypeFromAttributeOrNull(Attribute attribute)
+    private static Type? GetInputTypeFromAttributeOrNull(Attribute attribute)
     {
         var hasTextEditSupport = TextEditSupportedAttributeTypes.Any(t => t == attribute.GetType());
 
@@ -238,7 +252,7 @@ public static class BlazoriseUiObjectExtensionPropertyInfoExtensions
         return null;
     }
 
-    private static Type GetInputTypeFromTypeOrNull(Type type)
+    private static Type? GetInputTypeFromTypeOrNull(Type type)
     {
         if (type == typeof(bool))
         {

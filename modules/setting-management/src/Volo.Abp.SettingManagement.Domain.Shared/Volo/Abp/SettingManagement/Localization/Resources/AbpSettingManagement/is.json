@@ -2,10 +2,25 @@
   "culture": "is",
   "texts": {
     "Settings": "Stillingar",
-    "SuccessfullySaved": "Tókst að vista",
+    "SavedSuccessfully": "Tókst að vista",
     "Permission:SettingManagement": "Stillingar",
     "Permission:Emailing": "Senda tölvupóst",
+    "Permission:EmailingTest": "Próf í tölvupósti",
+    "Permission:TimeZone": "Tímabelti",
+    "SendTestEmail": "Sendu prófunarpóst",
+    "SenderEmailAddress": "Netfang sendanda",
+    "TargetEmailAddress": "Miðað netfang",
+    "Subject": "Efni",
+    "Body": "Líkami",
+    "TestEmailSubject": "Prófunartölvupóstur {0}",
+    "TestEmailBody": "Prófaðu meginmál tölvupósts hér",
+    "SuccessfullySent": "Tókst sent",
+    "MailSendingFailed": "Tölvupóstur sendist ekki. Athugaðu tölvupóst stillingar þínar og reyndu aftur.",
+    "Send": "Senda",
     "Menu:Emailing": "Senda tölvupóst",
+    "Menu:TimeZone": "Tímabelti",
+    "DisplayName:Timezone": "Tímabelti",
+    "TimezoneHelpText": "Þessi stilling er notuð fyrir allt forrit eða leigjanda.",
     "SmtpHost": "Smtp Host",
     "SmtpPort": "Port",
     "SmtpUserName": "Notanda nafn",
@@ -19,6 +34,7 @@
     "Feature:SettingManagementEnable": "Virkja stillingar",
     "Feature:SettingManagementEnableDescription": "Virkja stillingar í forritinu.",
     "Feature:AllowChangingEmailSettings": "Leyfa að breyta stillingum tölvupósts.",
-    "Feature:AllowChangingEmailSettingsDescription": "Leyfa að breyta stillingum tölvupósts."
+    "Feature:AllowChangingEmailSettingsDescription": "Leyfa að breyta stillingum tölvupósts.",
+    "SmtpPasswordPlaceholder": "Sláðu inn gildi til að uppfæra lykilorð"
   }
 }

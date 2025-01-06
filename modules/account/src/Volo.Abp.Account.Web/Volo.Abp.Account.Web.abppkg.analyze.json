@@ -1,11 +1,184 @@
 {
   "name": "Volo.Abp.Account.Web",
-  "hash": "5fb2aa05261d4febe7ea7083d80fea74",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.Account.Web",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.Account.Application.Contracts",
+          "namespace": "Volo.Abp.Account",
+          "name": "AbpAccountApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.Identity.AspNetCore",
+          "namespace": "Volo.Abp.Identity.AspNetCore",
+          "name": "AbpIdentityAspNetCoreModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AutoMapper",
+          "namespace": "Volo.Abp.AutoMapper",
+          "name": "AbpAutoMapperModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared",
+          "namespace": "Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared",
+          "name": "AbpAspNetCoreMvcUiThemeSharedModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.ExceptionHandling",
+          "namespace": "Volo.Abp.ExceptionHandling",
+          "name": "AbpExceptionHandlingModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpAccountWebModule"
+      "name": "AbpAccountWebModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "api/account/login",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "Volo.Abp.Account.Web.Areas.Account.Controllers.Models.AbpLoginResult",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "login",
+              "type": "UserLoginInfo"
+            }
+          ]
+        },
+        {
+          "path": "api/account/logout",
+          "method": "GET",
+          "groupName": "Account",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/account/check-password",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "Volo.Abp.Account.Web.Areas.Account.Controllers.Models.AbpLoginResult",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "login",
+              "type": "UserLoginInfo"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "AccessDeniedModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "ForgotPasswordModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "LoggedOutModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "LoginModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "LogoutModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "ManageModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "PasswordResetLinkSentModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "RegisterModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "ResetPasswordModel",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Abp.Account.Web.Pages.Account",
+      "contentType": "webPage",
+      "name": "ResetPasswordConfirmationModel",
+      "summary": null
     }
   ]
 }

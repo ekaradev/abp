@@ -10,7 +10,7 @@
     "UseAnotherServiceToLogin": "Use another service to log in",
     "UserLockedOutMessage": "The user account has been locked out due to invalid login attempts. Please wait a while and try again.",
     "InvalidUserNameOrPassword": "Invalid username or password!",
-    "LoginIsNotAllowed": "You are not allowed to login! Your account is inactive or needs to confirm your email/phone number.",
+    "LoginIsNotAllowed": "You are not allowed to log in! Your account is inactive or needs to confirm your email/phone number.",
     "SelfRegistrationDisabledMessage": "Self-registration is disabled for this application. Please contact the application administrator to register a new user.",
     "LocalLoginDisabledMessage": "Local login is disabled for this application.",
     "Login": "Login",
@@ -34,8 +34,11 @@
     "DisplayName:PhoneNumber": "Phone number",
     "PersonalSettings": "Personal settings",
     "PersonalSettingsSaved": "Personal settings saved",
+    "PersonalSettingsChangedConfirmationModalTitle": "Personal info changed",
+    "PersonalSettingsChangedConfirmationModalDescription": "The changes will be reflected after logging in again. Do you want to log out now?",
     "PasswordChanged": "Password changed",
     "NewPasswordConfirmFailed": "Please confirm the new password.",
+    "NewPasswordSameAsOld": "New password must be different from the old one.",
     "Manage": "Manage",
     "MyAccount": "My account",
     "DisplayName:Abp.Account.IsSelfRegistrationEnabled": "Is self-registration enabled",
@@ -47,10 +50,10 @@
     "ReturnToText": "Click here to return to the application",
     "OrLoginWith": "Or login with:",
     "ForgotPassword": "Forgot password?",
-    "SendPasswordResetLink_Information": "A password reset link will be sent to your email to reset your password. If you don't get an email within a few minutes, please re-try.",
+    "SendPasswordResetLink_Information": "A password reset link will be sent to your email to reset your password. If you don't get an email within a few minutes, please retry.",
     "PasswordResetMailSentMessage": "Account recovery email sent to your e-mail address. If you don't see this email in your inbox within 15 minutes, look for it in your junk mail folder. If you find it there, please mark it as -Not Junk-. ",
     "ResetPassword": "Reset Password",
-    "ConfirmPassword": "Confirm (repeat) the password",
+    "ConfirmPassword": "Confirm the password",
     "ResetPassword_Information": "Please enter your new password.",
     "YourPasswordIsSuccessfullyReset": "Your password is successfully reset.",
     "GoToTheApplication": "Go to the application",
@@ -63,6 +66,8 @@
     "PasswordResetInfoInEmail": "We received an account recovery request! If you initiated this request, click the following link to reset your password.",
     "ResetMyPassword": "Reset my password",
     "AccessDenied": "Access denied!",
-    "AccessDeniedMessage": "You do not have access to this resource."
+    "AccessDeniedMessage": "You do not have access to this resource.",
+    "OrRegisterWith": "Or register with",
+    "RegisterUsingYourProviderAccount": "Register using your {0} account"
   }
 }

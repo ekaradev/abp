@@ -317,6 +317,11 @@ public class RepositoryRegistration_Tests
             throw new NotImplementedException();
         }
 
+        public override Task DeleteDirectAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
@@ -402,7 +407,7 @@ public class RepositoryRegistration_Tests
 
     public class MyTestAggregateRootWithDefaultPkEmptyRepository : IMyTestAggregateRootWithDefaultPkEmptyRepository
     {
-
+        public bool? IsChangeTrackingEnabled { get; set; }
     }
 
     public class TestDbContextRegistrationOptions : AbpCommonDbContextRegistrationOptions

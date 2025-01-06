@@ -2,6 +2,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { PageAlertService } from '@abp/ng.theme.shared';
 
 @Component({
+  standalone: false,
   selector: 'abp-page-alert-container',
   templateUrl: './page-alert-container.component.html',
   encapsulation: ViewEncapsulation.None,

@@ -5,3 +5,25 @@
         padding: 1px !important;
     }
 }
+
+.input-group{
+    .input-group-text{
+        background-color: transparent!important;
+    }
+}
+
+.navigation {
+    .next-link, .prev-link {
+        .desc {
+            color: #0D6EFD;
+            .fa{
+                font-size: 12px;
+            }
+        }
+        .title {
+            font-weight: 600;
+            font-size: 18px;
+            color: #0B1621;
+        }
+    }
+}

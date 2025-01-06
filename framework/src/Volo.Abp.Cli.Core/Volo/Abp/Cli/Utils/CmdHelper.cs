@@ -12,26 +12,30 @@ public class CmdHelper : ICmdHelper, ITransientDependency
     private const int SuccessfulExitCode = 0;
 
     protected AbpCliOptions CliOptions { get; }
-    
+
     public CmdHelper(IOptionsSnapshot<AbpCliOptions> cliOptions)
     {
         CliOptions = cliOptions.Value;
     }
-    
-    public void OpenWebPage(string url)
+
+    public void Open(string pathOrUrl)
     {
+        //directory might contain 'space' character
+        pathOrUrl = pathOrUrl.EnsureStartsWith('"');
+        pathOrUrl = pathOrUrl.EnsureEndsWith('"');
+        
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            url = url.Replace("&", "^&");
-            Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+            pathOrUrl = pathOrUrl.Replace("&", "^&");
+            Process.Start(new ProcessStartInfo("cmd", $"/c start \"\" {pathOrUrl}") { CreateNoWindow = true });
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            Process.Start("xdg-open", url);
+            Process.Start("xdg-open", pathOrUrl);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            Process.Start("open", url);
+            Process.Start("open", pathOrUrl);
         }
     }
 
@@ -43,7 +47,7 @@ public class CmdHelper : ICmdHelper, ITransientDependency
         {
             HideNewCommandWindow(procStartInfo);
         }
-        
+
         Process.Start(procStartInfo)?.WaitForExit();
     }
 
@@ -74,6 +78,7 @@ public class CmdHelper : ICmdHelper, ITransientDependency
             process?.WaitForExit();
 
             exitCode = process.ExitCode;
+            Environment.ExitCode = exitCode;
         }
     }
 
@@ -144,6 +149,7 @@ public class CmdHelper : ICmdHelper, ITransientDependency
             process.WaitForExit();
 
             exitCode = process.ExitCode;
+            Environment.ExitCode = exitCode;
         }
 
         return output.Trim();
@@ -160,7 +166,7 @@ public class CmdHelper : ICmdHelper, ITransientDependency
         {
             procStartInfo.WorkingDirectory = workingDirectory;
         }
-        
+
         if (CliOptions.AlwaysHideExternalCommandOutput)
         {
             HideNewCommandWindow(procStartInfo);
@@ -174,7 +180,7 @@ public class CmdHelper : ICmdHelper, ITransientDependency
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            return delaySeconds == null ? "-c \"" + command + "\"" : "-c \"" + $"sleep {delaySeconds}s > /dev/null && " + command + "\"";
+            return delaySeconds == null ? "-c \"" + command + "\"" : "-c \"" + $"sleep {delaySeconds} > /dev/null && " + command + "\"";
         }
 
         //Windows default.

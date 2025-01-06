@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Volo.Abp.EventBus.Abstractions;
 using Volo.Abp.Modularity;
 using Volo.Abp.ObjectExtending;
@@ -42,7 +41,7 @@ public class AbpDataModule : AbpModule
     {
         var contributors = new List<Type>();
 
-        services.OnRegistred(context =>
+        services.OnRegistered(context =>
         {
             if (typeof(IDataSeedContributor).IsAssignableFrom(context.ImplementationType))
             {

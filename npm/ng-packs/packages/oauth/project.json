@@ -1,0 +1,37 @@
+{
+  "name": "oauth",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/oauth/src",
+  "prefix": "abp",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:package",
+      "outputs": ["{workspaceRoot}/dist/packages/oauth"],
+      "options": {
+        "project": "packages/oauth/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/oauth/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/oauth/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/oauth/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["core"]
+}

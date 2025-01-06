@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DistributedLocking;
 using Volo.Abp.EventBus.Abstractions;
-using Volo.Abp.EventBus.Boxes;
 using Volo.Abp.EventBus.Distributed;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Guids;
@@ -48,13 +47,14 @@ public class AbpEventBusModule : AbpModule
         var localHandlers = new List<Type>();
         var distributedHandlers = new List<Type>();
 
-        services.OnRegistred(context =>
+        services.OnRegistered(context =>
         {
             if (ReflectionHelper.IsAssignableToGenericType(context.ImplementationType, typeof(ILocalEventHandler<>)))
             {
                 localHandlers.Add(context.ImplementationType);
             }
-            else if (ReflectionHelper.IsAssignableToGenericType(context.ImplementationType, typeof(IDistributedEventHandler<>)))
+
+            if (ReflectionHelper.IsAssignableToGenericType(context.ImplementationType, typeof(IDistributedEventHandler<>)))
             {
                 distributedHandlers.Add(context.ImplementationType);
             }

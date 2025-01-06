@@ -4,6 +4,7 @@ import { Component, OnDestroy, OnInit, TrackByFunction } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 @Component({
+  standalone: false,
   selector: 'abp-setting-management',
   templateUrl: './setting-management.component.html',
 })

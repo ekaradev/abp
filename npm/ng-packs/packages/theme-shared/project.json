@@ -1,0 +1,38 @@
+{
+  "name": "theme-shared",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/theme-shared/src",
+  "prefix": "abp",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:package",
+      "outputs": ["{workspaceRoot}/dist/packages/theme-shared"],
+      "options": {
+        "project": "packages/theme-shared/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/theme-shared/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/theme-shared/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/theme-shared"],
+      "options": {
+        "jestConfig": "packages/theme-shared/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["core", "oauth"]
+}

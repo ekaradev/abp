@@ -1,10 +1,11 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'abp-loading',
   template: `
     <div class="abp-loading">
-      <i class="fa fa-spinner fa-pulse abp-spinner"></i>
+      <i class="fa fa-spinner fa-pulse abp-spinner" aria-hidden="true"></i>
     </div>
   `,
   encapsulation: ViewEncapsulation.None,

@@ -39,6 +39,12 @@ public static class AbpIdentityResultExtensions
             }
         }
 
+        if (IdentityStrings.ContainsKey("InvalidUserName"))
+        {
+            // The default text of `InvalidUserName` is `Username '{0}' is invalid, can only contain letters or digits.`
+            IdentityStrings["InvalidUserName"] = "Username '{0}' is invalid.";
+        }
+
         if (!IdentityStrings.Any())
         {
             throw new AbpException("ResourceSet values of Identity is empty.");
@@ -122,7 +128,7 @@ public static class AbpIdentityResultExtensions
             }
         }
 
-        return localizer["Identity.Default"];
+        return localizer["Volo.Abp.Identity:DefaultError"];
     }
 
     public static string GetResultAsString(this SignInResult signInResult)

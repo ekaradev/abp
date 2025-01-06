@@ -87,6 +87,7 @@ public class AbpIdentityServerTestDataBuilder : ITransientDependency
         apiResource.DisplayName = nameof(apiResource.DisplayName);
 
         apiResource.AddScope(nameof(ApiResourceScope.Scope));
+        apiResource.AddScope("Test-ApiResource-ApiScope-Name-1");
         apiResource.AddUserClaim(nameof(ApiResourceClaim.Type));
         apiResource.AddSecret(nameof(ApiResourceSecret.Value));
 
@@ -138,7 +139,7 @@ public class AbpIdentityServerTestDataBuilder : ITransientDependency
 
     private async Task AddClients()
     {
-        var client = new Client(_testData.Client1Id, "ClientId1")
+        var client = new Client(_testData.Client1Id, _testData.Client1Name)
         {
             Description = nameof(Client.Description),
             ClientName = nameof(Client.ClientName),

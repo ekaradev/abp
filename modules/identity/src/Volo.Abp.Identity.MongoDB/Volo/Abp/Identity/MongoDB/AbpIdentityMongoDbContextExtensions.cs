@@ -37,5 +37,15 @@ public static class AbpIdentityMongoDbContextExtensions
         {
             b.CollectionName = AbpIdentityDbProperties.DbTablePrefix + "LinkUsers";
         });
+
+        builder.Entity<IdentityUserDelegation>(b =>
+        {
+            b.CollectionName = AbpIdentityDbProperties.DbTablePrefix + "UserDelegations";
+        });
+
+        builder.Entity<IdentitySession>(b =>
+        {
+            b.CollectionName = AbpIdentityDbProperties.DbTablePrefix + "Sessions";
+        });
     }
 }

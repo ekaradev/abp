@@ -6,6 +6,7 @@ import { ReplaceableComponentsService } from '../services/replaceable-components
 import { SubscriptionService } from '../services/subscription.service';
 
 @Component({
+  standalone: false,
   selector: 'abp-replaceable-route-container',
   template: `
     <ng-container *ngComponentOutlet="externalComponent || defaultComponent"></ng-container>
@@ -13,11 +14,11 @@ import { SubscriptionService } from '../services/subscription.service';
   providers: [SubscriptionService],
 })
 export class ReplaceableRouteContainerComponent implements OnInit {
-  defaultComponent: Type<any>;
+  defaultComponent!: Type<any>;
 
-  componentKey: string;
+  componentKey!: string;
 
-  externalComponent: Type<any>;
+  externalComponent?: Type<any>;
 
   constructor(
     private route: ActivatedRoute,

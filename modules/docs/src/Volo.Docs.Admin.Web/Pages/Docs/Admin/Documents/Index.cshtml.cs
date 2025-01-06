@@ -1,14 +1,25 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Docs.Admin.Documents;
+using Volo.Docs.Admin.Projects;
 
 namespace Volo.Docs.Admin.Pages.Docs.Admin.Documents;
 
-[Authorize(DocsAdminPermissions.Projects.Default)]
+[Authorize(DocsAdminPermissions.Documents.Default)]
 public class IndexModel : DocsAdminPageModel
 {
-    public virtual Task<IActionResult> OnGet()
+    private readonly IDocumentAdminAppService _documentAdminAppService;
+    public List<ProjectWithoutDetailsDto> Projects { get; set; }
+
+    public IndexModel(IDocumentAdminAppService documentAdminAppService)
     {
-        return Task.FromResult<IActionResult>(Page());
+        _documentAdminAppService = documentAdminAppService;
+    }
+    public virtual async Task<IActionResult> OnGet()
+    {
+        Projects = await _documentAdminAppService.GetProjectsAsync();
+        return Page();
     }
 }

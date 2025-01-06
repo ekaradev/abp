@@ -1,6 +1,7 @@
 {
   "culture": "cs",
   "texts": {
+    "Menu:Account": "Účet",
     "UserName": "Uživatelské jméno",
     "EmailAddress": "Email",
     "UserNameOrEmailAddress": "Uživatelské jméno nebo email",
@@ -33,8 +34,11 @@
     "DisplayName:PhoneNumber": "Telefonní číslo",
     "PersonalSettings": "Osobní nastavení",
     "PersonalSettingsSaved": "Osobní nastavení uloženo",
+    "PersonalSettingsChangedConfirmationModalTitle": "Osobní údaje změněny",
+    "PersonalSettingsChangedConfirmationModalDescription": "Pokud chcete tyto změny použít, musíte se přihlásit. Chcete se odhlásit?",
     "PasswordChanged": "Heslo změněno",
     "NewPasswordConfirmFailed": "Potvrďte nové heslo.",
+    "NewPasswordSameAsOld": "Nové heslo musí být odlišné od současného.",
     "Manage": "Spravovat",
     "MyAccount": "Můj účet",
     "DisplayName:Abp.Account.IsSelfRegistrationEnabled": "Je povolena automatická registrace",
@@ -49,7 +53,7 @@
     "SendPasswordResetLink_Information": "Na váš e-mail bude zaslán odkaz pro resetování hesla, pomocí kterého můžete heslo resetovat. Pokud e-mail během několika minut neobdržíte, zkuste to znovu.",
     "PasswordResetMailSentMessage": "E-mail pro obnovení účtu byl odeslán na vaši e-mailovou adresu. Pokud tento e-mail ve své doručené poště neuvidíte do 15 minut, vyhledejte jej ve složce nevyžádané pošty. Pokud to tam najdete, označte to jako -Not Junk-.",
     "ResetPassword": "Obnovit heslo",
-    "ConfirmPassword": "Potvrďte (zopakujte) heslo",
+    "ConfirmPassword": "Potvrďte heslo",
     "ResetPassword_Information": "Zadejte prosím své nové heslo.",
     "YourPasswordIsSuccessfullyReset": "Vaše heslo bylo úspěšně resetováno.",
     "GoToTheApplication": "Přejděte do aplikace",
@@ -62,6 +66,8 @@
     "PasswordResetInfoInEmail": "Obdrželi jsme žádost o obnovení účtu! Pokud jste tento požadavek iniciovali, klikněte na následující odkaz a obnovte své heslo.",
     "ResetMyPassword": "Obnovit moje heslo",
     "AccessDenied": "Přístup odepřen!",
-    "AccessDeniedMessage": "K tomuto zdroji nemáte přístup."
+    "AccessDeniedMessage": "K tomuto zdroji nemáte přístup.",
+    "OrRegisterWith": "Nebo se registrujte pomocí:",
+    "RegisterUsingYourProviderAccount": "Registrovat pomocí vašeho účtu {0}"
   }
 }

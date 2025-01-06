@@ -1,11 +1,130 @@
 {
   "name": "Volo.Abp.FeatureManagement.HttpApi",
-  "hash": "4f9c79b9d96c4c033c25ec12008eb07a",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.FeatureManagement",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.FeatureManagement.Application.Contracts",
+          "namespace": "Volo.Abp.FeatureManagement",
+          "name": "AbpFeatureManagementApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc",
+          "namespace": "Volo.Abp.AspNetCore.Mvc",
+          "name": "AbpAspNetCoreMvcModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpFeatureManagementHttpApiModule"
+      "name": "AbpFeatureManagementHttpApiModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "api/feature-management/features",
+          "method": "GET",
+          "groupName": "Features",
+          "responseType": "Volo.Abp.FeatureManagement.GetFeatureListResultDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "providerName",
+              "type": "String"
+            },
+            {
+              "name": "providerKey",
+              "type": "String"
+            }
+          ]
+        },
+        {
+          "path": "api/feature-management/features",
+          "method": "PUT",
+          "groupName": "Features",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "providerName",
+              "type": "String"
+            },
+            {
+              "name": "providerKey",
+              "type": "String"
+            },
+            {
+              "name": "input",
+              "type": "UpdateFeaturesDto"
+            }
+          ]
+        },
+        {
+          "path": "api/feature-management/features",
+          "method": "DELETE",
+          "groupName": "Features",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "providerName",
+              "type": "String"
+            },
+            {
+              "name": "providerKey",
+              "type": "String"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
     }
   ]
 }

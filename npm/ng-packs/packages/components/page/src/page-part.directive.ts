@@ -24,11 +24,14 @@ export interface PageRenderStrategy {
 
 export const PAGE_RENDER_STRATEGY = new InjectionToken<PageRenderStrategy>('PAGE_RENDER_STRATEGY');
 
-@Directive({ selector: '[abpPagePart]' })
+@Directive({
+  standalone: false,
+  selector: '[abpPagePart]',
+})
 export class PagePartDirective implements OnInit, OnDestroy, OnChanges {
   hasRendered = false;
-  type: string;
-  subscription: Subscription;
+  type!: string;
+  subscription!: Subscription;
 
   @Input('abpPagePartContext') context: any;
   @Input() set abpPagePart(type: string) {

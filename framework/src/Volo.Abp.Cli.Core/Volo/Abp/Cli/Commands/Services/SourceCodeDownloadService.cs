@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
@@ -33,8 +30,7 @@ public class SourceCodeDownloadService : ITransientDependency
 
     public async Task DownloadModuleAsync(string moduleName, string outputFolder, string version, string gitHubAbpLocalRepositoryPath, string gitHubVoloLocalRepositoryPath, AbpCommandLineOptions options)
     {
-        Logger.LogInformation("Downloading source code of " + moduleName);
-        Logger.LogInformation("Version: " + (version ?? "Latest"));
+        Logger.LogInformation($"Downloading source code of {moduleName} ({(version != null ? "v" + version : "Latest")})");
         Logger.LogInformation("Output folder: " + outputFolder);
 
         var result = await ModuleProjectBuilder.BuildAsync(

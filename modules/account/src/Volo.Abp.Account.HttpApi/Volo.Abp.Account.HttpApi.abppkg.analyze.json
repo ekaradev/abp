@@ -1,11 +1,174 @@
 {
   "name": "Volo.Abp.Account.HttpApi",
-  "hash": "b178895fe2a7f470f36c4fd121b7c07a",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.Account",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.Account.Application.Contracts",
+          "namespace": "Volo.Abp.Account",
+          "name": "AbpAccountApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.Identity.HttpApi",
+          "namespace": "Volo.Abp.Identity",
+          "name": "AbpIdentityHttpApiModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc",
+          "namespace": "Volo.Abp.AspNetCore.Mvc",
+          "name": "AbpAspNetCoreMvcModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpAccountHttpApiModule"
+      "name": "AbpAccountHttpApiModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "api/account/register",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "Volo.Abp.Identity.IdentityUserDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "RegisterDto"
+            }
+          ]
+        },
+        {
+          "path": "api/account/send-password-reset-code",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "SendPasswordResetCodeDto"
+            }
+          ]
+        },
+        {
+          "path": "api/account/verify-password-reset-token",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "System.Boolean",
+          "responseTypeAsJson": "true",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "VerifyPasswordResetTokenInput"
+            }
+          ]
+        },
+        {
+          "path": "api/account/reset-password",
+          "method": "POST",
+          "groupName": "Account",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "ResetPasswordDto"
+            }
+          ]
+        },
+        {
+          "path": "api/account/dynamic-claims/refresh",
+          "method": "POST",
+          "groupName": "DynamicClaims",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/account/my-profile",
+          "method": "GET",
+          "groupName": "Profile",
+          "responseType": "Volo.Abp.Account.ProfileDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/account/my-profile",
+          "method": "PUT",
+          "groupName": "Profile",
+          "responseType": "Volo.Abp.Account.ProfileDto",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "UpdateProfileDto"
+            }
+          ]
+        },
+        {
+          "path": "api/account/my-profile/change-password",
+          "method": "POST",
+          "groupName": "Profile",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "ChangePasswordInput"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
     }
   ]
 }

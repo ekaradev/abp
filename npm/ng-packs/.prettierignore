@@ -2,3 +2,11 @@
 
 /dist
 /coverage
+/.angular
+/.vscode
+/node_modules
+/scripts
+/tools
+/source-code-requirements
+/.nx/cache
+/.nx/workspace-data

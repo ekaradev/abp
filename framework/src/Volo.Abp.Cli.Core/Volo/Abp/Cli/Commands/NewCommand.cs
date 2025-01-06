@@ -1,20 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using StackExchange.Redis;
 using Volo.Abp.Cli.Args;
+using Volo.Abp.Cli.Bundling;
 using Volo.Abp.Cli.Commands.Services;
 using Volo.Abp.Cli.LIbs;
 using Volo.Abp.Cli.ProjectBuilding;
-using Volo.Abp.Cli.ProjectBuilding.Building;
+using Volo.Abp.Cli.ProjectBuilding.Events;
 using Volo.Abp.Cli.ProjectModification;
 using Volo.Abp.Cli.Utils;
+using Volo.Abp.Cli.Version;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EventBus.Local;
 
@@ -23,24 +22,40 @@ namespace Volo.Abp.Cli.Commands;
 public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransientDependency
 {
     public const string Name = "new";
-    
+
     protected TemplateProjectBuilder TemplateProjectBuilder { get; }
     public ITemplateInfoProvider TemplateInfoProvider { get; }
 
-    public NewCommand(TemplateProjectBuilder templateProjectBuilder
-        , ITemplateInfoProvider templateInfoProvider,
+    public NewCommand(
         ConnectionStringProvider connectionStringProvider,
         SolutionPackageVersionFinder solutionPackageVersionFinder,
         ICmdHelper cmdHelper,
         IInstallLibsService installLibsService,
+        CliService cliService,
         AngularPwaSupportAdder angularPwaSupportAdder,
         InitialMigrationCreator initialMigrationCreator,
         ThemePackageAdder themePackageAdder,
-        ILocalEventBus eventBus)
-    : base(connectionStringProvider, solutionPackageVersionFinder, cmdHelper, installLibsService, angularPwaSupportAdder, initialMigrationCreator, themePackageAdder, eventBus)
+        ILocalEventBus eventBus,
+        IBundlingService bundlingService,
+        ITemplateInfoProvider templateInfoProvider,
+        TemplateProjectBuilder templateProjectBuilder,
+        AngularThemeConfigurer angularThemeConfigurer,
+        CliVersionService cliVersionService) :
+        base(connectionStringProvider,
+            solutionPackageVersionFinder,
+            cmdHelper,
+            installLibsService,
+            cliService,
+            angularPwaSupportAdder,
+            initialMigrationCreator,
+            themePackageAdder,
+            eventBus,
+            bundlingService,
+            angularThemeConfigurer,
+            cliVersionService)
     {
-        TemplateProjectBuilder = templateProjectBuilder;
         TemplateInfoProvider = templateInfoProvider;
+        TemplateProjectBuilder = templateProjectBuilder;
     }
 
     public async Task ExecuteAsync(CommandLineArgs commandLineArgs)
@@ -72,7 +87,9 @@ public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransien
             Logger.LogInformation("Tiered: yes");
         }
 
-        var projectArgs = GetProjectBuildArgs(commandLineArgs, template, projectName);
+        var projectArgs = await GetProjectBuildArgsAsync(commandLineArgs, template, projectName);
+
+        await CheckCreatingRequirements(projectArgs);
 
         var result = await TemplateProjectBuilder.BuildAsync(
             projectArgs
@@ -82,19 +99,79 @@ public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransien
 
         Logger.LogInformation($"'{projectName}' has been successfully created to '{projectArgs.OutputFolder}'");
 
-        ConfigureNpmPackagesForTheme(projectArgs);
+        await CheckCreatedRequirements(projectArgs);
+
+        await CreateOpenIddictPfxFilesAsync(projectArgs);
         await RunGraphBuildForMicroserviceServiceTemplate(projectArgs);
         await CreateInitialMigrationsAsync(projectArgs);
-        
+
+        await ConfigureAngularAfterMicroserviceServiceCreatedAsync(projectArgs, template);
+
         var skipInstallLibs = commandLineArgs.Options.ContainsKey(Options.SkipInstallingLibs.Long) || commandLineArgs.Options.ContainsKey(Options.SkipInstallingLibs.Short);
         if (!skipInstallLibs)
         {
             await RunInstallLibsForWebTemplateAsync(projectArgs);
+            ConfigureAngularJsonForThemeSelection(projectArgs);
         }
-        
+
+        var skipBundling = commandLineArgs.Options.ContainsKey(Options.SkipBundling.Long) || commandLineArgs.Options.ContainsKey(Options.SkipBundling.Short);
+        if (!skipBundling)
+        {
+            await RunBundleInternalAsync(projectArgs);
+        }
+
         await ConfigurePwaSupportForAngular(projectArgs);
 
-        OpenRelatedWebPage(projectArgs, template, isTiered, commandLineArgs);
+        if (!commandLineArgs.Options.ContainsKey(Options.NoOpenWebPage.Long))
+        {
+            OpenRelatedWebPage(projectArgs, template, isTiered, commandLineArgs);
+        }
+    }
+
+    private Task CheckCreatingRequirements(ProjectBuildArgs projectArgs)
+    {
+        return Task.CompletedTask;
+    }
+
+    private async Task CheckCreatedRequirements(ProjectBuildArgs projectArgs)
+    {
+        var requirementWarningMessages = new List<string>();
+
+        if (projectArgs.ExtraProperties.ContainsKey("PreRequirements:Redis"))
+        {
+            var isConnected = false;
+            try
+            {
+                var redis = await ConnectionMultiplexer.ConnectAsync("127.0.0.1", options => options.ConnectTimeout = 3000);
+                isConnected = redis.IsConnected;
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+            finally
+            {
+                if (!isConnected)
+                {
+                    requirementWarningMessages.Add("\t* Redis is not installed or not running on your computer.");
+                }
+            }
+        }
+
+        if (requirementWarningMessages.Any())
+        {
+            requirementWarningMessages.AddFirst("NOTICE: The following tools are required to run your solution:");
+
+            await EventBus.PublishAsync(new ProjectPostRequirementsCheckedEvent
+            {
+                Message = requirementWarningMessages.JoinAsString(Environment.NewLine)
+            }, false);
+
+            foreach (var error in requirementWarningMessages)
+            {
+                Logger.LogWarning(error);
+            }
+        }
     }
 
     public string GetUsageInfo()
@@ -125,6 +202,9 @@ public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransien
         sb.AppendLine("--no-random-port                            (Use template's default ports)");
         sb.AppendLine("--separate-auth-server                      (if supported by the template)");
         sb.AppendLine("--local-framework-ref --abp-path <your-local-abp-repo-path>  (keeps local references to projects instead of replacing with NuGet package references)");
+        sb.AppendLine("-sib|--skip-installing-libs                      (Doesn't run `abp install-libs` command after project creation)");
+        sb.AppendLine("-sb|--skip-bundling                             (Doesn't run `abp bundle` command after Blazor Wasm project creation)");
+        sb.AppendLine("-sc|--skip-cache                                (Always download the latest from our server and refresh their templates folder cache)");
         sb.AppendLine("");
         sb.AppendLine("Examples:");
         sb.AppendLine("");
@@ -134,6 +214,7 @@ public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransien
         sb.AppendLine("  abp new Acme.BookStore -u angular -d mongodb");
         sb.AppendLine("  abp new Acme.BookStore -m none");
         sb.AppendLine("  abp new Acme.BookStore -m react-native");
+        sb.AppendLine("  abp new Acme.BookStore -m maui");
         sb.AppendLine("  abp new Acme.BookStore -d mongodb");
         sb.AppendLine("  abp new Acme.BookStore -d mongodb -o d:\\my-project");
         sb.AppendLine("  abp new Acme.BookStore -t module");
@@ -146,14 +227,13 @@ public class NewCommand : ProjectCreationCommandBase, IConsoleCommand, ITransien
         sb.AppendLine("  abp new Acme.BookStore --theme basic");
         sb.AppendLine("  abp new Acme.BookStore --connection-string \"Server=myServerName\\myInstanceName;Database=myDatabase;User Id=myUsername;Password=myPassword\"");
         sb.AppendLine("");
-        sb.AppendLine("See the documentation for more info: https://docs.abp.io/en/abp/latest/CLI");
+        sb.AppendLine("See the documentation for more info: https://abp.io/docs/latest/cli");
 
         return sb.ToString();
     }
 
-    public string GetShortDescription()
+    public static string GetShortDescription()
     {
         return "Generate a new solution based on the ABP startup templates.";
     }
-
 }

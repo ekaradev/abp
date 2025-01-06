@@ -195,4 +195,29 @@ public class FeatureManager_Tests : FeatureManagementDomainTestBase
         featureValue.ShouldNotBeNull();
         featureValue.Value.ShouldBe(true.ToString().ToLower());
     }
+
+    [Fact]
+    public async Task DeleteAsync()
+    {
+        //Default
+        (await _featureManager.GetOrNullAsync(TestFeatureDefinitionProvider.BackupCount, TenantFeatureValueProvider.ProviderName, TestEditionIds.TenantId.ToString())).ShouldBe("0");
+
+        await _featureManager.SetAsync(TestFeatureDefinitionProvider.BackupCount, "2", TenantFeatureValueProvider.ProviderName, TestEditionIds.TenantId.ToString());
+        (await _featureManager.GetOrNullAsync(TestFeatureDefinitionProvider.BackupCount, TenantFeatureValueProvider.ProviderName, TestEditionIds.TenantId.ToString())).ShouldBe("2");
+
+        await _featureManager.DeleteAsync(TenantFeatureValueProvider.ProviderName, TestEditionIds.TenantId.ToString());
+
+        (await _featureManager.GetOrNullAsync(TestFeatureDefinitionProvider.BackupCount, TenantFeatureValueProvider.ProviderName, TestEditionIds.TenantId.ToString())).ShouldBe("0");
+    }
+    
+    [Fact]
+    public async Task Set_Should_Throw_Exception_If_Provider_Not_Found()
+    {
+        var exception = await Assert.ThrowsAsync<AbpException>(async () =>
+        {
+            await _featureManager.SetAsync(TestFeatureDefinitionProvider.EmailSupport, "true", "UndefinedProvider", "Test");
+        });
+        
+        exception.Message.ShouldBe("Unknown feature value provider: UndefinedProvider");
+    }
 }

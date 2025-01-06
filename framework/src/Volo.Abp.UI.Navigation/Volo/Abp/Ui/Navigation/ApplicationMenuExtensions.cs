@@ -1,11 +1,13 @@
+using System;
 using JetBrains.Annotations;
 using System.Linq;
-using Volo.Abp.UI.Navigation;
 
 namespace Volo.Abp.UI.Navigation;
 
 public static class ApplicationMenuExtensions
 {
+    public const string CustomDataComponentKey = "ApplicationMenu.CustomComponent";
+    
     [NotNull]
     public static ApplicationMenuItem GetAdministration(
         [NotNull] this ApplicationMenu applicationMenu)
@@ -29,8 +31,7 @@ public static class ApplicationMenuExtensions
         return menuItem;
     }
 
-    [CanBeNull]
-    public static ApplicationMenuItem GetMenuItemOrNull(
+    public static ApplicationMenuItem? GetMenuItemOrNull(
         [NotNull] this IHasMenuItems menuWithItems,
         string menuItemName)
     {
@@ -63,5 +64,74 @@ public static class ApplicationMenuExtensions
         }
 
         return menuWithItems;
+    }
+
+    [NotNull]
+    public static ApplicationMenuGroup GetMenuGroup(
+        [NotNull] this IHasMenuGroups menuWithGroups,
+        string groupName)
+    {
+        var menuGroup = menuWithGroups.GetMenuGroupOrNull(groupName);
+        if (menuGroup == null)
+        {
+            throw new AbpException($"Could not find a group item with given name: {groupName}");
+        }
+
+        return menuGroup;
+    }
+
+    public static ApplicationMenuGroup? GetMenuGroupOrNull(
+        [NotNull] this IHasMenuGroups menuWithGroups,
+        string menuGroupName)
+    {
+        Check.NotNull(menuWithGroups, nameof(menuWithGroups));
+
+        return menuWithGroups.Groups.FirstOrDefault(group => group.Name == menuGroupName);
+    }
+
+    public static bool TryRemoveMenuGroup(
+        [NotNull] this IHasMenuGroups menuWithGroups,
+        string menuGroupName)
+    {
+        Check.NotNull(menuWithGroups, nameof(menuWithGroups));
+
+        return menuWithGroups.Groups.RemoveAll(group => group.Name == menuGroupName) > 0;
+    }
+
+    [NotNull]
+    public static IHasMenuGroups SetMenuGroupOrder(
+        [NotNull] this IHasMenuGroups menuWithGroups,
+        string menuGroupName,
+        int order)
+    {
+        Check.NotNull(menuWithGroups, nameof(menuWithGroups));
+
+        var menuGroup = menuWithGroups.GetMenuGroupOrNull(menuGroupName);
+        if (menuGroup != null)
+        {
+            menuGroup.Order = order;
+        }
+
+        return menuWithGroups;
+    }
+    
+    public static ApplicationMenuItem UseComponent<TComponent>(this ApplicationMenuItem applicationMenuItem)
+    {
+        return applicationMenuItem.UseComponent(typeof(TComponent));
+    }
+    
+    public static ApplicationMenuItem UseComponent(this ApplicationMenuItem applicationMenuItem, Type componentType)
+    {
+        return applicationMenuItem.WithCustomData(CustomDataComponentKey, componentType);
+    }
+
+    public static Type? GetComponentTypeOrDefault(this ApplicationMenuItem applicationMenuItem)
+    {
+        if (applicationMenuItem.CustomData.TryGetValue(CustomDataComponentKey, out var value))
+        {
+            return value as Type;
+        }
+        
+        return default;
     }
 }

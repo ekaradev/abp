@@ -68,7 +68,8 @@ public class TemplateProjectBuilder : IProjectBuilder, ITransientDependency
             SourceCodeTypes.Template,
             args.Version,
             args.TemplateSource,
-            args.ExtraProperties.ContainsKey(NewCommand.Options.Preview.Long)
+            args.ExtraProperties.ContainsKey(NewCommand.Options.Preview.Long),
+            trustUserVersion: args.TrustUserVersion
         );
 
         ConfigureThemeOptions(args, templateFile.Version);
@@ -235,6 +236,16 @@ public class TemplateProjectBuilder : IProjectBuilder, ITransientDependency
         if (args.Theme.HasValue)
         {
             Logger.LogInformation("Theme: " + args.Theme);
+
+            var isProTemplate = !args.TemplateName.IsNullOrEmpty() && args.TemplateName.EndsWith("-pro", StringComparison.OrdinalIgnoreCase);
+
+            if (args.UiFramework == UiFramework.Angular && ((isProTemplate && args.Theme != AppProTemplate.DefaultTheme) ||
+                                                            (!isProTemplate && args.Theme != AppTemplate.DefaultTheme)))
+            {
+                Logger.LogWarning("You may need to make some additional changes for this theme. " +
+                                  "See the documentation for more information: " +
+                                  "https://abp.io/docs/latest/framework/ui/angular/theme-configurations");
+            }
         }
 
         if(args.ThemeStyle.HasValue) 

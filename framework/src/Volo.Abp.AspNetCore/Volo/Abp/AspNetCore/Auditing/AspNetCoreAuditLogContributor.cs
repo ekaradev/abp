@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Volo.Abp.AspNetCore.ExceptionHandling;
 using Volo.Abp.AspNetCore.WebClientInfo;
 using Volo.Abp.Auditing;
 using Volo.Abp.DependencyInjection;
@@ -38,7 +42,7 @@ public class AspNetCoreAuditLogContributor : AuditLogContributor, ITransientDepe
 
         if (context.AuditInfo.Url == null)
         {
-            context.AuditInfo.Url = BuildUrl(httpContext);
+            context.AuditInfo.Url = GetUrl(context, httpContext);
         }
 
         var clientInfoProvider = context.ServiceProvider.GetRequiredService<IWebClientInfoProvider>();
@@ -57,29 +61,58 @@ public class AspNetCoreAuditLogContributor : AuditLogContributor, ITransientDepe
 
     public override void PostContribute(AuditLogContributionContext context)
     {
+        if (context.AuditInfo.HttpStatusCode != null)
+        {
+            return;
+        }
+
         var httpContext = context.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext;
         if (httpContext == null)
         {
             return;
         }
 
-        if (context.AuditInfo.HttpStatusCode == null)
+        if (context.AuditInfo.Exceptions.Any())
         {
-            context.AuditInfo.HttpStatusCode = httpContext.Response.StatusCode;
+            var httpExceptionStatusCodeFinder = context.ServiceProvider.GetRequiredService<IHttpExceptionStatusCodeFinder>();
+            foreach (var auditInfoException in context.AuditInfo.Exceptions)
+            {
+                var statusCode = httpExceptionStatusCodeFinder.GetStatusCode(httpContext, auditInfoException);
+                context.AuditInfo.HttpStatusCode = (int) statusCode;
+            }
+
+            if (context.AuditInfo.HttpStatusCode != null)
+            {
+                return;
+            }
         }
+
+        context.AuditInfo.HttpStatusCode = httpContext.Response.StatusCode;
     }
 
-    protected virtual string BuildUrl(HttpContext httpContext)
+    protected virtual string GetUrl(AuditLogContributionContext context, HttpContext httpContext)
     {
-        //TODO: Add options to include/exclude query, schema and host
+        var options = context.ServiceProvider.GetRequiredService<IOptions<AbpAspNetCoreAuditingUrlOptions>>();
+        var stringBuilder = new StringBuilder();
 
-        var uriBuilder = new UriBuilder();
-
-        uriBuilder.Scheme = httpContext.Request.Scheme;
-        uriBuilder.Host = httpContext.Request.Host.Host;
-        uriBuilder.Path = httpContext.Request.Path.ToString();
-        uriBuilder.Query = httpContext.Request.QueryString.ToString();
-
-        return uriBuilder.Uri.AbsolutePath;
+        if (options.Value.IncludeSchema)
+        {
+            stringBuilder.Append(httpContext.Request.Scheme);
+            stringBuilder.Append("://");
+        }
+        
+        if (options.Value.IncludeHost)
+        {
+            stringBuilder.Append(httpContext.Request.Host.Host);
+        }
+        
+        stringBuilder.Append(httpContext.Request.Path.ToString());
+        
+        if (options.Value.IncludeQuery)
+        {
+            stringBuilder.Append(httpContext.Request.QueryString.ToString());
+        }
+        
+        return stringBuilder.ToString();
     }
 }

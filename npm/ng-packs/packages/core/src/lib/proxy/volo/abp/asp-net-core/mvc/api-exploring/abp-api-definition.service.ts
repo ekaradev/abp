@@ -1,4 +1,5 @@
-import { RestService } from '../../../../../../services/rest.service';
+import { RestService } from '../../../../../../services';
+import { Rest } from '../../../../../../models';
 import { Injectable } from '@angular/core';
 import type { ApplicationApiDescriptionModel, ApplicationApiDescriptionModelRequestDto } from '../../../http/modeling/models';
 
@@ -7,14 +8,15 @@ import type { ApplicationApiDescriptionModel, ApplicationApiDescriptionModelRequ
 })
 export class AbpApiDefinitionService {
   apiName = 'abp';
+  
 
-  getByModel = (model: ApplicationApiDescriptionModelRequestDto) =>
+  getByModel = (model: ApplicationApiDescriptionModelRequestDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, ApplicationApiDescriptionModel>({
       method: 'GET',
       url: '/api/abp/api-definition',
       params: { includeTypes: model.includeTypes },
     },
-      { apiName: this.apiName });
+    { apiName: this.apiName,...config });
 
-  constructor(private restService: RestService) { }
+  constructor(private restService: RestService) {}
 }

@@ -6,6 +6,7 @@ import { eAccountComponents } from '../../enums/components';
 import { ManageProfileStateService } from '../../services/manage-profile.state.service';
 
 @Component({
+  standalone: false,
   selector: 'abp-manage-profile',
   templateUrl: './manage-profile.component.html',
   animations: [trigger('fadeIn', [transition(':enter', useAnimation(fadeIn))])],
@@ -26,7 +27,7 @@ export class ManageProfileComponent implements OnInit {
 
   profile$ = this.manageProfileState.getProfile$();
 
-  hideChangePasswordTab: boolean;
+  hideChangePasswordTab?: boolean;
 
   constructor(
     protected profileService: ProfileService,

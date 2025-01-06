@@ -1,8 +1,6 @@
-﻿using Volo.Abp.Reflection;
+﻿namespace Volo.CmsKit.Permissions;
 
-namespace Volo.CmsKit.Permissions;
-
-public class CmsKitAdminPermissions
+public static class CmsKitAdminPermissions
 {
     public const string GroupName = "CmsKit";
 
@@ -10,6 +8,8 @@ public class CmsKitAdminPermissions
     {
         public const string Default = GroupName + ".Comments";
         public const string Delete = Default + ".Delete";
+        public const string Update = Default + ".Update";
+        public const string SettingManagement = Default + ".SettingManagement";
     }
 
     public static class Tags
@@ -34,6 +34,7 @@ public class CmsKitAdminPermissions
         public const string Create = Default + ".Create";
         public const string Update = Default + ".Update";
         public const string Delete = Default + ".Delete";
+        public const string SetAsHomePage = Default + ".SetAsHomePage";
     }
 
     public static class Blogs

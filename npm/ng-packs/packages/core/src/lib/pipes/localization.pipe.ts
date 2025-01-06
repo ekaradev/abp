@@ -4,6 +4,7 @@ import { LocalizationService } from '../services/localization.service';
 
 @Injectable()
 @Pipe({
+  standalone: false,
   name: 'abpLocalization',
 })
 export class LocalizationPipe implements PipeTransform {

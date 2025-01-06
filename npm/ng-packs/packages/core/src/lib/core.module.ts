@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
-import { APP_INITIALIZER, Injector, ModuleWithProviders, NgModule } from '@angular/core';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+  withXsrfConfiguration,
+} from '@angular/common/http';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { OAuthModule, OAuthStorage } from 'angular-oauth2-oidc';
 import { AbstractNgModelComponent } from './abstracts/ng-model.component';
 import { DynamicLayoutComponent } from './components/dynamic-layout.component';
 import { ReplaceableRouteContainerComponent } from './components/replaceable-route-container.component';
@@ -16,32 +19,28 @@ import { InitDirective } from './directives/init.directive';
 import { PermissionDirective } from './directives/permission.directive';
 import { ReplaceableTemplateDirective } from './directives/replaceable-template.directive';
 import { StopPropagationDirective } from './directives/stop-propagation.directive';
-import { OAuthConfigurationHandler } from './handlers/oauth-configuration.handler';
-import { RoutesHandler } from './handlers/routes.handler';
-import { ApiInterceptor } from './interceptors/api.interceptor';
 import { LocalizationModule } from './localization.module';
 import { ABP } from './models/common';
 import { LocalizationPipe } from './pipes/localization.pipe';
 import { SortPipe } from './pipes/sort.pipe';
 import { ToInjectorPipe } from './pipes/to-injector.pipe';
-import { CookieLanguageProvider } from './providers/cookie-language.provider';
-import { LocaleProvider } from './providers/locale.provider';
-import { LocalizationService } from './services/localization.service';
-import { oAuthStorage } from './strategies/auth-flow.strategy';
-import { localizationContributor, LOCALIZATIONS } from './tokens/localization.token';
-import { CORE_OPTIONS, coreOptionsFactory } from './tokens/options.token';
-import { TENANT_KEY } from './tokens/tenant-key.token';
-import { noop } from './utils/common-utils';
 import './utils/date-extensions';
-import { getInitialData, localeInitializer } from './utils/initial-utils';
 import { ShortDateTimePipe } from './pipes/short-date-time.pipe';
 import { ShortTimePipe } from './pipes/short-time.pipe';
 import { ShortDatePipe } from './pipes/short-date.pipe';
+import { SafeHtmlPipe } from './pipes/safe-html.pipe';
+import { provideAbpCoreChild, provideAbpCore, withOptions } from './providers';
 
-export function storageFactory(): OAuthStorage {
-  return oAuthStorage;
-}
-
+const standaloneDirectives = [
+  AutofocusDirective,
+  InputEventDebounceDirective,
+  ForDirective,
+  FormSubmitDirective,
+  InitDirective,
+  PermissionDirective,
+  ReplaceableTemplateDirective,
+  StopPropagationDirective,
+];
 /**
  * BaseCoreModule is the module that holds
  * all imports, declarations, exports, and entryComponents
@@ -51,58 +50,43 @@ export function storageFactory(): OAuthStorage {
 @NgModule({
   exports: [
     CommonModule,
-    HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
     LocalizationModule,
     AbstractNgModelComponent,
-    AutofocusDirective,
     DynamicLayoutComponent,
-    ForDirective,
-    FormSubmitDirective,
-    InitDirective,
-    InputEventDebounceDirective,
-    PermissionDirective,
     ReplaceableRouteContainerComponent,
-    ReplaceableTemplateDirective,
     RouterOutletComponent,
     SortPipe,
-    StopPropagationDirective,
+    SafeHtmlPipe,
     ToInjectorPipe,
     ShortDateTimePipe,
     ShortTimePipe,
     ShortDatePipe,
+    ...standaloneDirectives,
   ],
   imports: [
-    OAuthModule,
     CommonModule,
-    HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
     LocalizationModule,
+    ...standaloneDirectives,
   ],
   declarations: [
     AbstractNgModelComponent,
-    AutofocusDirective,
     DynamicLayoutComponent,
-    ForDirective,
-    FormSubmitDirective,
-    InitDirective,
-    InputEventDebounceDirective,
-    PermissionDirective,
     ReplaceableRouteContainerComponent,
-    ReplaceableTemplateDirective,
     RouterOutletComponent,
     SortPipe,
-    StopPropagationDirective,
+    SafeHtmlPipe,
     ToInjectorPipe,
     ShortDateTimePipe,
     ShortTimePipe,
     ShortDatePipe,
   ],
-  providers: [LocalizationPipe],
+  providers: [LocalizationPipe, provideHttpClient(withInterceptorsFromDi())],
 })
 export class BaseCoreModule {}
 
@@ -112,14 +96,14 @@ export class BaseCoreModule {}
  */
 @NgModule({
   exports: [BaseCoreModule, LocalizationModule],
-  imports: [
-    BaseCoreModule,
-    LocalizationModule,
-    OAuthModule,
-    HttpClientXsrfModule.withOptions({
-      cookieName: 'XSRF-TOKEN',
-      headerName: 'RequestVerificationToken',
-    }),
+  imports: [BaseCoreModule, LocalizationModule],
+  providers: [
+    provideHttpClient(
+      withXsrfConfiguration({
+        cookieName: 'XSRF-TOKEN',
+        headerName: 'RequestVerificationToken',
+      }),
+    ),
   ],
 })
 export class RootCoreModule {}
@@ -132,80 +116,23 @@ export class RootCoreModule {}
   imports: [BaseCoreModule],
 })
 export class CoreModule {
+  /**
+   * @deprecated forRoot method is deprecated, use `provideAbpCore` *function* for config settings.
+   */
   static forRoot(options = {} as ABP.Root): ModuleWithProviders<RootCoreModule> {
     return {
       ngModule: RootCoreModule,
-      providers: [
-        OAuthModule.forRoot().providers,
-        LocaleProvider,
-        CookieLanguageProvider,
-        {
-          provide: 'CORE_OPTIONS',
-          useValue: options,
-        },
-        {
-          provide: CORE_OPTIONS,
-          useFactory: coreOptionsFactory,
-          deps: ['CORE_OPTIONS'],
-        },
-        {
-          provide: HTTP_INTERCEPTORS,
-          useExisting: ApiInterceptor,
-          multi: true,
-        },
-        {
-          provide: APP_INITIALIZER,
-          multi: true,
-          deps: [OAuthConfigurationHandler],
-          useFactory: noop,
-        },
-        {
-          provide: APP_INITIALIZER,
-          multi: true,
-          deps: [Injector],
-          useFactory: getInitialData,
-        },
-        {
-          provide: APP_INITIALIZER,
-          multi: true,
-          deps: [Injector],
-          useFactory: localeInitializer,
-        },
-        {
-          provide: APP_INITIALIZER,
-          multi: true,
-          deps: [LocalizationService],
-          useFactory: noop,
-        },
-        {
-          provide: APP_INITIALIZER,
-          multi: true,
-          deps: [RoutesHandler],
-          useFactory: noop,
-        },
-        { provide: OAuthStorage, useFactory: storageFactory },
-        { provide: TENANT_KEY, useValue: options.tenantKey || '__tenant' },
-        {
-          provide: LOCALIZATIONS,
-          multi: true,
-          useValue: localizationContributor(options.localizations),
-          deps: [LocalizationService],
-        },
-      ],
+      providers: [provideAbpCore(withOptions(options))],
     };
   }
 
+  /**
+   * @deprecated forChild method is deprecated, use `provideAbpCoreChild` *function* for config settings.
+   */
   static forChild(options = {} as ABP.Child): ModuleWithProviders<RootCoreModule> {
     return {
       ngModule: RootCoreModule,
-      providers: [
-        {
-          provide: LOCALIZATIONS,
-          multi: true,
-          useValue: localizationContributor(options.localizations),
-          deps: [LocalizationService],
-        },
-      ],
+      providers: [provideAbpCoreChild(options)],
     };
   }
 }

@@ -8,6 +8,11 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.Abstractions;
+using Volo.Abp.Data;
 using Volo.Abp.Guids;
 using Volo.Abp.OpenIddict.Tokens;
 using Volo.Abp.Uow;
@@ -22,23 +27,26 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         IOpenIddictApplicationRepository repository,
         IUnitOfWorkManager unitOfWorkManager,
         IOpenIddictTokenRepository tokenRepository,
-        IGuidGenerator guidGenerator)
-        : base(repository, unitOfWorkManager, guidGenerator)
+        IGuidGenerator guidGenerator,
+        AbpOpenIddictIdentifierConverter identifierConverter,
+        IOpenIddictDbConcurrencyExceptionHandler concurrencyExceptionHandler,
+        IOptions<AbpOpenIddictStoreOptions> storeOptions)
+        : base(repository, unitOfWorkManager, guidGenerator, identifierConverter, concurrencyExceptionHandler, storeOptions)
     {
         TokenRepository = tokenRepository;
     }
 
-    public async ValueTask<long> CountAsync(CancellationToken cancellationToken)
+    public virtual async ValueTask<long> CountAsync(CancellationToken cancellationToken)
     {
         return await Repository.GetCountAsync(cancellationToken);
     }
 
-    public ValueTask<long> CountAsync<TResult>(Func<IQueryable<OpenIddictApplicationModel>, IQueryable<TResult>> query, CancellationToken cancellationToken)
+    public virtual ValueTask<long> CountAsync<TResult>(Func<IQueryable<OpenIddictApplicationModel>, IQueryable<TResult>> query, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }
 
-    public async ValueTask CreateAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual async ValueTask CreateAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -47,105 +55,121 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         application = (await Repository.FindAsync(application.Id, cancellationToken: cancellationToken)).ToModel();
     }
 
-    public async ValueTask DeleteAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual async ValueTask DeleteAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
-        using (var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true, isolationLevel: IsolationLevel.RepeatableRead))
+        try
         {
-            await TokenRepository.DeleteManyByApplicationIdAsync(application.Id, cancellationToken: cancellationToken);
+            using (var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true, isolationLevel: StoreOptions.Value.DeleteIsolationLevel))
+            {
+                await TokenRepository.DeleteManyByApplicationIdAsync(application.Id, cancellationToken: cancellationToken);
 
-            await Repository.DeleteAsync(application.Id, cancellationToken: cancellationToken);
+                await Repository.DeleteAsync(application.Id, cancellationToken: cancellationToken);
 
-            await uow.CompleteAsync(cancellationToken);
+                await uow.CompleteAsync(cancellationToken);
+            }
+        }
+        catch (AbpDbConcurrencyException e)
+        {
+            Logger.LogException(e);
+            await ConcurrencyExceptionHandler.HandleAsync(e);
+            throw new OpenIddictExceptions.ConcurrencyException(e.Message, e.InnerException);
         }
     }
 
-    public async ValueTask<OpenIddictApplicationModel> FindByIdAsync(string identifier, CancellationToken cancellationToken)
+    public virtual async ValueTask<OpenIddictApplicationModel> FindByIdAsync(string identifier, CancellationToken cancellationToken)
     {
         Check.NotNullOrEmpty(identifier, nameof(identifier));
 
         return (await Repository.FindAsync(ConvertIdentifierFromString(identifier),  cancellationToken: cancellationToken)).ToModel();
     }
 
-    public async ValueTask<OpenIddictApplicationModel> FindByClientIdAsync(string identifier, CancellationToken cancellationToken)
+    public virtual async ValueTask<OpenIddictApplicationModel> FindByClientIdAsync(string identifier, CancellationToken cancellationToken)
     {
         Check.NotNullOrEmpty(identifier, nameof(identifier));
 
         return (await Repository.FindByClientIdAsync(identifier, cancellationToken: cancellationToken)).ToModel();
     }
 
-    public async IAsyncEnumerable<OpenIddictApplicationModel> FindByPostLogoutRedirectUriAsync(string address, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public virtual async IAsyncEnumerable<OpenIddictApplicationModel> FindByPostLogoutRedirectUriAsync(string uris, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        Check.NotNullOrEmpty(address, nameof(address));
+        Check.NotNullOrEmpty(uris, nameof(uris));
 
-        var applications = await Repository.FindByPostLogoutRedirectUriAsync(address, cancellationToken);
+        var applications = await Repository.FindByPostLogoutRedirectUriAsync(uris, cancellationToken);
 
         foreach (var application in applications)
         {
             var addresses = await GetPostLogoutRedirectUrisAsync(application.ToModel(), cancellationToken);
-            if (addresses.Contains(address, StringComparer.Ordinal))
+            if (addresses.Contains(uris, StringComparer.Ordinal))
             {
                 yield return application.ToModel();
             }
         }
     }
 
-    public async IAsyncEnumerable<OpenIddictApplicationModel> FindByRedirectUriAsync(string address, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public virtual async IAsyncEnumerable<OpenIddictApplicationModel> FindByRedirectUriAsync(string uri, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        Check.NotNullOrEmpty(address, nameof(address));
+        Check.NotNullOrEmpty(uri, nameof(uri));
 
-        var applications = await Repository.FindByRedirectUriAsync(address, cancellationToken);
+        var applications = await Repository.FindByRedirectUriAsync(uri, cancellationToken);
         foreach (var application in applications)
         {
-            var addresses = await GetRedirectUrisAsync(application.ToModel(), cancellationToken);
-            if (addresses.Contains(address, StringComparer.Ordinal))
+            var uris = await GetRedirectUrisAsync(application.ToModel(), cancellationToken);
+            if (uris.Contains(uri, StringComparer.Ordinal))
             {
                 yield return application.ToModel();
             }
         }
     }
 
-    public ValueTask<TResult> GetAsync<TState, TResult>(Func<IQueryable<OpenIddictApplicationModel>, TState, IQueryable<TResult>> query, TState state, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetApplicationTypeAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        return new ValueTask<string>(application.ApplicationType);
+    }
+
+    public virtual ValueTask<TResult> GetAsync<TState, TResult>(Func<IQueryable<OpenIddictApplicationModel>, TState, IQueryable<TResult>> query, TState state, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }
 
-    public ValueTask<string> GetClientIdAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetClientIdAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         return new ValueTask<string>(application.ClientId);
     }
 
-    public ValueTask<string> GetClientSecretAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetClientSecretAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         return new ValueTask<string>(application.ClientSecret);
     }
 
-    public ValueTask<string> GetClientTypeAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetClientTypeAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
-        return new ValueTask<string>(application.Type);
+        return new ValueTask<string>(application.ClientType);
     }
 
-    public ValueTask<string> GetConsentTypeAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetConsentTypeAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         return new ValueTask<string>(application.ConsentType);
     }
 
-    public ValueTask<string> GetDisplayNameAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetDisplayNameAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         return new ValueTask<string>(application.DisplayName);
     }
 
-    public ValueTask<ImmutableDictionary<CultureInfo, string>> GetDisplayNamesAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableDictionary<CultureInfo, string>> GetDisplayNamesAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -173,14 +197,21 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public ValueTask<string> GetIdAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<string> GetIdAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         return new ValueTask<string>(ConvertIdentifierToString(application.Id));
     }
 
-    public ValueTask<ImmutableArray<string>> GetPermissionsAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<JsonWebKeySet> GetJsonWebKeySetAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        return new ValueTask<JsonWebKeySet>(application.JsonWebKeySet);
+    }
+
+    public virtual ValueTask<ImmutableArray<string>> GetPermissionsAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -208,7 +239,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public ValueTask<ImmutableArray<string>> GetPostLogoutRedirectUrisAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableArray<string>> GetPostLogoutRedirectUrisAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -236,7 +267,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         };
     }
 
-    public ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableDictionary<string, JsonElement>> GetPropertiesAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -257,7 +288,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public ValueTask<ImmutableArray<string>> GetRedirectUrisAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableArray<string>> GetRedirectUrisAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -285,7 +316,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public ValueTask<ImmutableArray<string>> GetRequirementsAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableArray<string>> GetRequirementsAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
@@ -313,7 +344,35 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public ValueTask<OpenIddictApplicationModel> InstantiateAsync(CancellationToken cancellationToken)
+    public virtual ValueTask<ImmutableDictionary<string, string>> GetSettingsAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        if (string.IsNullOrEmpty(application.Settings))
+        {
+            return new ValueTask<ImmutableDictionary<string, string>>(ImmutableDictionary.Create<string, string>());
+        }
+
+        using (var document = JsonDocument.Parse(application.Settings))
+        {
+            var builder = ImmutableDictionary.CreateBuilder<string, string>();
+
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                var value = property.Value.GetString();
+                if (string.IsNullOrEmpty(value))
+                {
+                    continue;
+                }
+
+                builder[property.Name] = value;
+            }
+
+            return new ValueTask<ImmutableDictionary<string, string>>(builder.ToImmutable());
+        }
+    }
+
+    public virtual ValueTask<OpenIddictApplicationModel> InstantiateAsync(CancellationToken cancellationToken)
     {
         return new ValueTask<OpenIddictApplicationModel>(new OpenIddictApplicationModel
         {
@@ -321,7 +380,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         });
     }
 
-    public async IAsyncEnumerable<OpenIddictApplicationModel> ListAsync(int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public virtual async IAsyncEnumerable<OpenIddictApplicationModel> ListAsync(int? count, int? offset, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var applications = await Repository.ListAsync(count, offset, cancellationToken);
         foreach (var application in applications)
@@ -330,9 +389,17 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         }
     }
 
-    public IAsyncEnumerable<TResult> ListAsync<TState, TResult>(Func<IQueryable<OpenIddictApplicationModel>, TState, IQueryable<TResult>> query, TState state, CancellationToken cancellationToken)
+    public virtual IAsyncEnumerable<TResult> ListAsync<TState, TResult>(Func<IQueryable<OpenIddictApplicationModel>, TState, IQueryable<TResult>> query, TState state, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
+    }
+
+    public virtual ValueTask SetApplicationTypeAsync(OpenIddictApplicationModel application, string type, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        application.ApplicationType = type;
+        return default;
     }
 
     public virtual ValueTask SetClientIdAsync(OpenIddictApplicationModel application, string identifier, CancellationToken cancellationToken)
@@ -355,7 +422,7 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
     {
         Check.NotNull(application, nameof(application));
 
-        application.Type = type;
+        application.ClientType = type;
         return default;
     }
 
@@ -399,6 +466,14 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         return default;
     }
 
+    public virtual ValueTask SetJsonWebKeySetAsync(OpenIddictApplicationModel application, JsonWebKeySet set, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        application.JsonWebKeySet = set;
+        return default;
+    }
+
     public virtual ValueTask SetPermissionsAsync(OpenIddictApplicationModel application, ImmutableArray<string> permissions,
         CancellationToken cancellationToken)
     {
@@ -423,12 +498,12 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         return default;
     }
 
-    public virtual ValueTask SetPostLogoutRedirectUrisAsync(OpenIddictApplicationModel application, ImmutableArray<string> addresses,
+    public virtual ValueTask SetPostLogoutRedirectUrisAsync(OpenIddictApplicationModel application, ImmutableArray<string> uris,
         CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
-        if (addresses.IsDefaultOrEmpty)
+        if (uris.IsDefaultOrEmpty)
         {
             application.PostLogoutRedirectUris = null;
             return default;
@@ -437,9 +512,9 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         application.PostLogoutRedirectUris = WriteStream(writer =>
         {
             writer.WriteStartArray();
-            foreach (var address in addresses)
+            foreach (var uri in uris)
             {
-                writer.WriteStringValue(address);
+                writer.WriteStringValue(uri);
             }
             writer.WriteEndArray();
         });
@@ -472,12 +547,12 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         return default;
     }
 
-    public virtual ValueTask SetRedirectUrisAsync(OpenIddictApplicationModel application, ImmutableArray<string> addresses,
+    public virtual ValueTask SetRedirectUrisAsync(OpenIddictApplicationModel application, ImmutableArray<string> uris,
         CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
-        if (addresses.IsDefaultOrEmpty)
+        if (uris.IsDefaultOrEmpty)
         {
             application.RedirectUris = null;
             return default;
@@ -486,9 +561,9 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         application.RedirectUris = WriteStream(writer =>
         {
             writer.WriteStartArray();
-            foreach (var address in addresses)
+            foreach (var uri in uris)
             {
-                writer.WriteStringValue(address);
+                writer.WriteStringValue(uri);
             }
             writer.WriteEndArray();
         });
@@ -520,13 +595,46 @@ public class AbpOpenIddictApplicationStore : AbpOpenIddictStoreBase<IOpenIddictA
         return default;
     }
 
+    public virtual ValueTask SetSettingsAsync(OpenIddictApplicationModel application, ImmutableDictionary<string, string> settings, CancellationToken cancellationToken)
+    {
+        Check.NotNull(application, nameof(application));
+
+        if (settings.IsEmpty)
+        {
+            application.Settings = null;
+            return default;
+        }
+
+        application.Settings = WriteStream(writer =>
+        {
+            writer.WriteStartObject();
+            foreach (var setting in settings)
+            {
+                writer.WritePropertyName(setting.Key);
+                writer.WriteStringValue(setting.Value);
+            }
+            writer.WriteEndObject();
+        });
+
+        return default;
+    }
+
     public virtual async ValueTask UpdateAsync(OpenIddictApplicationModel application, CancellationToken cancellationToken)
     {
         Check.NotNull(application, nameof(application));
 
         var entity = await Repository.GetAsync(application.Id, cancellationToken: cancellationToken);
 
-        await Repository.UpdateAsync(application.ToEntity(entity), autoSave: true, cancellationToken: cancellationToken);
+        try
+        {
+            await Repository.UpdateAsync(application.ToEntity(entity), autoSave: true, cancellationToken: cancellationToken);
+        }
+        catch (AbpDbConcurrencyException e)
+        {
+            Logger.LogException(e);
+            await ConcurrencyExceptionHandler.HandleAsync(e);
+            throw new OpenIddictExceptions.ConcurrencyException(e.Message, e.InnerException);
+        }
 
         application = (await Repository.FindAsync(entity.Id, cancellationToken: cancellationToken)).ToModel();
     }

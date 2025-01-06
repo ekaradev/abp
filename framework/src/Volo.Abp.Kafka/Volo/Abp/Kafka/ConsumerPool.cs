@@ -30,14 +30,14 @@ public class ConsumerPool : IConsumerPool, ISingletonDependency
         Logger = new NullLogger<ConsumerPool>();
     }
 
-    public virtual IConsumer<string, byte[]> Get(string groupId, string connectionName = null)
+    public virtual IConsumer<string, byte[]> Get(string groupId, string? connectionName = null)
     {
         connectionName ??= KafkaConnections.DefaultConnectionName;
 
         return Consumers.GetOrAdd(
             connectionName, connection => new Lazy<IConsumer<string, byte[]>>(() =>
             {
-                var config = new ConsumerConfig(Options.Connections.GetOrDefault(connection))
+                var config = new ConsumerConfig(Options.Connections.GetOrDefault(connection).ToDictionary(k => k.Key, v => v.Value))
                 {
                     GroupId = groupId,
                     EnableAutoCommit = false

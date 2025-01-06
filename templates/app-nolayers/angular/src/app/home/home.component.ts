@@ -1,18 +1,18 @@
 import { AuthService } from '@abp/ng.core';
-import { Component } from '@angular/core';
-import { OAuthService } from 'angular-oauth2-oidc';
+import { Component, inject } from '@angular/core';
 
 @Component({
+  standalone: false,
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  get hasLoggedIn(): boolean {
-    return this.oAuthService.hasValidAccessToken();
-  }
+  private authService = inject(AuthService);
 
-  constructor(private oAuthService: OAuthService, private authService: AuthService) {}
+  get hasLoggedIn(): boolean {
+    return this.authService.isAuthenticated;
+  }
 
   login() {
     this.authService.navigateToLogin();

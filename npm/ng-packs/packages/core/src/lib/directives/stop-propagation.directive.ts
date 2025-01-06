@@ -3,7 +3,7 @@ import { fromEvent } from 'rxjs';
 import { SubscriptionService } from '../services/subscription.service';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
+  standalone: true,
   selector: '[click.stop]',
   providers: [SubscriptionService],
 })
@@ -13,7 +13,7 @@ export class StopPropagationDirective implements OnInit {
   constructor(private el: ElementRef, private subscription: SubscriptionService) {}
 
   ngOnInit(): void {
-    this.subscription.addOne(fromEvent(this.el.nativeElement, 'click'), (event: MouseEvent) => {
+    this.subscription.addOne(fromEvent<MouseEvent>(this.el.nativeElement, 'click'), event => {
       event.stopPropagation();
       this.stopPropEvent.emit(event);
     });

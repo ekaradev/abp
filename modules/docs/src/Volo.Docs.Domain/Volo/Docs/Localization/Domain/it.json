@@ -36,6 +36,8 @@
     "Volo.Docs.Domain:010002": "Abbreviazione {ShortName} esiste già.",
     "Preview": "anteprima",
     "Search": "Ricerca",
-    "SearchResults": "Risultati della ricerca"
+    "SearchResults": "Risultati della ricerca",
+    "SearchInTheAllDocuments": "Cerca in tutti i documenti",
+    "GoogleTranslate": "Traduci con Google"
   }
 }

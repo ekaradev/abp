@@ -1,11 +1,126 @@
 {
   "name": "Volo.Docs.Web",
-  "hash": "1e9dc32233dc11c064eabd8d5470318c",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Docs",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Docs.Application.Contracts",
+          "namespace": "Volo.Docs",
+          "name": "DocsApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AutoMapper",
+          "namespace": "Volo.Abp.AutoMapper",
+          "name": "AbpAutoMapperModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc.UI.Bootstrap",
+          "namespace": "Volo.Abp.AspNetCore.Mvc.UI.Bootstrap",
+          "name": "AbpAspNetCoreMvcUiBootstrapModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared",
+          "namespace": "Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared",
+          "name": "AbpAspNetCoreMvcUiThemeSharedModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc.UI.Packages",
+          "namespace": "Volo.Abp.AspNetCore.Mvc.UI.Packages",
+          "name": "AbpAspNetCoreMvcUiPackagesModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc.UI.Bundling",
+          "namespace": "Volo.Abp.AspNetCore.Mvc.UI.Bundling",
+          "name": "AbpAspNetCoreMvcUiBundlingModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "DocsWebModule"
+      "name": "DocsWebModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "document-resources",
+          "method": "GET",
+          "groupName": "DocumentResource",
+          "responseType": "Volo.Abp.Http.RemoteServiceErrorResponse",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "ProjectId",
+              "type": "Guid"
+            },
+            {
+              "name": "Name",
+              "type": "String"
+            },
+            {
+              "name": "Version",
+              "type": "String"
+            },
+            {
+              "name": "LanguageCode",
+              "type": "String"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
+    },
+    {
+      "namespace": "Volo.Docs.Pages.Documents.Project",
+      "contentType": "webPage",
+      "name": "IndexModel",
+      "summary": null
     }
   ]
 }

@@ -1,6 +1,7 @@
 ﻿@page
-@using Microsoft.AspNetCore.Authentication
+@using System.Net.Http
 @using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Authentication
 @using System.Text.Json
 @model IndexModel
 @{
@@ -9,7 +10,7 @@
 
 <div class="text-center">
     <a class="btn btn-primary" href="/Login">Login</a>
-    <a class="btn btn-warning" href="/Logout">Loout</a>
+    <a class="btn btn-warning" href="/Logout">Logout</a>
 
     @if (HttpContext.User.Identity != null && HttpContext.User.Identity.IsAuthenticated)
     {
@@ -35,25 +36,6 @@
         <code style="display: block; white-space: pre-wrap; text-align: left">
             @{
                 var apiResponse = response.StatusCode.ToString();
-                if (response.IsSuccessStatusCode)
-                {
-                    apiResponse = JsonSerializer.Serialize(JsonDocument.Parse(await response.Content.ReadAsStringAsync()), new JsonSerializerOptions
-                    {
-                        WriteIndented = true
-                    });
-                }
-            }
-            @apiResponse;
-        </code>
-
-        request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:44301/api/claims");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await HttpContext.GetTokenAsync("access_token"));
-
-        response = await client.SendAsync(request);
-
-        <code style="display: block; white-space: pre-wrap; text-align: left">
-            @{
-                apiResponse = response.StatusCode.ToString();
                 if (response.IsSuccessStatusCode)
                 {
                     apiResponse = JsonSerializer.Serialize(JsonDocument.Parse(await response.Content.ReadAsStringAsync()), new JsonSerializerOptions

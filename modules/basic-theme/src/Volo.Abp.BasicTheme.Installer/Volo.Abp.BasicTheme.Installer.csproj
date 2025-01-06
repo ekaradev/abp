@@ -4,19 +4,27 @@
     <Import Project="..\..\..\..\common.props" />
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
         <RootNamespace />
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\..\studio\src\Volo.Abp.Studio.ModuleInstaller\Volo.Abp.Studio.ModuleInstaller.csproj" />
+        
         <ProjectReference Include="..\..\..\..\framework\src\Volo.Abp.VirtualFileSystem\Volo.Abp.VirtualFileSystem.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="..\..\Volo.Abp.BasicTheme.abpmdl.json" />
-      <EmbeddedResource Include="..\..\Volo.Abp.BasicTheme.abpmdl.json" />
+      <None Remove="..\..\Volo.Abp.BasicTheme.abpmdl" />
+      <Content Include="..\..\Volo.Abp.BasicTheme.abpmdl">
+        <Pack>true</Pack>
+        <PackagePath>content\</PackagePath>
+      </Content>
+      <None Remove="..\..\**\*.abppkg*" />
+      <Content Include="..\..\**\*.abppkg*">
+        <Pack>true</Pack>
+        <PackagePath>content\</PackagePath>
+      </Content>
     </ItemGroup>
 
 </Project>

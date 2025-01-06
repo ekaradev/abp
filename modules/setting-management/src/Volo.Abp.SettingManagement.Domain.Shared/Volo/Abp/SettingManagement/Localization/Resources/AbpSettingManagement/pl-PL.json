@@ -2,10 +2,25 @@
   "culture": "pl-PL",
   "texts": {
     "Settings": "Ustawienia",
-    "SuccessfullySaved": "Zapisano pomyślnie",
+    "SavedSuccessfully": "Zapisano pomyślnie",
     "Permission:SettingManagement": "Zarządzanie ustawieniami",
     "Permission:Emailing": "Wysyłanie e-maili",
+    "Permission:EmailingTest": "Test wysyłania e-maili",
+    "Permission:TimeZone": "Strefa czasowa",
+    "SendTestEmail": "Wyślij e-mail testowy",
+    "SenderEmailAddress": "Adres e-mail nadawcy",
+    "TargetEmailAddress": "Docelowy adres e-mail",
+    "Subject": "Temat",
+    "Body": "Ciało",
+    "TestEmailSubject": "Testowy e-mail {0}",
+    "TestEmailBody": "Tutaj przetestuj treść wiadomości e-mail",
+    "SuccessfullySent": "Pomyślnie wysłane",
+    "MailSendingFailed": "Wysyłanie e-maila nie powiodło się. Sprawdź konfigurację e-maila i spróbuj ponownie.",
+    "Send": "Wysłać",
     "Menu:Emailing": "Wysyłanie e-maili",
+    "Menu:TimeZone": "Strefa Czasowa",
+    "DisplayName:Timezone": "Strefa czasowa",
+    "TimezoneHelpText": "To ustawienie jest używane w przypadku całej aplikacji lub opartej na dzierżawie.",
     "SmtpHost": "Gospodarz",
     "SmtpPort": "Port",
     "SmtpUserName": "Nazwa użytkownika",
@@ -19,6 +34,7 @@
     "Feature:SettingManagementEnable": "Włącz zarządzanie ustawieniami",
     "Feature:SettingManagementEnableDescription": "Włącz system zarządzania ustawieniami w aplikacji.",
     "Feature:AllowChangingEmailSettings": "Zezwól na zmianę ustawień poczty e-mail.",
-    "Feature:AllowChangingEmailSettingsDescription": "Zezwól na zmianę ustawień poczty e-mail."
+    "Feature:AllowChangingEmailSettingsDescription": "Zezwól na zmianę ustawień poczty e-mail.",
+    "SmtpPasswordPlaceholder": "Wprowadź wartość, aby zaktualizować hasło"
   }
 }

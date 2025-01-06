@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Blazorise;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.AspNetCore.Components.Web.Extensibility.EntityActions;
 using Volo.Abp.AspNetCore.Components.Web.Extensibility.TableColumns;
 using Volo.Abp.AspNetCore.Components.Web.Theming.PageToolbars;
-using Volo.Abp.BlazoriseUI;
-using Volo.Abp.FeatureManagement;
 using Volo.Abp.FeatureManagement.Blazor.Components;
 using Volo.Abp.ObjectExtending;
 using Volo.Abp.TenantManagement.Localization;
@@ -24,6 +21,8 @@ public partial class TenantManagement
 
     protected FeatureManagementModal FeatureManagementModal;
 
+    protected bool ShowPassword { get; set; }
+
     protected PageToolbar Toolbar { get; } = new();
 
     protected List<TableColumn> TenantManagementTableColumns => TableColumns.Get<TenantManagement>();
@@ -38,6 +37,13 @@ public partial class TenantManagement
         DeletePolicyName = TenantManagementPermissions.Tenants.Delete;
 
         ManageFeaturesPolicyName = TenantManagementPermissions.Tenants.ManageFeatures;
+    }
+
+    protected override ValueTask SetBreadcrumbItemsAsync()
+    {
+        BreadcrumbItems.Add(new BlazoriseUI.BreadcrumbItem(L["Menu:TenantManagement"]));
+        BreadcrumbItems.Add(new BlazoriseUI.BreadcrumbItem(L["Tenants"]));
+        return base.SetBreadcrumbItemsAsync();
     }
 
     protected override async Task SetPermissionsAsync()
@@ -81,7 +87,7 @@ public partial class TenantManagement
                         Clicked = async (data) =>
                         {
                             var tenant = data.As<TenantDto>();
-                            await FeatureManagementModal.OpenAsync(FeatureProviderName, tenant.Id.ToString());
+                            await FeatureManagementModal.OpenAsync(FeatureProviderName, tenant.Id.ToString(), tenant.Name);
                         }
                     },
                     new EntityAction
@@ -96,7 +102,7 @@ public partial class TenantManagement
         return base.SetEntityActionsAsync();
     }
 
-    protected override ValueTask SetTableColumnsAsync()
+    protected override async ValueTask SetTableColumnsAsync()
     {
         TenantManagementTableColumns
             .AddRange(new TableColumn[]
@@ -114,10 +120,15 @@ public partial class TenantManagement
                     },
             });
 
-        TenantManagementTableColumns.AddRange(GetExtensionTableColumns(
+        TenantManagementTableColumns.AddRange(await GetExtensionTableColumnsAsync(
             TenantManagementModuleExtensionConsts.ModuleName,
             TenantManagementModuleExtensionConsts.EntityNames.Tenant));
 
-        return base.SetTableColumnsAsync();
+        await base.SetTableColumnsAsync();
+    }
+
+    protected virtual void TogglePasswordVisibility()
+    {
+        ShowPassword = !ShowPassword;
     }
 }

@@ -79,12 +79,12 @@ public class UpdateCommand : IConsoleCommand, ITransientDependency
 
                 await _nugetPackagesVersionUpdater.UpdateSolutionAsync(solution, checkAll: checkAll, version: version);
 
-                Logger.LogInformation($"Volo packages are updated in {solutionName} solution.");
+                Logger.LogInformation("Volo packages are updated in {SolutionName} solution", solutionName);
             }
             return;
         }
 
-        var project = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.csproj").FirstOrDefault();
+        var project = Directory.GetFiles(directory, "*.csproj").FirstOrDefault();
 
         if (project != null)
         {
@@ -92,7 +92,7 @@ public class UpdateCommand : IConsoleCommand, ITransientDependency
 
             await _nugetPackagesVersionUpdater.UpdateProjectAsync(project, checkAll: checkAll, version: version);
 
-            Logger.LogInformation($"Volo packages are updated in {projectName} project.");
+            Logger.LogInformation("Volo packages are updated in {ProjectName} project", projectName);
             return;
         }
 
@@ -127,12 +127,12 @@ public class UpdateCommand : IConsoleCommand, ITransientDependency
         sb.AppendLine("  abp update -p");
         sb.AppendLine("  abp update -sp \"D:\\projects\\\" -sn Acme.BookStore");
         sb.AppendLine("");
-        sb.AppendLine("See the documentation for more info: https://docs.abp.io/en/abp/latest/CLI");
+        sb.AppendLine("See the documentation for more info: https://abp.io/docs/latest/cli");
 
         return sb.ToString();
     }
 
-    public string GetShortDescription()
+    public static string GetShortDescription()
     {
         return "Update all ABP related NuGet packages and NPM packages in a solution or project to the latest version.";
     }

@@ -11,7 +11,8 @@ public static class CmsKitErrorCodes
     public static class Pages
     {
         public const string SlugAlreadyExist = "CmsKit:Page:0001";
-    }
+		public const string MultipleHomePage = "CmsKit:Page:0002";
+	}
 
     public static class Ratings
     {
@@ -42,5 +43,12 @@ public static class CmsKitErrorCodes
     {
         public const string InvalidName = "CmsKit:Media:0001";
         public const string EntityTypeDoesntExist = "CmsKit:Media:0002";
+    }
+
+    public static class MarkedItems
+    {
+        public const string EntityCannotBeMarked = "CmsKit:MarkedItem:0001";
+        public const string MarkedItemDefinitionNotFound = "CmsKit:MarkedItem:0002";
+        public const string DuplicateMarkedItem = "CmsKit:MarkedItem:0003";
     }
 }

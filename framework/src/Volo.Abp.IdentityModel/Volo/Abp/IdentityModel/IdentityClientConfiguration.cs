@@ -5,14 +5,14 @@ using IdentityModel;
 
 namespace Volo.Abp.IdentityModel;
 
-public class IdentityClientConfiguration : Dictionary<string, string>
+public class IdentityClientConfiguration : Dictionary<string, string?>
 {
     /// <summary>
     /// Possible values: "client_credentials" or "password".
     /// Default value: "client_credentials".
     /// </summary>
     public string GrantType {
-        get => this.GetOrDefault(nameof(GrantType));
+        get => this.GetOrDefault(nameof(GrantType))!;
         set => this[nameof(GrantType)] = value;
     }
 
@@ -20,7 +20,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// Client Id.
     /// </summary>
     public string ClientId {
-        get => this.GetOrDefault(nameof(ClientId));
+        get => this.GetOrDefault(nameof(ClientId))!;
         set => this[nameof(ClientId)] = value;
     }
 
@@ -28,7 +28,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// Client secret (as plain text - without hashed).
     /// </summary>
     public string ClientSecret {
-        get => this.GetOrDefault(nameof(ClientSecret));
+        get => this.GetOrDefault(nameof(ClientSecret))!;
         set => this[nameof(ClientSecret)] = value;
     }
 
@@ -36,7 +36,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// User name.
     /// Valid only if <see cref="GrantType"/> is "password".
     /// </summary>
-    public string UserName {
+    public string? UserName {
         get => this.GetOrDefault(nameof(UserName));
         set => this[nameof(UserName)] = value;
     }
@@ -45,7 +45,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// Password of the <see cref="UserName"/>.
     /// Valid only if <see cref="GrantType"/> is "password".
     /// </summary>
-    public string UserPassword {
+    public string? UserPassword {
         get => this.GetOrDefault(nameof(UserPassword));
         set => this[nameof(UserPassword)] = value;
     }
@@ -54,7 +54,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// Authority.
     /// </summary>
     public string Authority {
-        get => this.GetOrDefault(nameof(Authority));
+        get => this.GetOrDefault(nameof(Authority))!;
         set => this[nameof(Authority)] = value;
     }
 
@@ -62,7 +62,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
     /// Scope.
     /// </summary>
     public string Scope {
-        get => this.GetOrDefault(nameof(Scope));
+        get => this.GetOrDefault(nameof(Scope))!;
         set => this[nameof(Scope)] = value;
     }
 
@@ -83,6 +83,24 @@ public class IdentityClientConfiguration : Dictionary<string, string>
         get => this.GetOrDefault(nameof(CacheAbsoluteExpiration))?.To<int>() ?? 60 * 30;
         set => this[nameof(CacheAbsoluteExpiration)] = value.ToString(CultureInfo.InvariantCulture);
     }
+    
+    /// <summary>
+    /// ValidateIssuerName.
+    /// Default: true.
+    /// </summary>
+    public bool ValidateIssuerName {
+        get => this.GetOrDefault(nameof(ValidateIssuerName))?.To<bool>() ?? true;
+        set => this[nameof(ValidateIssuerName)] = value.ToString().ToLowerInvariant();
+    }
+    
+    /// <summary>
+    /// ValidateEndpoints.
+    /// Default: true.
+    /// </summary>
+    public bool ValidateEndpoints {
+        get => this.GetOrDefault(nameof(ValidateEndpoints))?.To<bool>() ?? true;
+        set => this[nameof(ValidateEndpoints)] = value.ToString().ToLowerInvariant();
+    }
 
     public IdentityClientConfiguration()
     {
@@ -95,10 +113,12 @@ public class IdentityClientConfiguration : Dictionary<string, string>
         string clientId,
         string clientSecret,
         string grantType = OidcConstants.GrantTypes.ClientCredentials,
-        string userName = null,
-        string userPassword = null,
+        string? userName = null,
+        string? userPassword = null,
         bool requireHttps = true,
-        int cacheAbsoluteExpiration = 60 * 30)
+        int cacheAbsoluteExpiration = 60 * 30,
+        bool validateIssuerName = true,
+        bool validateEndpoints = true)
     {
         this[nameof(Authority)] = authority;
         this[nameof(Scope)] = scope;
@@ -109,5 +129,7 @@ public class IdentityClientConfiguration : Dictionary<string, string>
         this[nameof(UserPassword)] = userPassword;
         this[nameof(RequireHttps)] = requireHttps.ToString().ToLowerInvariant();
         this[nameof(CacheAbsoluteExpiration)] = cacheAbsoluteExpiration.ToString(CultureInfo.InvariantCulture);
+        this[nameof(ValidateIssuerName)] = validateIssuerName.ToString().ToLowerInvariant();
+        this[nameof(ValidateEndpoints)] = validateEndpoints.ToString().ToLowerInvariant();
     }
 }

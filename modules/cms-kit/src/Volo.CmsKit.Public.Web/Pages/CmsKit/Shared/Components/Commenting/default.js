@@ -1,10 +1,10 @@
 (function ($) {
 
-    var l = abp.localization.getResource('CmsKit');
+    let l = abp.localization.getResource('CmsKit');
 
     abp.widgets.CmsCommenting = function ($widget) {
-        var widgetManager = $widget.data('abp-widget-manager');
-        var $commentArea = $widget.find('.cms-comment-area');
+        let widgetManager = $widget.data('abp-widget-manager');
+        let $commentArea = $widget.find('.cms-comment-area');
 
         function getFilters() {
             return {
@@ -15,14 +15,14 @@
 
         function registerEditLinks($container) {
             $container.find('.comment-edit-link').each(function () {
-                var $link = $(this);
+                let $link = $(this);
                 $link.on('click', function (e) {
                     e.preventDefault();
 
-                    var commentId = $link.data('id');
+                    let commentId = $link.data('id');
 
-                    var $relatedCommentContentArea = $container.find('.cms-comment-content-area[data-id=' + commentId + ']');
-                    var $relatedCommentEditFormArea = $container.find('.cms-comment-edit-area[data-id=' + commentId + ']');
+                    let $relatedCommentContentArea = $container.find('.cms-comment-content-area[data-id=' + commentId + ']');
+                    let $relatedCommentEditFormArea = $container.find('.cms-comment-edit-area[data-id=' + commentId + ']');
 
                     $relatedCommentContentArea.hide();
                     $relatedCommentEditFormArea.show();
@@ -30,15 +30,15 @@
                 });
             });
             $container.find('.comment-edit-cancel-button').each(function () {
-                var $button = $(this);
+                let $button = $(this);
                 $button.on('click', function (e) {
                     e.preventDefault();
 
-                    var commentId = $button.data('id');
+                    let commentId = $button.data('id');
 
-                    var $relatedCommentContentArea = $container.find('.cms-comment-content-area[data-id=' + commentId + ']');
-                    var $relatedCommentEditFormArea = $container.find('.cms-comment-edit-area[data-id=' + commentId + ']');
-                    var $link = $container.find('.comment-edit-link[data-id=' + commentId + ']');
+                    let $relatedCommentContentArea = $container.find('.cms-comment-content-area[data-id=' + commentId + ']');
+                    let $relatedCommentEditFormArea = $container.find('.cms-comment-edit-area[data-id=' + commentId + ']');
+                    let $link = $container.find('.comment-edit-link[data-id=' + commentId + ']');
 
                     $relatedCommentContentArea.show();
                     $relatedCommentEditFormArea.hide();
@@ -49,14 +49,14 @@
 
         function registerReplyLinks($container) {
             $container.find('.comment-reply-link').each(function () {
-                var $link = $(this);
+                let $link = $(this);
                 $link.on('click', function (e) {
                     e.preventDefault();
 
-                    var replyCommentId = $link.data('reply-id');
+                    let replyCommentId = $link.data('reply-id');
 
-                    var $relatedCommentArea = $container.find('.cms-comment-form-area[data-reply-id=' + replyCommentId + ']');
-                    var $links = $container.find('.comment-reply-link[data-reply-id=' + replyCommentId + ']');
+                    let $relatedCommentArea = $container.find('.cms-comment-form-area[data-reply-id=' + replyCommentId + ']');
+                    let $links = $container.find('.comment-reply-link[data-reply-id=' + replyCommentId + ']');
 
                     $relatedCommentArea.show();
                     $relatedCommentArea.find('textarea').focus();
@@ -64,14 +64,14 @@
                 });
             });
             $container.find('.reply-cancel-button').each(function () {
-                var $button = $(this);
+                let $button = $(this);
                 $button.on('click', function (e) {
                     e.preventDefault();
 
-                    var replyCommentId = $button.data('reply-id');
+                    let replyCommentId = $button.data('reply-id');
 
-                    var $relatedCommentArea = $container.find('.cms-comment-form-area[data-reply-id=' + replyCommentId + ']');
-                    var $links = $container.find('.comment-reply-link[data-reply-id=' + replyCommentId + ']');
+                    let $relatedCommentArea = $container.find('.cms-comment-form-area[data-reply-id=' + replyCommentId + ']');
+                    let $links = $container.find('.comment-reply-link[data-reply-id=' + replyCommentId + ']');
 
                     $relatedCommentArea.hide();
                     $links.removeClass('disabled');
@@ -81,36 +81,60 @@
 
         function registerDeleteLinks($container) {
             $container.find('.comment-delete-link').each(function () {
-                var $link = $(this);
-                $link.on('click', '', function (e) {
-                    e.preventDefault();
+                let $link = $(this);
 
-                    abp.message.confirm(l("MessageDeletionConfirmationMessage"), function (ok) {
-                        if (ok) {
-                            volo.cmsKit.public.comments.commentPublic.delete($link.data('id')
-                            ).then(function () {
-                                widgetManager.refresh($widget);
-                            });
-                        }
+                let allowDelete = abp.auth.isGranted('CmsKitPublic.Comments.DeleteAll');
+                let isCurrentUser = abp.currentUser.id == $link.data('author-id');
+                if (!allowDelete && !isCurrentUser) {
+                    $link.hide();
+                }
+                else {
+                    $link.on('click', '', function (e) {
+                        e.preventDefault();
+
+                        abp.message.confirm(l("MessageDeletionConfirmationMessage"), function (ok) {
+                            if (ok) {
+                                volo.cmsKit.public.comments.commentPublic.delete($link.data('id')
+                                ).then(function () {
+                                    widgetManager.refresh($widget);
+                                });
+                            }
+                        });
                     });
-                });
+                }
             });
         }
 
         function registerUpdateOfNewComment($container) {
             $container.find('.cms-comment-update-form').each(function () {
                 var $form = $(this);
+
                 $form.submit(function (e) {
                     e.preventDefault();
-                    var formAsObject = $form.serializeFormToObject();
-                    volo.cmsKit.public.comments.commentPublic.update(
-                        formAsObject.id,
-                        {
+
+                    abp.ui.setBusy($form.find("button[type='submit']"));
+
+                    let formAsObject = $form.serializeFormToObject();
+                    
+                    $.ajax({
+                        type: 'POST',
+                        url: '/CmsKitPublicComments/Update/' + formAsObject.id,
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify({
                             text: formAsObject.commentText,
-                            concurrencyStamp: formAsObject.commentConcurrencyStamp
+                            concurrencyStamp: formAsObject.commentConcurrencyStamp,
+                            captchaToken: formAsObject.captchaId,
+                            captchaAnswer: formAsObject.input?.captcha
+                        }),
+                        success: function () {
+                            widgetManager.refresh($widget);
+                            abp.ui.clearBusy();
+                        },
+                        error: function (data) {
+                            abp.message.error(data.responseJSON.error.message);
+                            abp.ui.clearBusy();
                         }
-                    ).then(function () {
-                        widgetManager.refresh($widget);
                     });
                 });
             });
@@ -119,23 +143,51 @@
         function registerSubmissionOfNewComment($container) {
             $container.find('.cms-comment-form').each(function () {
                 var $form = $(this);
+
                 $form.submit(function (e) {
                     e.preventDefault();
+
+                    abp.ui.setBusy("button[type='submit']");
+
                     var formAsObject = $form.serializeFormToObject();
 
-                    if (formAsObject.repliedCommentId == ''){
+                    if (formAsObject.repliedCommentId == '') {
                         formAsObject.repliedCommentId = null;
                     }
 
-                    volo.cmsKit.public.comments.commentPublic.create(
-                        $commentArea.attr('data-entity-type'),
-                        $commentArea.attr('data-entity-id'),
-                        {
+                    if (formAsObject.commentText == '') {
+                        abp.message.error(l("CommentTextRequired"));
+                        abp.ui.clearBusy();
+                        return;
+                    }
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/CmsKitPublicComments/Validate',
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            entityId: $commentArea.attr('data-entity-id'),
+                            entityType: $commentArea.attr('data-entity-type'),
                             repliedCommentId: formAsObject.repliedCommentId,
-                            text: formAsObject.commentText
+                            text: formAsObject.commentText,
+                            url: window.location.href,
+                            captchaToken: formAsObject.captchaId,
+                            captchaAnswer: formAsObject.input?.captcha,
+                            idempotencyToken: formAsObject.idempotencyToken
+                        }),
+                        success: function () {
+                            widgetManager.refresh($widget);
+                            if (abp.setting.getBoolean("CmsKit.Comments.RequireApprovement")) {
+                                abp.message.success(l("CommentSubmittedForApproval"), l("SavedSuccessfully"));
+                            }
+                            $form.trigger('reset');
+                            abp.ui.clearBusy();
+                        },
+                        error: function (data) {
+                            abp.message.error(data.responseJSON.error.message);
+                            abp.ui.clearBusy();
                         }
-                    ).then(function () {
-                        widgetManager.refresh($widget);
                     });
                 });
             });
@@ -146,7 +198,7 @@
                 return;
             }
 
-            var $link = $(location.hash + '_link');
+            let $link = $(location.hash + '_link');
 
             if ($link.length > 0) {
                 $link.click();
@@ -155,7 +207,7 @@
                 $(location.hash).find('textarea').focus();
             }
         }
-
+        
         function init() {
             registerReplyLinks($widget);
             registerEditLinks($widget);

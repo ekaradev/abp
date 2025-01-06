@@ -54,12 +54,22 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
             output.TagMode = TagMode.StartTagAndEndTag;
             output.TagName = "div";
             LeaveOnlyGroupAttributes(context, output);
-            output.Attributes.AddClass(isCheckBox ? "mb-2" : "mb-3");
-            if (isCheckBox)
+            if (!IsOutputHidden(output))
             {
-                output.Attributes.AddClass("custom-checkbox");
-                output.Attributes.AddClass("custom-control");
-                output.Attributes.AddClass("form-check");
+                if (TagHelper.FloatingLabel && !isCheckBox)
+                {
+                    output.Attributes.AddClass("form-floating");
+                }
+                if (TagHelper.AddMarginBottomClass)
+                {
+                    output.Attributes.AddClass(isCheckBox ? "mb-2" : "mb-3");
+                }
+                if (isCheckBox)
+                {
+                    output.Attributes.AddClass("custom-checkbox");
+                    output.Attributes.AddClass("custom-control");
+                    output.Attributes.AddClass("form-check");
+                }
             }
             output.Content.AppendHtml(innerHtml);
         }
@@ -97,16 +107,17 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
 
     protected virtual string GetContent(TagHelperContext context, TagHelperOutput output, string label, string inputHtml, string validation, string infoHtml, bool isCheckbox)
     {
-        var innerContent = isCheckbox ?
+        var innerContent = isCheckbox || TagHelper.FloatingLabel ?
             inputHtml + label :
             label + inputHtml;
 
-        return innerContent + infoHtml + validation;
+        return innerContent + validation + infoHtml;
     }
 
     protected virtual string SurroundInnerHtmlAndGet(TagHelperContext context, TagHelperOutput output, string innerHtml, bool isCheckbox)
     {
-        return "<div class=\"" + (isCheckbox ? "custom-checkbox custom-control mb-2 form-check" : "mb-3") + "\">" +
+        var mb = TagHelper.AddMarginBottomClass ? (isCheckbox ? "mb-2" : "mb-3") : string.Empty;
+        return "<div class=\"" + (isCheckbox ? $"custom-checkbox custom-control {mb} form-check" : $"{mb}") + "\">" +
                 Environment.NewLine + innerHtml + Environment.NewLine +
                 "</div>";
     }
@@ -223,10 +234,9 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
 
         var attribute = TagHelper.AspFor.ModelExplorer.GetAttribute<Placeholder>();
 
-        if (attribute != null)
+        if (attribute != null || TagHelper.FloatingLabel)
         {
-            var placeholderLocalized = _tagHelperLocalizer.GetLocalizedText(attribute.Value, TagHelper.AspFor.ModelExplorer);
-
+            var placeholderLocalized = _tagHelperLocalizer.GetLocalizedText(attribute?.Value ?? TagHelper.AspFor.Name, TagHelper.AspFor.ModelExplorer);
             inputTagHelperOutput.Attributes.Add("placeholder", placeholderLocalized);
         }
     }
@@ -256,7 +266,7 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
     }
 
     protected virtual async Task<string> GetLabelAsHtmlAsync(TagHelperContext context, TagHelperOutput output, TagHelperOutput inputTag, bool isCheckbox)
-    {
+    {        
         if (IsOutputHidden(inputTag) || TagHelper.SuppressLabel)
         {
             return string.Empty;
@@ -264,14 +274,35 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
 
         if (string.IsNullOrEmpty(TagHelper.Label))
         {
-            return await GetLabelAsHtmlUsingTagHelperAsync(context, output, isCheckbox) + GetRequiredSymbol(context, output);
+            return await GetLabelAsHtmlUsingTagHelperAsync(context, output, isCheckbox);
         }
 
         var label = new TagBuilder("label");
         label.Attributes.Add("for", GetIdAttributeValue(inputTag));
-        label.InnerHtml.AppendHtml(TagHelper.Label);
+        label.InnerHtml.AppendHtml(_encoder.Encode(TagHelper.Label));
 
         label.AddCssClass(isCheckbox ? "form-check-label" : "form-label");
+
+        if (!TagHelper.LabelTooltip.IsNullOrEmpty())
+        {
+            label.Attributes.Add("data-bs-toggle", "tooltip");
+            label.Attributes.Add("data-bs-placement", TagHelper.LabelTooltipPlacement);
+            if (TagHelper.LabelTooltipHtml)
+            {
+                label.Attributes.Add("data-bs-html", "true");
+            }
+            label.Attributes.Add("title", TagHelper.LabelTooltip);
+            var iconClass = TagHelper.LabelTooltipIcon;
+            if (iconClass.StartsWith("bi-"))
+            {
+                iconClass = "bi " + iconClass;
+            }
+            else if (iconClass.StartsWith("fa-"))
+            {
+                iconClass = "fa " + iconClass;
+            }
+            label.InnerHtml.AppendHtml($" <i class=\"{iconClass}\"></i>");
+        }
 
         return label.ToHtmlString();
     }
@@ -283,7 +314,9 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
             return "";
         }
 
-        return TagHelper.AspFor.ModelExplorer.GetAttribute<RequiredAttribute>() != null ? "<span> * </span>" : "";
+        var isHaveRequiredAttribute = context.AllAttributes.Any(a => a.Name == "required");
+
+        return TagHelper.AspFor.ModelExplorer.GetAttribute<RequiredAttribute>() != null || isHaveRequiredAttribute ? "<span> * </span>" : "";
     }
 
     protected virtual string GetInfoAsHtml(TagHelperContext context, TagHelperOutput output, TagHelperOutput inputTag, bool isCheckbox)
@@ -337,7 +370,35 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
 
         attributeList.AddClass(isCheckbox ? "form-check-label" : "form-label");
 
-        return await labelTagHelper.RenderAsync(attributeList, context, _encoder, "label", TagMode.StartTagAndEndTag);
+        if (!TagHelper.LabelTooltip.IsNullOrEmpty())
+        {
+            attributeList.Add("data-bs-toggle", "tooltip");
+            attributeList.Add("data-bs-placement", TagHelper.LabelTooltipPlacement);
+            if (TagHelper.LabelTooltipHtml)
+            {
+                attributeList.Add("data-bs-html", "true");
+            }
+            attributeList.Add("title", TagHelper.LabelTooltip);
+        }
+
+        var innerOutput = await labelTagHelper.ProcessAndGetOutputAsync(attributeList, context, "label", TagMode.StartTagAndEndTag);
+        if (!TagHelper.LabelTooltip.IsNullOrEmpty())
+        {
+            var iconClass = TagHelper.LabelTooltipIcon;
+            if (iconClass.StartsWith("bi-"))
+            {
+                iconClass = "bi " + iconClass;
+            }
+            else if (iconClass.StartsWith("fa-"))
+            {
+                iconClass = "fa " + iconClass;
+            }
+            innerOutput.Content.AppendHtml($" <i class=\"{iconClass}\"></i>");
+        }
+        
+        innerOutput.Content.AppendHtml(GetRequiredSymbol(context, output));
+
+        return innerOutput.Render(_encoder);
     }
 
     protected virtual void ConvertToTextAreaIfTextArea(TagHelperOutput tagHelperOutput)
@@ -362,7 +423,7 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
         }
     }
 
-    protected virtual TextArea TryGetTextAreaAttribute(TagHelperOutput output)
+    protected virtual TextArea? TryGetTextAreaAttribute(TagHelperOutput output)
     {
         var textAreaAttribute = TagHelper.AspFor.ModelExplorer.GetAttribute<TextArea>();
 
@@ -444,14 +505,14 @@ public class AbpInputTagHelperService : AbpTagHelperService<AbpInputTagHelper>
 
     protected virtual bool IsOutputHidden(TagHelperOutput inputTag)
     {
-        return inputTag.Attributes.Any(a => a.Name.ToLowerInvariant() == "type" && a.Value.ToString().ToLowerInvariant() == "hidden");
+        return inputTag.Attributes.Any(a => a.Name.ToLowerInvariant() == "type" && a.Value.ToString()!.ToLowerInvariant() == "hidden");
     }
 
     protected virtual string GetIdAttributeValue(TagHelperOutput inputTag)
     {
         var idAttr = inputTag.Attributes.FirstOrDefault(a => a.Name == "id");
 
-        return idAttr != null ? idAttr.Value.ToString() : string.Empty;
+        return idAttr != null ? idAttr.Value.ToString()! : string.Empty;
     }
 
     protected virtual string GetIdAttributeAsString(TagHelperOutput inputTag)

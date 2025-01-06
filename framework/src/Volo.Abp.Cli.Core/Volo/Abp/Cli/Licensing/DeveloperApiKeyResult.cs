@@ -8,11 +8,13 @@ public class DeveloperApiKeyResult
     public string OrganizationName { get; set; }
     public string ApiKey { get; set; }
     public DateTime? LicenseEndTime { get; set; }
+    public DateTime? LicenseStartTime { get; set; }
     public bool CanDownloadSourceCode { get; set; }
     public string LicenseCode { get; set; }
     public string ErrorMessage { get; set; }
     public LicenseErrorType? ErrorType { get; set; }
     public LicenseType LicenseType { get; set; }
+    public bool IsTrialLicense { get; set; }
 
     public enum LicenseErrorType
     {

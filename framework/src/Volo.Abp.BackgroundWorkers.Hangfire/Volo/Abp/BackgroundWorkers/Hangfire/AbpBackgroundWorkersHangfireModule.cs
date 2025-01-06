@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Hangfire;
 using Volo.Abp.Modularity;
-using Volo.Abp.Threading;
 
 namespace Volo.Abp.BackgroundWorkers.Hangfire;
 
@@ -19,7 +17,7 @@ public class AbpBackgroundWorkersHangfireModule : AbpModule
         context.Services.AddSingleton(typeof(HangfirePeriodicBackgroundWorkerAdapter<>));
     }
     
-    public async override Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
+    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
     {
         var options = context.ServiceProvider.GetRequiredService<IOptions<AbpBackgroundWorkerOptions>>().Value;
         if (!options.IsEnabled)
@@ -28,17 +26,12 @@ public class AbpBackgroundWorkersHangfireModule : AbpModule
             hangfireOptions.BackgroundJobServerFactory = CreateOnlyEnqueueJobServer;
         }
         
-        await context.ServiceProvider
-            .GetRequiredService<IBackgroundWorkerManager>()
-            .StartAsync(); 
-    }
-
-    public override void OnPreApplicationInitialization(ApplicationInitializationContext context)
-    {
-        AsyncHelper.RunSync(() => OnPreApplicationInitializationAsync(context));
+        context.ServiceProvider
+            .GetRequiredService<HangfireBackgroundWorkerManager>()
+            .Initialize(); 
     }
     
-    private BackgroundJobServer CreateOnlyEnqueueJobServer(IServiceProvider serviceProvider)
+    private BackgroundJobServer? CreateOnlyEnqueueJobServer(IServiceProvider serviceProvider)
     {
         serviceProvider.GetRequiredService<JobStorage>();
         return null;

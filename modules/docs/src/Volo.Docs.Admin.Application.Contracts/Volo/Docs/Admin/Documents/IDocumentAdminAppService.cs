@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Docs.Admin.Projects;
 
 namespace Volo.Docs.Admin.Documents
 {
@@ -19,5 +20,9 @@ namespace Volo.Docs.Admin.Documents
         Task RemoveFromCacheAsync(Guid documentId);
 
         Task ReindexAsync(Guid documentId);
+
+        Task<List<DocumentInfoDto>> GetFilterItemsAsync();
+
+        Task<List<ProjectWithoutDetailsDto>> GetProjectsAsync();
     }
 }

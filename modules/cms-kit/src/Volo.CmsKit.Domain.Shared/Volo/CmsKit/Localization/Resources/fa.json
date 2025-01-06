@@ -75,7 +75,7 @@
     "PageDeletionConfirmationMessage": "آیا مطمئن هستید که این صفحه را حذف می کنید؟",
     "PageId": "صفحه",
     "Pages": "صفحات",
-    "PageSlugInformation": "Slug در url استفاده می شود. آدرس اینترنتی شما '/pages/{{slug}}' خواهد بود.",
+    "PageSlugInformation": "Slug در url استفاده می شود. آدرس اینترنتی شما '/{{slug}}' خواهد بود.",
     "Permission:BlogManagement": "مدیریت وبلاگ",
     "Permission:BlogManagement.Create": "ایجاد",
     "Permission:BlogManagement.Delete": "حذف",
@@ -142,7 +142,7 @@
     "SubjectPlaceholder": "لطفا یک موضوع را تایپ کنید",
     "Submit": "ارسال",
     "Subscribe": "اشتراک",
-    "SuccessfullySaved": "با موفقیت ذخیره گردید!",
+    "SavedSuccessfully": "با موفقیت ذخیره گردید!",
     "TagDeletionConfirmationMessage": "آیا مطمئن هستید که برچسب '{0}' را حذف می کنید؟",
     "Tags": "برچسب ها",
     "Text": "متن",
@@ -181,6 +181,13 @@
     "HasBlogPostWaitingForReviewMessage": "شما یک پست وبلاگ دارید که منتظر بررسی است. برای لیست کلیک کنید.",
     "SelectAStatus": "انتخاب وضعیت",
     "Status": "وضعیت",
-    "CmsKit.BlogPost.ScrollIndex": "نوار پیمایش سریع در پست های وبلاگ"
+    "CmsKit.BlogPost.ScrollIndex": "نوار پیمایش سریع در پست های وبلاگ",
+    "CmsKit.BlogPost.PreventXssFeature": "جلوگیری از XSS",
+    "ThisPartOfContentCouldntBeLoaded": "این قسمت از محتوا قابل بارگیری نیست.",
+    "ChooseAnActionForBlog": "یک عمل برای وبلاگ انتخاب کنید",
+    "AssignBlogPostsToOtherBlog": "پست های وبلاگ را به وبلاگ دیگری اختصاص دهید",
+    "SelectAnBlogToAssign": "یک وبلاگ برای اختصاص دادن انتخاب کنید",
+    "DeleteAllBlogPostsOfThisBlog": "تمام پست های وبلاگ این وبلاگ را حذف کنید",
+    "RequiredPermissionName": "نام مجوز مورد نیاز"
   }
 }

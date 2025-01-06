@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -10,7 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
+using Volo.Abp.AspNetCore.Security;
 using Volo.Abp.OpenIddict.ViewModels.Authorization;
+using Volo.Abp.Security.Claims;
 
 namespace Volo.Abp.OpenIddict.Controllers;
 
@@ -20,17 +23,18 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
 {
     [HttpGet, HttpPost]
     [IgnoreAntiforgeryToken]
+    [IgnoreAbpSecurityHeader]
     public virtual async Task<IActionResult> HandleAsync()
     {
         var request = await GetOpenIddictServerRequestAsync(HttpContext);
 
         // If prompt=login was specified by the client application,
         // immediately return the user agent to the login page.
-        if (request.HasPrompt(OpenIddictConstants.Prompts.Login))
+        if (request.HasPromptValue(OpenIddictConstants.PromptValues.Login))
         {
             // To avoid endless login -> authorization redirects, the prompt=login flag
             // is removed from the authorization request payload before redirecting the user.
-            var prompt = string.Join(" ", request.GetPrompts().Remove(OpenIddictConstants.Prompts.Login));
+            var prompt = string.Join(" ", request.GetPromptValues().Remove(OpenIddictConstants.PromptValues.Login));
 
             var parameters = Request.HasFormContentType ?
                 Request.Form.Where(parameter => parameter.Key != OpenIddictConstants.Parameters.Prompt).ToList() :
@@ -55,7 +59,7 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
         {
             // If the client application requested promptless authentication,
             // return an error indicating that the user is not logged in.
-            if (request.HasPrompt(OpenIddictConstants.Prompts.None))
+            if (request.HasPromptValue(OpenIddictConstants.PromptValues.None))
             {
                 return Forbid(
                     authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
@@ -76,8 +80,33 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
         }
 
         // Retrieve the profile of the logged in user.
-        var user = await UserManager.GetUserAsync(result.Principal) ??
-            throw new InvalidOperationException(L["TheUserDetailsCannotBbeRetrieved"]);
+        var dynamicPrincipal = result.Principal;
+        if (AbpClaimsPrincipalFactoryOptions.Value.IsDynamicClaimsEnabled)
+        {
+            dynamicPrincipal = await AbpClaimsPrincipalFactory.CreateDynamicAsync(dynamicPrincipal);
+            if (dynamicPrincipal == null)
+            {
+                return Challenge(
+                    authenticationSchemes: IdentityConstants.ApplicationScheme,
+                    properties: new AuthenticationProperties
+                    {
+                        RedirectUri = Request.PathBase + Request.Path + QueryString.Create(
+                            Request.HasFormContentType ? Request.Form.ToList() : Request.Query.ToList())
+                    });
+            }
+        }
+
+        var user = await UserManager.GetUserAsync(dynamicPrincipal);
+        if (user == null)
+        {
+            return Challenge(
+                authenticationSchemes: IdentityConstants.ApplicationScheme,
+                properties: new AuthenticationProperties
+                {
+                    RedirectUri = Request.PathBase + Request.Path + QueryString.Create(
+                        Request.HasFormContentType ? Request.Form.ToList() : Request.Query.ToList())
+                });
+        }
 
         // Retrieve the application details from the database.
         var application = await ApplicationManager.FindByClientIdAsync(request.ClientId) ??
@@ -108,8 +137,14 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
             // return an authorization response without displaying the consent form.
             case OpenIddictConstants.ConsentTypes.Implicit:
             case OpenIddictConstants.ConsentTypes.External when authorizations.Any():
-            case OpenIddictConstants.ConsentTypes.Explicit when authorizations.Any() && !request.HasPrompt(OpenIddictConstants.Prompts.Consent):
+            case OpenIddictConstants.ConsentTypes.Explicit when authorizations.Any() && !request.HasPromptValue(OpenIddictConstants.PromptValues.Consent):
                 var principal = await SignInManager.CreateUserPrincipalAsync(user);
+
+                if (result.Properties != null && result.Properties.IsPersistent)
+                {
+                    var claim = new Claim(AbpClaimTypes.RememberMe, true.ToString()).SetDestinations(OpenIddictConstants.Destinations.AccessToken);
+                    principal.Identities.FirstOrDefault()?.AddClaim(claim);
+                }
 
                 // Note: in this sample, the granted scopes match the requested scope
                 // but you may want to allow the user to uncheck specific scopes.
@@ -132,14 +167,14 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
 
                 principal.SetAuthorizationId(await AuthorizationManager.GetIdAsync(authorization));
 
-                await SetClaimsDestinationsAsync(principal);
+                await OpenIddictClaimsPrincipalManager.HandleAsync(request, principal);
 
                 return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
 
             // At this point, no authorization was found in the database and an error must be returned
             // if the client application specified prompt=none in the authorization request.
-            case OpenIddictConstants.ConsentTypes.Explicit when request.HasPrompt(OpenIddictConstants.Prompts.None):
-            case OpenIddictConstants.ConsentTypes.Systematic when request.HasPrompt(OpenIddictConstants.Prompts.None):
+            case OpenIddictConstants.ConsentTypes.Explicit when request.HasPromptValue(OpenIddictConstants.PromptValues.None):
+            case OpenIddictConstants.ConsentTypes.Systematic when request.HasPromptValue(OpenIddictConstants.PromptValues.None):
                 return Forbid(
                     authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                     properties: new AuthenticationProperties(new Dictionary<string, string>
@@ -204,6 +239,13 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
 
         var principal = await SignInManager.CreateUserPrincipalAsync(user);
 
+        var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (result.Succeeded && result.Properties != null && result.Properties.IsPersistent)
+        {
+            var claim = new Claim(AbpClaimTypes.RememberMe, true.ToString()).SetDestinations(OpenIddictConstants.Destinations.AccessToken);
+            principal.Identities.FirstOrDefault()?.AddClaim(claim);
+        }
+
         // Note: in this sample, the granted scopes match the requested scope
         // but you may want to allow the user to uncheck specific scopes.
         // For that, simply restrict the list of scopes before calling SetScopes.
@@ -227,7 +269,7 @@ public class AuthorizeController : AbpOpenIdDictControllerBase
         principal.SetScopes(request.GetScopes());
         principal.SetResources(await GetResourcesAsync(request.GetScopes()));
 
-        await SetClaimsDestinationsAsync(principal);
+        await OpenIddictClaimsPrincipalManager.HandleAsync(request, principal);
 
         // Returning a SignInResult will ask OpenIddict to issue the appropriate access/identity tokens.
         return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

@@ -1,7 +1,10 @@
 import { Directive, HostListener, Optional } from '@angular/core';
 import { ModalComponent } from './modal.component';
 
-@Directive({ selector: '[abpClose]' })
+@Directive({
+  standalone: false,
+  selector: '[abpClose]',
+})
 export class ModalCloseDirective {
   constructor(@Optional() private modal: ModalComponent) {
     if (!modal) {

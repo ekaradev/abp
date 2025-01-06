@@ -1,19 +1,22 @@
-import { ChangeDetectorRef, Component, Injector, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Input } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 
 // Not an abstract class on purpose. Do not change!
-@Component({ template: '' })
+@Component({
+  standalone: false,
+  template: '',
+})
 export class AbstractNgModelComponent<T = any, U = T> implements ControlValueAccessor {
-  protected _value: T;
-  protected cdRef: ChangeDetectorRef;
-  onChange: (value: T) => void;
-  onTouched: () => void;
+  protected _value!: T;
+  protected cdRef = inject(ChangeDetectorRef);
+  onChange?: (value: T) => void;
+  onTouched?: () => void;
 
   @Input()
-  disabled: boolean;
+  disabled?: boolean;
 
   @Input()
-  readonly: boolean;
+  readonly?: boolean;
 
   @Input()
   valueFn: (value: U, previousValue?: T) => T = value => value as any as T;
@@ -39,10 +42,6 @@ export class AbstractNgModelComponent<T = any, U = T> implements ControlValueAcc
     return this._value;
   }
 
-  constructor(public injector: Injector) {
-    this.cdRef = injector.get(ChangeDetectorRef);
-  }
-
   notifyValueChange(): void {
     if (this.onChange) {
       this.onChange(this.value);
@@ -51,7 +50,7 @@ export class AbstractNgModelComponent<T = any, U = T> implements ControlValueAcc
 
   writeValue(value: T): void {
     this._value = this.valueLimitFn(value, this._value) || value;
-    setTimeout(() => this.cdRef.markForCheck(), 0);
+    this.cdRef.markForCheck();
   }
 
   registerOnChange(fn: any): void {

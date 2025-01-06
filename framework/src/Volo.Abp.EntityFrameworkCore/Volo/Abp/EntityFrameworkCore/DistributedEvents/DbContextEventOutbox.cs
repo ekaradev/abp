@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -24,19 +25,24 @@ public class DbContextEventOutbox<TDbContext> : IDbContextEventOutbox<TDbContext
     public virtual async Task EnqueueAsync(OutgoingEventInfo outgoingEvent)
     {
         var dbContext = (IHasEventOutbox)await DbContextProvider.GetDbContextAsync();
-        dbContext.OutgoingEvents.Add(
-            new OutgoingEventRecord(outgoingEvent)
-        );
+        dbContext.OutgoingEvents.Add(new OutgoingEventRecord(outgoingEvent));
     }
 
     [UnitOfWork]
-    public virtual async Task<List<OutgoingEventInfo>> GetWaitingEventsAsync(int maxCount, CancellationToken cancellationToken = default)
+    public virtual async Task<List<OutgoingEventInfo>> GetWaitingEventsAsync(int maxCount, Expression<Func<IOutgoingEventInfo, bool>>? filter = null, CancellationToken cancellationToken = default)
     {
         var dbContext = (IHasEventOutbox)await DbContextProvider.GetDbContextAsync();
+
+        Expression<Func<OutgoingEventRecord, bool>>? transformedFilter = null;
+        if (filter != null)
+        {
+            transformedFilter = InboxOutboxFilterExpressionTransformer.Transform<IOutgoingEventInfo, OutgoingEventRecord>(filter)!;
+        }
 
         var outgoingEventRecords = await dbContext
             .OutgoingEvents
             .AsNoTracking()
+            .WhereIf(transformedFilter != null, transformedFilter!)
             .OrderBy(x => x.CreationTime)
             .Take(maxCount)
             .ToListAsync(cancellationToken: cancellationToken);
@@ -50,21 +56,13 @@ public class DbContextEventOutbox<TDbContext> : IDbContextEventOutbox<TDbContext
     public virtual async Task DeleteAsync(Guid id)
     {
         var dbContext = (IHasEventOutbox)await DbContextProvider.GetDbContextAsync();
-        var outgoingEvent = await dbContext.OutgoingEvents.FindAsync(id);
-        if (outgoingEvent != null)
-        {
-            dbContext.Remove(outgoingEvent);
-        }
+        await dbContext.OutgoingEvents.Where(x => x.Id == id).ExecuteDeleteAsync();
     }
 
     [UnitOfWork]
     public virtual async Task DeleteManyAsync(IEnumerable<Guid> ids)
     {
         var dbContext = (IHasEventOutbox)await DbContextProvider.GetDbContextAsync();
-        var outgoingEvents = await dbContext.OutgoingEvents.Where(x => ids.Contains(x.Id)).ToListAsync();
-        if (outgoingEvents.Any())
-        {
-            dbContext.RemoveRange(outgoingEvents);
-        }
+        await dbContext.OutgoingEvents.Where(x => ids.Contains(x.Id)).ExecuteDeleteAsync();
     }
 }

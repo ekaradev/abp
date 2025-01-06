@@ -40,9 +40,9 @@ public abstract class AbstractKeyReadOnlyAppService<TEntity, TGetOutputDto, TGet
 {
     protected IReadOnlyRepository<TEntity> ReadOnlyRepository { get; }
 
-    protected virtual string GetPolicyName { get; set; }
+    protected virtual string? GetPolicyName { get; set; }
 
-    protected virtual string GetListPolicyName { get; set; }
+    protected virtual string? GetListPolicyName { get; set; }
 
     protected AbstractKeyReadOnlyAppService(IReadOnlyRepository<TEntity> repository)
     {
@@ -63,14 +63,19 @@ public abstract class AbstractKeyReadOnlyAppService<TEntity, TGetOutputDto, TGet
         await CheckGetListPolicyAsync();
 
         var query = await CreateFilteredQueryAsync(input);
-
         var totalCount = await AsyncExecuter.CountAsync(query);
 
-        query = ApplySorting(query, input);
-        query = ApplyPaging(query, input);
+        var entities = new List<TEntity>();
+        var entityDtos = new List<TGetListOutputDto>();
 
-        var entities = await AsyncExecuter.ToListAsync(query);
-        var entityDtos = await MapToGetListOutputDtosAsync(entities);
+        if (totalCount > 0)
+        {
+            query = ApplySorting(query, input);
+            query = ApplyPaging(query, input);
+
+            entities = await AsyncExecuter.ToListAsync(query);
+            entityDtos = await MapToGetListOutputDtosAsync(entities);
+        }
 
         return new PagedResultDto<TGetListOutputDto>(
             totalCount,
@@ -102,7 +107,7 @@ public abstract class AbstractKeyReadOnlyAppService<TEntity, TGetOutputDto, TGet
         {
             if (!sortInput.Sorting.IsNullOrWhiteSpace())
             {
-                return query.OrderBy(sortInput.Sorting);
+                return query.OrderBy(sortInput.Sorting!);
             }
         }
 
@@ -127,7 +132,7 @@ public abstract class AbstractKeyReadOnlyAppService<TEntity, TGetOutputDto, TGet
             return query.OrderByDescending(e => ((IHasCreationTime)e).CreationTime);
         }
 
-        throw new AbpException("No sorting specified but this query requires sorting. Override the ApplyDefaultSorting method for your application service derived from AbstractKeyReadOnlyAppService!");
+        throw new AbpException("No sorting specified but this query requires sorting. Override the ApplySorting or the ApplyDefaultSorting method for your application service derived from AbstractKeyReadOnlyAppService!");
     }
 
     /// <summary>

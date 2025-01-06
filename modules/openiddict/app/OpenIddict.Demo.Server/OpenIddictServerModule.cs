@@ -2,6 +2,7 @@
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Demo.Server.EntityFrameworkCore;
+using OpenIddict.Demo.Server.ExtensionGrants;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
@@ -21,6 +22,7 @@ using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.ExtensionGrantTypes;
 using Volo.Abp.OpenIddict.WildcardDomains;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
@@ -32,6 +34,7 @@ using Volo.Abp.SettingManagement.Web;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement.Web;
+using Volo.Abp.Uow;
 
 namespace OpenIddict.Demo.Server;
 
@@ -86,30 +89,18 @@ public class OpenIddictServerModule : AbpModule
 
         PreConfigure<OpenIddictServerBuilder>(builder =>
         {
-            //https://documentation.openiddict.com/configuration/encryption-and-signing-credentials.html
-            using (var algorithm = RSA.Create(keySizeInBits: 2048))
-            {
-                var subject = new X500DistinguishedName("CN=Fabrikam Encryption Certificate");
-                var request = new CertificateRequest(subject, algorithm, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, critical: true));
-                var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(2));
-                builder.AddSigningCertificate(certificate);
-            }
+            builder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", "00000000-0000-0000-0000-000000000000");
 
-            using (var algorithm = RSA.Create(keySizeInBits: 2048))
+            builder.Configure(openIddictServerOptions =>
             {
-                var subject = new X500DistinguishedName("CN=Fabrikam Signing Certificate");
-                var request = new CertificateRequest(subject, algorithm, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment, critical: true));
-                var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(2));
-                builder.AddEncryptionCertificate(certificate);
-            }
+                openIddictServerOptions.GrantTypes.Add(MyTokenExtensionGrant.ExtensionGrantName);
+            });
         });
 
         PreConfigure<AbpOpenIddictWildcardDomainOptions>(options =>
         {
             options.EnableWildcardDomainSupport = true;
-            options.WildcardDomainsFormat.Add("https://{0}.abp.io/signin-oidc");
+            options.WildcardDomainsFormat.Add("https://*.abp.io");
         });
 
         PreConfigure<OpenIddictBuilder>(builder =>
@@ -141,30 +132,34 @@ public class OpenIddictServerModule : AbpModule
         {
             options.IsEnabled = true;
         });
+
+        Configure<AbpOpenIddictExtensionGrantsOptions>(options =>
+        {
+            options.Grants.Add(MyTokenExtensionGrant.ExtensionGrantName, new MyTokenExtensionGrant());
+        });
     }
 
-    public async override Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
+    public async override Task OnPreApplicationInitializationAsync(ApplicationInitializationContext context)
     {
-        var dbContext = context.ServiceProvider
-            .GetRequiredService<ServerDbContext>();
-
-        if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
+        using var uow = context.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Begin();
         {
-            await dbContext.Database.MigrateAsync();
+            var dbContext = await context.ServiceProvider.GetRequiredService<IDbContextProvider<ServerDbContext>>().GetDbContextAsync();
+            if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
+            {
+                await dbContext.Database.MigrateAsync();
+            }
 
-            await context.ServiceProvider
-                .GetRequiredService<IDataSeeder>()
-                .SeedAsync();
+            await uow.CompleteAsync();
         }
+
+        await context.ServiceProvider
+            .GetRequiredService<IDataSeeder>()
+            .SeedAsync();
 
         var tenantManager = context.ServiceProvider.GetRequiredService<TenantManager>();
         var tenantRepository = context.ServiceProvider.GetRequiredService<ITenantRepository>();
-        if (await tenantRepository.FindByNameAsync("Default") == null)
-        {
-            var tenant = await tenantRepository.InsertAsync( await tenantManager.CreateAsync("Default"));
-            await context.ServiceProvider
-                .GetRequiredService<IDataSeeder>()
-                .SeedAsync(tenant.Id);
-        }
+        var tenant = await tenantRepository.FindByNameAsync("Default") ??
+                     await tenantRepository.InsertAsync(await tenantManager.CreateAsync("Default"));
+        await context.ServiceProvider.GetRequiredService<IDataSeeder>().SeedAsync(tenant.Id);
     }
 }

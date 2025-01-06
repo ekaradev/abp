@@ -49,6 +49,33 @@ public class MongoBlogRepository : MongoDbRepository<ICmsKitMongoDbContext, Blog
                   .ToListAsync(token);
     }
 
+    public async Task<List<BlogWithBlogPostCount>> GetListWithBlogPostCountAsync(
+        string filter = null, 
+        string sorting = null,
+        int maxResultCount = int.MaxValue, 
+        int skipCount = 0, 
+        CancellationToken cancellationToken = default)
+    {
+        var token = GetCancellationToken(cancellationToken);
+        
+        var blogs = await GetListQueryAsync(filter, token);
+
+        var blogIds = blogs.OrderBy(sorting.IsNullOrEmpty() ? "creationTime desc" : sorting)
+            .PageBy(skipCount, maxResultCount).Select(x => x.Id).ToList();
+        
+        var blogPostCount = await (await GetMongoQueryableAsync<BlogPost>(token))
+            .Where(blogPost => blogIds.Contains(blogPost.Id))
+            .GroupBy(blogPost => blogPost.BlogId)
+            .Select(x => new
+            {
+                BlogId = x.Key,
+                Count = x.Count()
+            })
+            .ToListAsync(GetCancellationToken(cancellationToken));
+
+        return blogs.Select(blog => new BlogWithBlogPostCount(blog, blogPostCount.FirstOrDefault(x => x.BlogId == blog.Id) != null ? blogPostCount.FirstOrDefault(x => x.BlogId == blog.Id).Count : 0)).ToList();
+    }
+
     public virtual async Task<long> GetCountAsync(string filter = null, CancellationToken cancellationToken = default)
     {
         var token = GetCancellationToken(cancellationToken);

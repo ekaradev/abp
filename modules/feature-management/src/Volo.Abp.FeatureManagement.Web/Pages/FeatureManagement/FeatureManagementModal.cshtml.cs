@@ -1,12 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc.ApplicationConfigurations;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.Features;
+using Volo.Abp.Localization;
 using Volo.Abp.Validation.StringValues;
 
 namespace Volo.Abp.FeatureManagement.Web.Pages.FeatureManagement;
@@ -21,6 +25,10 @@ public class FeatureManagementModal : AbpPageModel
     [HiddenInput]
     [BindProperty(SupportsGet = true)]
     public string ProviderKey { get; set; }
+    
+    [HiddenInput]
+    [BindProperty(SupportsGet = true)] 
+    public string ProviderKeyDisplayName { get; set; }
 
     [BindProperty]
     public List<FeatureGroupViewModel> FeatureGroups { get; set; }
@@ -31,20 +39,27 @@ public class FeatureManagementModal : AbpPageModel
 
     protected ILocalEventBus LocalEventBus { get; }
 
+    public AbpLocalizationOptions LocalizationOptions { get; }
+
     public FeatureManagementModal(
         IFeatureAppService featureAppService,
-        ILocalEventBus localEventBus)
+        ILocalEventBus localEventBus,
+        IOptions<AbpLocalizationOptions> localizationOptions)
     {
         ObjectMapperContext = typeof(AbpFeatureManagementWebModule);
 
         FeatureAppService = featureAppService;
         LocalEventBus = localEventBus;
+        LocalizationOptions = localizationOptions.Value;
     }
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
         ValidateModel();
-
+        if (!ProviderKeyDisplayName.IsNullOrWhiteSpace())
+        {
+            ProviderKeyDisplayName = " - " + HttpUtility.HtmlEncode(ProviderKeyDisplayName);
+        }
         FeatureListResultDto = await FeatureAppService.GetAsync(ProviderName, ProviderKey);
 
         return Page();
@@ -68,11 +83,6 @@ public class FeatureManagementModal : AbpPageModel
         );
 
         return NoContent();
-    }
-
-    public virtual bool IsDisabled(string providerName)
-    {
-        return providerName != ProviderName && providerName != DefaultValueFeatureValueProvider.ProviderName;
     }
 
     public class FeatureGroupViewModel

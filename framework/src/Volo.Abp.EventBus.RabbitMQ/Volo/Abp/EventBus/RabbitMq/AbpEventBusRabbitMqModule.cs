@@ -20,7 +20,7 @@ public class AbpEventBusRabbitMqModule : AbpModule
     {
         context
             .ServiceProvider
-            .GetRequiredService<RabbitMqDistributedEventBus>()
+            .GetRequiredService<IRabbitMqDistributedEventBus>()
             .Initialize();
     }
 }

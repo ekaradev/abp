@@ -1,11 +1,138 @@
 {
   "name": "Volo.Abp.SettingManagement.HttpApi",
-  "hash": "044618bbf045094718f03b1e0c259d2b",
+  "hash": "",
   "contents": [
     {
       "namespace": "Volo.Abp.SettingManagement",
+      "dependsOnModules": [
+        {
+          "declaringAssemblyName": "Volo.Abp.SettingManagement.Application.Contracts",
+          "namespace": "Volo.Abp.SettingManagement",
+          "name": "AbpSettingManagementApplicationContractsModule"
+        },
+        {
+          "declaringAssemblyName": "Volo.Abp.AspNetCore.Mvc",
+          "namespace": "Volo.Abp.AspNetCore.Mvc",
+          "name": "AbpAspNetCoreMvcModule"
+        }
+      ],
+      "implementingInterfaces": [
+        {
+          "name": "IAbpModule",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IAbpModule"
+        },
+        {
+          "name": "IOnPreApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPreApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationInitialization",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationInitialization"
+        },
+        {
+          "name": "IOnPostApplicationInitialization",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IOnPostApplicationInitialization"
+        },
+        {
+          "name": "IOnApplicationShutdown",
+          "namespace": "Volo.Abp",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.IOnApplicationShutdown"
+        },
+        {
+          "name": "IPreConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPreConfigureServices"
+        },
+        {
+          "name": "IPostConfigureServices",
+          "namespace": "Volo.Abp.Modularity",
+          "declaringAssemblyName": "Volo.Abp.Core",
+          "fullName": "Volo.Abp.Modularity.IPostConfigureServices"
+        }
+      ],
       "contentType": "abpModule",
-      "name": "AbpSettingManagementHttpApiModule"
+      "name": "AbpSettingManagementHttpApiModule",
+      "summary": null
+    },
+    {
+      "apis": [
+        {
+          "path": "api/setting-management/emailing",
+          "method": "GET",
+          "groupName": "EmailSettings",
+          "responseType": "Volo.Abp.SettingManagement.EmailSettingsDto",
+          "responseTypeAsJson": "{\r\n  \"smtpHost\": \"string\",\r\n  \"smtpPort\": 0,\r\n  \"smtpUserName\": \"string\",\r\n  \"smtpPassword\": \"string\",\r\n  \"smtpDomain\": \"string\",\r\n  \"smtpEnableSsl\": false,\r\n  \"smtpUseDefaultCredentials\": false,\r\n  \"defaultFromAddress\": \"string\",\r\n  \"defaultFromDisplayName\": \"string\"\r\n}",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/setting-management/emailing",
+          "method": "POST",
+          "groupName": "EmailSettings",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "UpdateEmailSettingsDto"
+            }
+          ]
+        },
+        {
+          "path": "api/setting-management/emailing/send-test-email",
+          "method": "POST",
+          "groupName": "EmailSettings",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "input",
+              "type": "SendTestEmailInput"
+            }
+          ]
+        },
+        {
+          "path": "api/setting-management/timezone",
+          "method": "GET",
+          "groupName": "TimeZoneSettings",
+          "responseType": "System.String",
+          "responseTypeAsJson": "\"string\"",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/setting-management/timezone/timezones",
+          "method": "GET",
+          "groupName": "TimeZoneSettings",
+          "responseType": "System.Collections.Generic.List`1[Volo.Abp.NameValue]",
+          "responseTypeAsJson": "[\r\n  {\r\n    \"name\": \"string\",\r\n    \"value\": \"string\"\r\n  }\r\n]",
+          "parameterDescriptions": []
+        },
+        {
+          "path": "api/setting-management/timezone",
+          "method": "POST",
+          "groupName": "TimeZoneSettings",
+          "responseType": "System.Void",
+          "responseTypeAsJson": "",
+          "parameterDescriptions": [
+            {
+              "name": "timezone",
+              "type": "String"
+            }
+          ]
+        }
+      ],
+      "contentType": "httpApi",
+      "name": "Defined Http Apis",
+      "summary": null
     }
   ]
 }

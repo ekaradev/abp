@@ -1,7 +1,9 @@
 import { Injectable, Pipe, PipeTransform } from '@angular/core';
 export type SortOrder = 'asc' | 'desc';
+
 @Injectable()
 @Pipe({
+  standalone: false,
   name: 'abpSort',
 })
 export class SortPipe implements PipeTransform {

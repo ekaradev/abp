@@ -5,6 +5,8 @@
     "OnlyProviderPermissons": "Solo questo provider",
     "All": "Tutti",
     "SelectAllInAllTabs": "Concedi tutte le autorizzazioni",
-    "SelectAllInThisTab": "Seleziona tutto"
+    "SelectAllInThisTab": "Seleziona tutto",
+    "SaveWithoutAnyPermissionsWarningMessage": "Sei sicuro di voler salvare senza alcuna autorizzazione?",
+    "PermissionGroup": "Gruppo di autorizzazioni"
   }
 }

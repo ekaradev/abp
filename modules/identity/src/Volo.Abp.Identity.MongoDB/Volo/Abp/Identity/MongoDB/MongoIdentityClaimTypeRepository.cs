@@ -49,7 +49,7 @@ public class MongoIdentityClaimTypeRepository : MongoDbRepository<IAbpIdentityMo
                 u =>
                     u.Name.Contains(filter)
             )
-            .OrderBy(sorting.IsNullOrWhiteSpace() ? nameof(IdentityClaimType.Name) : sorting)
+            .OrderBy(sorting.IsNullOrWhiteSpace() ? nameof(IdentityClaimType.CreationTime) + " desc" : sorting)
             .As<IMongoQueryable<IdentityClaimType>>()
             .PageBy<IdentityClaimType, IMongoQueryable<IdentityClaimType>>(skipCount, maxResultCount)
             .ToListAsync(GetCancellationToken(cancellationToken));
@@ -67,5 +67,12 @@ public class MongoIdentityClaimTypeRepository : MongoDbRepository<IAbpIdentityMo
             )
             .As<IMongoQueryable<IdentityClaimType>>()
             .LongCountAsync(GetCancellationToken(cancellationToken));
+    }
+
+    public virtual async Task<List<IdentityClaimType>> GetListByNamesAsync(IEnumerable<string> names, CancellationToken cancellationToken = default)
+    {
+        return await (await GetMongoQueryableAsync(cancellationToken))
+            .Where(x => names.Contains(x.Name))
+            .ToListAsync(GetCancellationToken(cancellationToken));
     }
 }

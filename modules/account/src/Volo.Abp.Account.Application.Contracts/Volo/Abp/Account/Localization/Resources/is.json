@@ -1,6 +1,7 @@
 {
   "culture": "is",
   "texts": {
+    "Menu:Account": "Reikningur",
     "UserName": "Notandanafn",
     "EmailAddress": "Netfang",
     "UserNameOrEmailAddress": "Notandanafn eða netfang",
@@ -33,8 +34,11 @@
     "DisplayName:PhoneNumber": "Símanúmer",
     "PersonalSettings": "Persónulegar stillingar",
     "PersonalSettingsSaved": "Persónulegar stillingar vistaðar",
+    "PersonalSettingsChangedConfirmationModalTitle": "Persónuupplýsingum breytt",
+    "PersonalSettingsChangedConfirmationModalDescription": "Ef þú vilt beita þessum breytingum þarftu að skrá þig inn. Viltu skrá þig út?",
     "PasswordChanged": "Lykilorði breytt",
     "NewPasswordConfirmFailed": "Vinsamlegast staðfestu nýja lykilorðið.",
+    "NewPasswordSameAsOld": "Nýtt lykilorð verður að vera frábrugðið núverandi lykilorði.",
     "Manage": "Umsjá",
     "MyAccount": "Minn aðgangur",
     "DisplayName:Abp.Account.IsSelfRegistrationEnabled": "Er sjálfskráning virk",
@@ -49,7 +53,7 @@
     "SendPasswordResetLink_Information": "Hlekkur til að endurstilla lykilorð verður sendur á netfangið þitt til að endurstilla lykilorðið þitt. Ef þú færð ekki tölvupóst innan nokkurra mínútna skaltu reyna aftur.",
     "PasswordResetMailSentMessage": "Hlekkur til að endurstilla aðganginn þinn verður sendur á netfangið þitt.Ef þú sérð ekki þennan tölvupóst í pósthólfinu þínu innan 15 mínútna skaltu leita að honum í ruslpóstmöppunni þinni. Ef þú finnur það þarna skaltu merkja það sem -Ekki rusl-.",
     "ResetPassword": "Endur stilla lykilorð",
-    "ConfirmPassword": "Staðfestu (endurtaktu) lykilorðið",
+    "ConfirmPassword": "Staðfestu lykilorðið",
     "ResetPassword_Information": "Sláðu inn nýja lykilorðið þitt.",
     "YourPasswordIsSuccessfullyReset": "Lykilorðið þitt var endurstillt.",
     "GoToTheApplication": "Farðu í forritið",
@@ -62,6 +66,8 @@
     "PasswordResetInfoInEmail": "Við fengum beiðni um endurheimt reiknings! Ef þú stofnaðir þessa beiðni skaltu smella á eftirfarandi krækju til að endurstilla lykilorðið þitt.",
     "ResetMyPassword": "Endurstilla lykilorðið mitt",
     "AccessDenied": "Aðgangi hafnað!",
-    "AccessDeniedMessage": "Þú hefur ekki aðgang að þessari auðlind."
+    "AccessDeniedMessage": "Þú hefur ekki aðgang að þessari auðlind.",
+    "OrRegisterWith": "Eða skráðu þig með:",
+    "RegisterUsingYourProviderAccount": "Skráðu þig með {0} aðganginum þínum"
   }
 }

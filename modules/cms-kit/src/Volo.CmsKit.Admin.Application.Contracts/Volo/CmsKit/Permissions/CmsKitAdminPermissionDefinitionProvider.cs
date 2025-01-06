@@ -17,6 +17,10 @@ public class CmsKitAdminPermissionDefinitionProvider : PermissionDefinitionProvi
             .RequireGlobalFeatures(typeof(CommentsFeature));
         contentGroup.AddChild(CmsKitAdminPermissions.Comments.Delete, L("Permission:Comments.Delete"))
             .RequireGlobalFeatures(typeof(CommentsFeature));
+        contentGroup.AddChild(CmsKitAdminPermissions.Comments.Update, L("Permission:Comments.Update"))
+            .RequireGlobalFeatures(typeof(CommentsFeature));
+        contentGroup.AddChild(CmsKitAdminPermissions.Comments.SettingManagement, L("Permission:Comments.SettingManagement"))
+            .RequireGlobalFeatures(typeof(CommentsFeature));
 
         var tagGroup = cmsGroup.AddPermission(CmsKitAdminPermissions.Tags.Default, L("Permission:TagManagement"))
             .RequireGlobalFeatures(typeof(TagsFeature));
@@ -35,6 +39,8 @@ public class CmsKitAdminPermissionDefinitionProvider : PermissionDefinitionProvi
             .RequireGlobalFeatures(typeof(PagesFeature));
         pageManagement.AddChild(CmsKitAdminPermissions.Pages.Delete, L("Permission:PageManagement:Delete"))
             .RequireGlobalFeatures(typeof(PagesFeature));
+        pageManagement.AddChild(CmsKitAdminPermissions.Pages.SetAsHomePage, L("Permission:PageManagement:SetAsHomePage"))
+           .RequireGlobalFeatures(typeof(PagesFeature));
 
         var blogManagement = cmsGroup.AddPermission(CmsKitAdminPermissions.Blogs.Default, L("Permission:BlogManagement"))
             .RequireGlobalFeatures(typeof(BlogsFeature));

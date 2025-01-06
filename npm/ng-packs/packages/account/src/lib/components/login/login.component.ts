@@ -1,7 +1,7 @@
 import { AuthService, ConfigStateService } from '@abp/ng.core';
 import { ToasterService } from '@abp/ng.theme.shared';
-import { Component, Injector, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, Injector, OnInit, inject } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { throwError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { eAccountComponents } from '../../enums/components';
@@ -10,25 +10,24 @@ import { getRedirectUrl } from '../../utils/auth-utils';
 const { maxLength, required } = Validators;
 
 @Component({
+  standalone: false,
   selector: 'abp-login',
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
-  form: FormGroup;
+  protected injector = inject(Injector);
+  protected fb = inject(UntypedFormBuilder);
+  protected toasterService = inject(ToasterService);
+  protected authService = inject(AuthService);
+  protected configState = inject(ConfigStateService);
 
-  inProgress: boolean;
+  form!: UntypedFormGroup;
+
+  inProgress?: boolean;
 
   isSelfRegistrationEnabled = true;
 
   authWrapperKey = eAccountComponents.AuthWrapper;
-
-  constructor(
-    protected injector: Injector,
-    protected fb: FormBuilder,
-    protected toasterService: ToasterService,
-    protected authService: AuthService,
-    protected configState: ConfigStateService,
-  ) {}
 
   ngOnInit() {
     this.init();
@@ -67,7 +66,7 @@ export class LoginComponent implements OnInit {
             err.error?.error_description ||
               err.error?.error.message ||
               'AbpAccount::DefaultErrorMessage',
-            null,
+            '',
             { life: 7000 },
           );
           return throwError(err);

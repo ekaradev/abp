@@ -20,6 +20,8 @@ public class AbpIdentityMongoDbModule : AbpModule
             options.AddRepository<OrganizationUnit, MongoOrganizationUnitRepository>();
             options.AddRepository<IdentitySecurityLog, MongoIdentitySecurityLogRepository>();
             options.AddRepository<IdentityLinkUser, MongoIdentityLinkUserRepository>();
+            options.AddRepository<IdentityUserDelegation, MongoIdentityUserDelegationRepository>();
+            options.AddRepository<IdentitySession, MongoIdentitySessionRepository>();
         });
     }
 }

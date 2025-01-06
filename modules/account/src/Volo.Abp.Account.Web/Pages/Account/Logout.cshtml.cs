@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp.Account.Settings;
 using Volo.Abp.Identity;
+using Volo.Abp.Settings;
 
 namespace Volo.Abp.Account.Web.Pages.Account;
 
@@ -25,10 +27,15 @@ public class LogoutModel : AccountPageModel
         await SignInManager.SignOutAsync();
         if (ReturnUrl != null)
         {
-            return RedirectSafely(ReturnUrl, ReturnUrlHash);
+            return await RedirectSafelyAsync(ReturnUrl, ReturnUrlHash);
         }
 
-        return RedirectToPage("/Account/Login");
+        if (await SettingProvider.IsTrueAsync(AccountSettingNames.EnableLocalLogin))
+        {
+            return RedirectToPage("/Account/Login");
+        }
+
+        return RedirectToPage("/");
     }
 
     public virtual Task<IActionResult> OnPostAsync()

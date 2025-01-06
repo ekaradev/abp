@@ -1,0 +1,33 @@
+@inject IComponentBundleManager BundleManager
+@if (ScriptFiles != null)
+{
+    foreach (var file in ScriptFiles)
+    {
+        <script src="@file"></script>
+    }
+}
+
+@code {
+    [Parameter]
+    public List<string>? WebAssemblyScriptFiles { get; set; }
+
+    [Parameter]
+    public string? BundleName { get; set; }
+
+    private List<string>? ScriptFiles { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScriptFiles = new List<string>();
+
+        if (!BundleName.IsNullOrWhiteSpace())
+        {
+            ScriptFiles = (await BundleManager.GetScriptBundleFilesAsync(BundleName!)).ToList();
+        }
+
+        if (OperatingSystem.IsBrowser() && WebAssemblyScriptFiles != null)
+        {
+            ScriptFiles.AddIfNotContains(WebAssemblyScriptFiles);
+        }
+    }
+}

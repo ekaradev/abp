@@ -3,12 +3,13 @@ using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Shouldly;
 using Volo.Abp.ExceptionHandling;
 using Volo.Abp.Http;
 using Volo.Abp.Security.Claims;
+using Volo.Abp.Uow;
 using Xunit;
 
 namespace Volo.Abp.AspNetCore.Mvc.ExceptionHandling;
@@ -24,13 +25,15 @@ public class ExceptionTestPage_Tests : AspNetCoreMvcTestBase
         _fakeRequiredService = GetRequiredService<FakeUserClaims>();
     }
 
-    protected override void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+    protected override void ConfigureServices(IServiceCollection services)
     {
-        base.ConfigureServices(context, services);
+        base.ConfigureServices(services);
 
         _fakeExceptionSubscriber = Substitute.For<IExceptionSubscriber>();
 
         services.AddSingleton(_fakeExceptionSubscriber);
+
+        services.Replace(ServiceDescriptor.Transient<IUnitOfWork, ExceptionHandingUnitOfWork>());
     }
 
     [Fact]
@@ -139,5 +142,26 @@ public class ExceptionTestPage_Tests : AspNetCoreMvcTestBase
             .Received()
             .HandleAsync(Arg.Any<ExceptionNotificationContext>());
 #pragma warning restore 4014
+    }
+
+
+    [Fact]
+    public async Task Should_Handle_Exception_On_Uow_SaveChangeAsync()
+    {
+        _fakeRequiredService.Claims.AddRange(new[]
+        {
+            new Claim(AbpClaimTypes.UserId, Guid.Empty.ToString())
+        });
+
+        var result = await GetResponseAsObjectAsync<RemoteServiceErrorResponse>("/api/exception-test/ExceptionOnUowSaveChange", HttpStatusCode.Conflict);
+        result.Error.ShouldNotBeNull();
+        result.Error.Message.ShouldBe("The data you have submitted has already been changed by another user. Discard your changes and try again.");
+
+#pragma warning disable 4014
+        _fakeExceptionSubscriber
+            .Received()
+            .HandleAsync(Arg.Any<ExceptionNotificationContext>());
+#pragma warning restore 4014
+
     }
 }

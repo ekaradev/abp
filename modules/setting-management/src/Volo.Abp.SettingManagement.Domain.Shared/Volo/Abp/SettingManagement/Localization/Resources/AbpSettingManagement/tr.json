@@ -2,10 +2,11 @@
   "culture": "tr",
   "texts": {
     "Settings": "Ayarlar",
-    "SuccessfullySaved": "Başarıyla Kaydedildi",
+    "SavedSuccessfully": "Başarıyla Kaydedildi",
     "Permission:SettingManagement": "Ayarlar yönetimi",
     "Permission:Emailing": "Email",
     "Permission:EmailingTest": "Email testi",
+    "Permission:TimeZone": "Zaman dilimi",
     "SendTestEmail": "Test emaili gönder",
     "SenderEmailAddress": "Gönderen email adresi",
     "TargetEmailAddress": "Hedef email adresi",
@@ -14,12 +15,16 @@
     "TestEmailSubject": "Test email {0}",
     "TestEmailBody": "E-posta gövdesi mesajını burada test edin",
     "SuccessfullySent": "Başarıyla gönderildi",
+    "MailSendingFailed": "E-posta gönderme başarısız, lütfen e-posta yapılandırmanızı kontrol edin ve tekrar deneyin.",
     "Send": "Gönder",
     "Menu:Emailing": "Email",
+    "Menu:TimeZone": "Zaman Dilimi",
+    "DisplayName:Timezone": "Zaman dilimi",
+    "TimezoneHelpText": "Bu ayar uygulama genelinde veya müşteri tabanlı olarak kullanılır.",
     "SmtpHost": "Sunucu",
     "SmtpPort": "Port",
     "SmtpUserName": "Kullanıcı adı",
-    "SmtpPassword": "şifre",
+    "SmtpPassword": "Şifre",
     "SmtpDomain": "Domain",
     "SmtpEnableSsl": "Ssl'i aktif et",
     "SmtpUseDefaultCredentials": "Varsayılan yetkilendirmeleri kullan",
@@ -29,6 +34,7 @@
     "Feature:SettingManagementEnable": "Ayar yönetimini etkinleştir",
     "Feature:SettingManagementEnableDescription": "Uygulamada ayar yönetim sistemini etkinleştirin.",
     "Feature:AllowChangingEmailSettings": "E-posta ayarlarını değiştirmeye izin verin.",
-    "Feature:AllowChangingEmailSettingsDescription": "E-posta ayarlarını değiştirmeye izin verin."
+    "Feature:AllowChangingEmailSettingsDescription": "E-posta ayarlarını değiştirmeye izin verin.",
+    "SmtpPasswordPlaceholder": "Şifreyi güncellemek için bir değer girin"
   }
 }

@@ -1,9 +1,6 @@
-﻿using JetBrains.Annotations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Volo.Abp;
 using Volo.Abp.Domain.Services;
 
@@ -23,7 +20,8 @@ public class PageManager : DomainService
         [NotNull] string slug,
         [CanBeNull] string content = null,
         [CanBeNull] string script = null,
-        [CanBeNull] string style = null)
+        [CanBeNull] string style = null,
+        [CanBeNull] string layoutName = null)
     {
         Check.NotNullOrEmpty(title, nameof(title));
         Check.NotNullOrEmpty(slug, nameof(slug));
@@ -37,16 +35,48 @@ public class PageManager : DomainService
             content,
             script,
             style,
+            layoutName,
             CurrentTenant.Id);
     }
 
-    public virtual async Task SetSlugAsync(Page page, string newSlug)
+    public virtual async Task SetSlugAsync(Page page, [NotNull] string newSlug)
     {
         if (page.Slug != newSlug)
         {
             await CheckPageSlugAsync(newSlug);
             page.SetSlug(newSlug);
         }
+    }
+
+    public virtual async Task SetHomePageAsync(Page page)
+    {
+        var homePage = await GetHomePageAsync();
+
+        if (!page.IsHomePage)
+        {
+            if (homePage != null)
+            {
+                homePage.SetIsHomePage(false);
+                await PageRepository.UpdateAsync(homePage);
+            }
+
+            homePage = await PageRepository.GetAsync(page.Id);
+        }
+
+        homePage.SetIsHomePage(!page.IsHomePage);
+        await PageRepository.UpdateAsync(homePage);
+    }
+
+    public virtual async Task<Page> GetHomePageAsync()
+    {
+        var currentHomePages = await PageRepository.GetListOfHomePagesAsync();
+
+        if (currentHomePages.Count > 1)
+        {
+            throw new BusinessException("There can be only one home page.");
+        }
+
+        return currentHomePages.FirstOrDefault();
     }
 
     protected virtual async Task CheckPageSlugAsync(string slug)
